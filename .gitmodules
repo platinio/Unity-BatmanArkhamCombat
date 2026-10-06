@@ -1,0 +1,27 @@
+[submodule "Assets/ArcaneOnyx/BH3"]
+	path = Assets/ArcaneOnyx/BH3
+	url = https://github.com/platinio/Unity-BH3.git
+[submodule "Assets/ArcaneOnyx/GraphCore"]
+	path = Assets/ArcaneOnyx/GraphCore
+	url = https://github.com/platinio/graph-core-library.git
+[submodule "Assets/ArcaneOnyx/VisualScriptingExtension"]
+	path = Assets/ArcaneOnyx/VisualScriptingExtension
+	url = https://github.com/platinio/visual-scripting-extension.git
+[submodule "Assets/ArcaneOnyx/BlockVariables"]
+	path = Assets/ArcaneOnyx/BlockVariables
+	url = https://github.com/platinio/Unity-BlockVariables.git
+[submodule "Assets/ArcaneOnyx/MGizmos"]
+	path = Assets/ArcaneOnyx/MGizmos
+	url = https://github.com/platinio/Unity-MGizmos.git
+[submodule "Assets/ArcaneOnyx/HermesEventGenerator"]
+	path = Assets/ArcaneOnyx/HermesEventGenerator
+	url = https://github.com/platinio/Unity-HermesEventGenerator.git
+[submodule "Assets/ArcaneOnyx/ScriptableObjectDatabase"]
+	path = Assets/ArcaneOnyx/ScriptableObjectDatabase
+	url = https://github.com/platinio/Unity-ScriptableObjectDatabase.git
+[submodule "Assets/ArcaneOnyx/UnityExtensions"]
+	path = Assets/ArcaneOnyx/UnityExtensions
+	url = https://github.com/platinio/Unity-EditorExtension.git
+[submodule "Assets/ArcaneOnyx/AdvancedDropdown"]
+	path = Assets/ArcaneOnyx/AdvancedDropdown
+	url = https://github.com/platinio/Unity-AdvancedDropdown.git
