@@ -19,9 +19,12 @@
 [submodule "Assets/ArcaneOnyx/ScriptableObjectDatabase"]
 	path = Assets/ArcaneOnyx/ScriptableObjectDatabase
 	url = https://github.com/platinio/Unity-ScriptableObjectDatabase.git
-[submodule "Assets/ArcaneOnyx/UnityExtensions"]
-	path = Assets/ArcaneOnyx/UnityExtensions
-	url = https://github.com/platinio/Unity-EditorExtension.git
 [submodule "Assets/ArcaneOnyx/AdvancedDropdown"]
 	path = Assets/ArcaneOnyx/AdvancedDropdown
 	url = https://github.com/platinio/Unity-AdvancedDropdown.git
+[submodule "Assets/ArcaneOnyx/Zenject"]
+	path = Assets/ArcaneOnyx/Zenject
+	url = https://github.com/platinio/Unity-Zenject.git
+[submodule "Assets/ArcaneOnyx/UnityExtensions"]
+	path = Assets/ArcaneOnyx/UnityExtensions
+	url = https://github.com/platinio/Unity-EditorExtension.git
