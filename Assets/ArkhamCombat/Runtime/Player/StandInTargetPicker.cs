@@ -1,5 +1,4 @@
 using System.Collections.Generic;
-using ArcaneOnyx.TPCharacterController.Movement;
 using ArkhamCombat.Combat;
 using UnityEngine;
 
@@ -22,37 +21,38 @@ namespace ArkhamCombat.Player
     }
 
     /// <summary>
-    /// Nearest dummy roughly where the stick points, or ahead when the stick is idle. A stand-in
-    /// for spec 04's scored pick over the director's roster; the runner only ever sees an
-    /// <see cref="IActionTarget"/>, so swapping it changes nothing downstream.
+    /// Nearest dummy roughly along the preferred direction. A stand-in for spec 04's scored pick
+    /// over the director's roster, behind <see cref="ITargetPicker"/> so swapping it is an installer
+    /// change. Reads the scene on first use; <see cref="Refresh"/> re-reads it after spawning.
     /// </summary>
-    public sealed class StandInTargetPicker
+    public sealed class StandInTargetPicker : ITargetPicker
     {
         private readonly CombatConfig config;
-        private readonly IMovementFrame frame;
         private readonly List<CombatDummy> candidates = new List<CombatDummy>();
         private readonly TransformTarget current = new TransformTarget();
+        private bool scanned;
 
-        public StandInTargetPicker(CombatConfig config, IMovementFrame frame)
+        public StandInTargetPicker(CombatConfig config)
         {
             this.config = config;
-            this.frame = frame;
         }
 
-        /// <summary>Re-reads the scene. Call once at start and whenever dummies are spawned.</summary>
+        /// <summary>Re-reads the scene's dummies. Called on first pick, and by whoever spawns more.</summary>
         public void Refresh()
         {
             candidates.Clear();
             candidates.AddRange(Object.FindObjectsByType<CombatDummy>(FindObjectsInactive.Exclude));
+            scanned = true;
         }
 
-        public TransformTarget Pick(Transform character, Vector2 moveInput)
+        public IActionTarget Pick(Vector3 origin, Vector3 preferredDirection)
         {
-            Vector3 origin = character.position;
-            Vector3 preferred = moveInput.sqrMagnitude > 0.01f
-                ? frame.Frame * new Vector3(moveInput.x, 0f, moveInput.y)
-                : character.forward;
-            preferred.y = 0f;
+            if (!scanned)
+            {
+                Refresh();
+            }
+
+            preferredDirection.y = 0f;
 
             CombatDummy best = null;
             float bestScore = float.MaxValue;
@@ -74,7 +74,7 @@ namespace ArkhamCombat.Player
                     continue;
                 }
 
-                float angle = preferred.sqrMagnitude > 1e-4f ? Vector3.Angle(preferred, toCandidate) : 0f;
+                float angle = preferredDirection.sqrMagnitude > 1e-4f ? Vector3.Angle(preferredDirection, toCandidate) : 0f;
                 if (angle > config.TargetMaxAngle)
                 {
                     continue;

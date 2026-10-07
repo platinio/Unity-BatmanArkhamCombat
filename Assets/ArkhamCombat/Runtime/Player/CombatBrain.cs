@@ -23,7 +23,7 @@ namespace ArkhamCombat.Player
         private CharacterMotor motor;
         private ActionRunner runner;
         private CombatContextPublisher publisher;
-        private StandInTargetPicker picker;
+        private ITargetPicker picker;
         private ComboMeter meter;
 
         public ActionRunner Runner => runner;
@@ -33,7 +33,7 @@ namespace ArkhamCombat.Player
             CharacterMotor motor,
             ActionRunner runner,
             CombatContextPublisher publisher,
-            StandInTargetPicker picker,
+            ITargetPicker picker,
             ComboMeter meter)
         {
             this.motor = motor;
@@ -56,8 +56,6 @@ namespace ArkhamCombat.Player
             }
         }
 
-        private void Start() => picker.Refresh();
-
         private void Update()
         {
             CharacterStateMachine machine = brain.StateMachine;
@@ -68,7 +66,7 @@ namespace ArkhamCombat.Player
 
             float deltaTime = Time.deltaTime;
 
-            TransformTarget target = picker.Pick(transform, brain.Context.Input.Move);
+            IActionTarget target = picker.Pick(transform.position, PreferredDirection());
             runner.Target = target;
             publisher.Publish(target, runner.CurrentAttack);
             meter.Tick(deltaTime);
@@ -83,6 +81,18 @@ namespace ArkhamCombat.Player
             {
                 machine.Change<AttackingState>();
             }
+        }
+
+        /// <summary>The stick, in the movement frame, while it is pushed; the facing otherwise.</summary>
+        private Vector3 PreferredDirection()
+        {
+            Vector2 move = brain.Context.Input.Move;
+            if (move.sqrMagnitude > 0.01f)
+            {
+                return brain.Context.MovementFrame.Frame * new Vector3(move.x, 0f, move.y);
+            }
+
+            return transform.forward;
         }
     }
 }

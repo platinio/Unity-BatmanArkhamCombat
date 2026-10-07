@@ -4,6 +4,7 @@
     "references": [
         "ArkhamCombat.Combat",
         "ArkhamCombat.Presentation",
+        "ArkhamCombat.Player",
         "ArcaneOnyx.TPCharacterController",
         "UnityEditor.TestRunner",
         "UnityEngine.TestRunner"
