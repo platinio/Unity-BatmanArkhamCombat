@@ -85,6 +85,38 @@ namespace ArkhamCombat.Combat
             this.unblockable = unblockable;
         }
 
+        /// <summary>
+        /// Where the warp wants to end: strikeDistance from the target, on the character's side. A
+        /// character standing on the target backs off along -Z so the result is still defined.
+        /// </summary>
+        public Vector3 WarpDestination(Vector3 position, Vector3 targetPosition)
+        {
+            Vector3 away = position - targetPosition;
+            away.y = 0f;
+
+            if (away.sqrMagnitude < 1e-6f)
+            {
+                away = Vector3.back;
+            }
+
+            return targetPosition + away.normalized * strikeDistance;
+        }
+
+        /// <summary>Planar distance the warp would travel from here to its end point.</summary>
+        public float LungeDistance(Vector3 position, Vector3 targetPosition)
+        {
+            Vector3 lunge = WarpDestination(position, targetPosition) - position;
+            lunge.y = 0f;
+            return lunge.magnitude;
+        }
+
+        /// <summary>
+        /// The one lunge rule: the warp refuses, and the targetBeyondLunge fact is true, when the
+        /// travel to the end point exceeds maxLunge. Both sides read this so they can never disagree.
+        /// </summary>
+        public bool IsBeyondLunge(Vector3 position, Vector3 targetPosition) =>
+            LungeDistance(position, targetPosition) > maxLunge;
+
         public override bool Validate(List<string> errors)
         {
             bool ok = base.Validate(errors);

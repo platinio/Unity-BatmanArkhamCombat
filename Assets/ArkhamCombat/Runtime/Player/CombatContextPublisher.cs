@@ -1,3 +1,4 @@
+using System;
 using ArcaneOnyx.BehaviorTree;
 using ArcaneOnyx.TPCharacterController.Motor;
 using ArcaneOnyx.TPCharacterController.Movement;
@@ -22,6 +23,13 @@ namespace ArkhamCombat.Player
         private readonly CombatConfig config;
         private readonly IMovementFrame frame;
         private Vector3 toTarget;
+        private int lastComboCount = -1;
+        private int lastComboTier = -1;
+        private float lastTargetDistance = float.NaN;
+        private int lastTargetSide = int.MinValue;
+        private string lastTargetState;
+        private bool? lastTargetBeyondLunge;
+        private bool? lastIncomingCounterable;
 
         public CombatContextPublisher(
             CharacterMotor motor,
@@ -58,8 +66,10 @@ namespace ArkhamCombat.Player
                 TransformTarget scene = target as TransformTarget;
                 context.TargetState = scene?.Dummy != null ? scene.Dummy.State : string.Empty;
 
-                float maxLunge = currentAttack != null ? currentAttack.MaxLunge : config.IdleMaxLunge;
-                context.TargetBeyondLunge = context.TargetDistance > maxLunge;
+                // The same rule the warp refuses by, so the fact and the overlay's warp-refused flag agree.
+                context.TargetBeyondLunge = currentAttack != null
+                    ? currentAttack.IsBeyondLunge(character.position, target.Position)
+                    : context.TargetDistance > config.IdleMaxLunge;
             }
             else
             {
@@ -70,13 +80,14 @@ namespace ArkhamCombat.Player
                 context.TargetBeyondLunge = true;
             }
 
-            Write(CombatContext.Keys.ComboCount, context.ComboCount);
-            Write(CombatContext.Keys.ComboTier, context.ComboTier);
-            Write(CombatContext.Keys.TargetDistance, context.TargetDistance);
-            Write(CombatContext.Keys.TargetSide, context.TargetSide);
-            Write(CombatContext.Keys.TargetState, context.TargetState);
-            Write(CombatContext.Keys.TargetBeyondLunge, context.TargetBeyondLunge);
-            Write(CombatContext.Keys.IncomingAttackCounterable, context.IncomingAttackCounterable);
+            // Only changed values are written: each write boxes and goes through the agent's variables.
+            WriteIfChanged(CombatContext.Keys.ComboCount, context.ComboCount, ref lastComboCount);
+            WriteIfChanged(CombatContext.Keys.ComboTier, context.ComboTier, ref lastComboTier);
+            WriteIfChanged(CombatContext.Keys.TargetDistance, context.TargetDistance, ref lastTargetDistance);
+            WriteIfChanged(CombatContext.Keys.TargetSide, context.TargetSide, ref lastTargetSide);
+            WriteIfChanged(CombatContext.Keys.TargetState, context.TargetState, ref lastTargetState);
+            WriteIfChanged(CombatContext.Keys.TargetBeyondLunge, context.TargetBeyondLunge, ref lastTargetBeyondLunge);
+            WriteIfChanged(CombatContext.Keys.IncomingAttackCounterable, context.IncomingAttackCounterable, ref lastIncomingCounterable);
         }
 
         /// <summary>Degrees between where the stick pointed at the press and the target. Zero with no stick or no target.</summary>
@@ -105,6 +116,28 @@ namespace ArkhamCombat.Player
             }
 
             return cross < -deadBand ? -1 : 0;
+        }
+
+        private void WriteIfChanged<T>(string key, T value, ref T last) where T : IEquatable<T>
+        {
+            if (last != null && last.Equals(value))
+            {
+                return;
+            }
+
+            last = value;
+            Write(key, value);
+        }
+
+        private void WriteIfChanged(string key, bool value, ref bool? last)
+        {
+            if (last == value)
+            {
+                return;
+            }
+
+            last = value;
+            Write(key, value);
         }
 
         private void Write(string key, object value) => AgentVariableWriter.SetOn(agent, key, value, Source);

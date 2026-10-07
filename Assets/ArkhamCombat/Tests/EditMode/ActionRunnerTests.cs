@@ -154,6 +154,45 @@ namespace ArkhamCombat.Tests
             Assert.AreSame(cross, runner.CurrentAction, "t 0.5: the cancel window opened and the press was spent");
             Assert.AreEqual("S2", runner.CurrentNode.Id);
             Assert.AreEqual(0, intents.Entries.Count);
+
+            CollectionAssert.Contains(events.Log, "end Jab");
+            CollectionAssert.DoesNotContain(events.Log, "cut Jab");
+            ActionTrace.Record jabRecord = runner.Trace.Records[runner.Trace.Records.Count - 2];
+            Assert.IsFalse(jabRecord.Interrupted, "a follow-up is a cancel the move allowed, not an interrupt");
+            Assert.AreEqual(0.5f, jabRecord.EndedAt, 1e-5f);
+        }
+
+        [Test]
+        public void APressWhileTheCancelWindowIsAlreadyOpen_IsTakenOnTheNextTick()
+        {
+            ActionRunner runner = Runner();
+            intents.Push(IntentKind.Strike, Vector2.zero);
+            Tick(runner, 1);
+            Tick(runner, 7);
+            Assert.IsTrue(runner.CancelWindowOpen, "t 0.7: inside the cancel window");
+
+            intents.Push(IntentKind.Strike, Vector2.zero);
+            Tick(runner, 1);
+
+            Assert.AreSame(cross, runner.CurrentAction, "the resolver is asked every tick the window stays open");
+        }
+
+        [Test]
+        public void Interrupt_FromCode_ReplacesTheRunningAction()
+        {
+            ActionRunner runner = Runner();
+            intents.Push(IntentKind.Strike, Vector2.zero);
+            Tick(runner, 4);
+            Assert.IsTrue(hits.IsArmed);
+            stance.TryGetNode("Evade", out ChainNode evade);
+
+            runner.Interrupt(evade, Vector3.zero);
+
+            Assert.IsFalse(hits.IsArmed);
+            Assert.AreSame(cross, runner.CurrentAction);
+            Assert.AreEqual("Evade", runner.CurrentNode.Id);
+            CollectionAssert.Contains(events.Log, "cut Jab");
+            CollectionAssert.Contains(events.Log, "interrupt Cross");
         }
 
         [Test]
@@ -220,6 +259,50 @@ namespace ArkhamCombat.Tests
             Assert.AreEqual(2f, position.z, 1e-3f, "stopped strikeDistance short of the target");
             Assert.IsFalse(runner.WarpOpen);
             Assert.IsFalse(runner.WarpRefused);
+        }
+
+        [Test]
+        public void TheWarp_ReAimsEveryTick_WhenTheTargetMoves()
+        {
+            ActionRunner runner = Runner();
+            PointTarget target = new PointTarget(new Vector3(0f, 0f, 3f));
+            runner.Target = target;
+            intents.Push(IntentKind.Strike, Vector2.zero);
+
+            Tick(runner, 1);
+            Vector3 position = Vector3.zero;
+            for (int i = 0; i < 3; i++)
+            {
+                target.Position = new Vector3(i * 0.5f, 0f, 3f);
+                sink.Total = Vector3.zero;
+                runner.Tick(0.1f, position, true);
+                position += sink.Total;
+            }
+
+            Vector3 expected = jab.WarpDestination(position, target.Position);
+            Assert.AreEqual(expected.x, position.x, 1e-3f, "landed relative to where the target ended up");
+            Assert.AreEqual(expected.z, position.z, 1e-3f);
+        }
+
+        [Test]
+        public void TheWarpRefusal_AndTheBeyondLungeRule_FlipAtTheSameDistance()
+        {
+            Vector3 justInside = new Vector3(0f, 0f, jab.MaxLunge + jab.StrikeDistance - 0.01f);
+            Vector3 justBeyond = new Vector3(0f, 0f, jab.MaxLunge + jab.StrikeDistance + 0.01f);
+            Assert.IsFalse(jab.IsBeyondLunge(Vector3.zero, justInside));
+            Assert.IsTrue(jab.IsBeyondLunge(Vector3.zero, justBeyond));
+
+            ActionRunner inside = Runner();
+            inside.Target = new PointTarget(justInside);
+            intents.Push(IntentKind.Strike, Vector2.zero);
+            Tick(inside, 2);
+            Assert.IsFalse(inside.WarpRefused);
+
+            ActionRunner beyond = Runner();
+            beyond.Target = new PointTarget(justBeyond);
+            intents.Push(IntentKind.Strike, Vector2.zero);
+            Tick(beyond, 2);
+            Assert.IsTrue(beyond.WarpRefused);
         }
 
         [Test]

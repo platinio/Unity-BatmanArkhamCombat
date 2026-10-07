@@ -50,7 +50,7 @@ namespace ArkhamCombat.Tests
         }
 
         private Resolution Resolve(ChainNode node, AttackDefinition attack = null, float t = 0f, bool followUps = true) =>
-            resolver.Resolve(stance, new ResolveInput(node, attack, t, followUps), intents, context);
+            resolver.Resolve(stance, new ResolveInput(node, attack, t, followUps, isPlaying: attack != null), intents, context);
 
         [Test]
         public void EdgesAreTriedInPriorityOrder_AndAFailedConditionFallsThrough()
@@ -132,6 +132,17 @@ namespace ArkhamCombat.Tests
             Assert.IsFalse(Resolve(s1, jab, 0.5f).Matched, "outside the evade window");
             Assert.AreEqual(1, intents.Entries.Count, "a gated edge consumes nothing");
             Assert.AreEqual("EvadeNode", Resolve(s1, jab, 0.1f).Destination.Id);
+        }
+
+        [Test]
+        public void Evade_IsNotAllowed_WhileAPlainActionPlays()
+        {
+            intents.Push(IntentKind.Evade, Vector2.zero);
+
+            Resolution result = resolver.Resolve(stance, new ResolveInput(s1, null, 0.1f, false, isPlaying: true), intents, context);
+
+            Assert.IsFalse(result.Matched, "a reaction with no evade window cannot be evaded out of");
+            Assert.AreEqual(1, intents.Entries.Count);
         }
 
         [Test]

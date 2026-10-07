@@ -71,7 +71,14 @@ namespace ArkhamCombat.Presentation
             body.DOLocalRotate(spun, cue.Duration, RotateMode.FastBeyond360)
                 .SetEase(cue.Ease)
                 .SetId(target.TweenId)
-                .OnComplete(() => body.localRotation = rest);
+                .OnKill(() =>
+                {
+                    // On kill as well as on completion: a cancelled spin must not leave the body yawed.
+                    if (body != null)
+                    {
+                        body.localRotation = rest;
+                    }
+                });
         }
     }
 
@@ -101,6 +108,11 @@ namespace ArkhamCombat.Presentation
                     value =>
                     {
                         amount = value;
+                        if (renderer == null)
+                        {
+                            return;
+                        }
+
                         block.SetColor(property, Color.Lerp(baseColour, cue.Colour, value * cue.Strength));
                         renderer.SetPropertyBlock(block);
                     },
@@ -109,7 +121,13 @@ namespace ArkhamCombat.Presentation
                 .SetEase(cue.Ease)
                 .SetLoops(2, LoopType.Yoyo)
                 .SetId(target.TweenId)
-                .OnKill(() => renderer.SetPropertyBlock(null));
+                .OnKill(() =>
+                {
+                    if (renderer != null)
+                    {
+                        renderer.SetPropertyBlock(null);
+                    }
+                });
         }
     }
 }

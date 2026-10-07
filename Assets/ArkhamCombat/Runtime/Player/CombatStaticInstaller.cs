@@ -1,3 +1,4 @@
+using System.Collections.Generic;
 using ArcaneOnyx.TPCharacterController.Inputs;
 using ArcaneOnyx.UnityExtensions;
 using ArkhamCombat.Combat;
@@ -29,6 +30,10 @@ namespace ArkhamCombat.Player
             {
                 Debug.LogError($"[{nameof(CombatStaticInstaller)}] No CombatConfig assigned on '{name}'.", this);
             }
+            else
+            {
+                ReportAuthoringErrors(config);
+            }
 
             Container.Bind<CombatConfig>().FromInstance(config);
             Container.Bind<Stance>().FromResolveGetter<CombatConfig>(c => c != null ? c.Stance : null);
@@ -52,6 +57,57 @@ namespace ArkhamCombat.Player
 
             Container.Bind<StandInTargetPicker>().AsSingle();
             Container.Bind<ActionRunner>().AsSingle();
+        }
+
+        /// <summary>
+        /// Runs the stance and attack validation once at scene load, so a reversed window or an edge
+        /// to nowhere is an error in the console rather than a hitbox that never disarms.
+        /// </summary>
+        private static void ReportAuthoringErrors(CombatConfig config)
+        {
+            if (config.Stance == null)
+            {
+                Debug.LogError($"[{nameof(CombatStaticInstaller)}] CombatConfig '{config.name}' has no stance.", config);
+                return;
+            }
+
+            List<string> errors = new List<string>();
+            config.Stance.Validate(errors);
+
+            HashSet<AttackDefinition> attacks = new HashSet<AttackDefinition>();
+            foreach (ChainNode node in config.Stance.Nodes)
+            {
+                if (node == null)
+                {
+                    continue;
+                }
+
+                if (node.Attack != null)
+                {
+                    attacks.Add(node.Attack);
+                }
+
+                if (node.Pool != null)
+                {
+                    foreach (AttackDefinition attack in node.Pool.Attacks)
+                    {
+                        if (attack != null)
+                        {
+                            attacks.Add(attack);
+                        }
+                    }
+                }
+            }
+
+            foreach (AttackDefinition attack in attacks)
+            {
+                attack.Validate(errors);
+            }
+
+            foreach (string error in errors)
+            {
+                Debug.LogError($"[{nameof(CombatStaticInstaller)}] {error}", config.Stance);
+            }
         }
     }
 }

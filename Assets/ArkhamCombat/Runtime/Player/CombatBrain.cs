@@ -11,7 +11,9 @@ namespace ArkhamCombat.Player
     /// Ticks the combat side once per frame, before the character brain ticks the state machine:
     /// pick a target, publish the facts, run the meter and the runner, and push the state machine
     /// into Attacking when the runner starts a chain from idle. Leaving the state machine alone
-    /// otherwise is what keeps Locomotion unaware that combat exists.
+    /// otherwise is what keeps Locomotion unaware that combat exists. Because this runs first, the
+    /// picker sees the previous frame's stick and a press expires one tick late; at any playable
+    /// frame rate neither is visible.
     /// </summary>
     [DefaultExecutionOrder(-10)]
     [RequireComponent(typeof(CharacterBrain))]
@@ -28,14 +30,12 @@ namespace ArkhamCombat.Player
 
         [Inject]
         private void Construct(
-            CharacterBrain brain,
             CharacterMotor motor,
             ActionRunner runner,
             CombatContextPublisher publisher,
             StandInTargetPicker picker,
             ComboMeter meter)
         {
-            this.brain = brain;
             this.motor = motor;
             this.runner = runner;
             this.publisher = publisher;
@@ -45,6 +45,9 @@ namespace ArkhamCombat.Player
 
         private void Awake()
         {
+            // The brain is the one on this object, not whichever one the container found in the scene.
+            brain = GetComponent<CharacterBrain>();
+
             if (runner == null)
             {
                 Debug.LogError(
@@ -70,7 +73,10 @@ namespace ArkhamCombat.Player
             publisher.Publish(target, runner.CurrentAttack);
             meter.Tick(deltaTime);
 
-            bool canStartChain = machine.Current is LocomotionState && motor.Ground.IsGrounded;
+            // An idle runner while still in Attacking is recovery, so a queued press continues the chain
+            // without a one-frame trip through Locomotion.
+            bool canStartChain = motor.Ground.IsGrounded
+                                 && (machine.Current is LocomotionState || machine.Current is AttackingState);
             runner.Tick(deltaTime, transform.position, canStartChain);
 
             if (runner.IsPlaying && !(machine.Current is AttackingState))

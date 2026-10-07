@@ -149,7 +149,7 @@ namespace ArkhamCombat.Combat
             if (stance != null && CurrentNode != null)
             {
                 Resolution resolution = resolver.Resolve(
-                    stance, new ResolveInput(CurrentNode, attack, t, cancelOpen), intents, context);
+                    stance, new ResolveInput(CurrentNode, attack, t, cancelOpen, isPlaying: true), intents, context);
 
                 if (resolution.Matched)
                 {
@@ -326,10 +326,7 @@ namespace ArkhamCombat.Combat
                 return;
             }
 
-            Vector3 lunge = WarpDestination(attack, position) - position;
-            lunge.y = 0f;
-
-            if (lunge.magnitude > attack.MaxLunge)
+            if (attack.IsBeyondLunge(position, Target.Position))
             {
                 WarpRefused = true;
                 Trace.MarkWarpRefused();
@@ -358,23 +355,9 @@ namespace ArkhamCombat.Combat
             float span = warp.End - from;
             float fraction = span <= 1e-5f ? 1f : Mathf.Clamp01((to - from) / span);
 
-            Vector3 remaining = WarpDestination(attack, position) - position;
+            Vector3 remaining = attack.WarpDestination(position, Target.Position) - position;
             remaining.y = 0f;
             displacement.Displace(remaining * fraction);
-        }
-
-        private Vector3 WarpDestination(AttackDefinition attack, Vector3 position)
-        {
-            Vector3 targetPosition = Target.Position;
-            Vector3 away = position - targetPosition;
-            away.y = 0f;
-
-            if (away.sqrMagnitude < 1e-6f)
-            {
-                away = Vector3.back;
-            }
-
-            return targetPosition + away.normalized * attack.StrikeDistance;
         }
     }
 }

@@ -16,15 +16,19 @@ namespace ArkhamCombat.Combat
         /// <summary>Whether the node's own edges may be taken: the cancel window is open, or nothing is playing.</summary>
         public readonly bool FollowUpsOpen;
 
-        public ResolveInput(ChainNode node, AttackDefinition attack, float normalizedTime, bool followUpsOpen)
+        /// <summary>True while any action plays, attack or not. A plain reaction has no evade window and is not idle.</summary>
+        public readonly bool IsPlaying;
+
+        public ResolveInput(ChainNode node, AttackDefinition attack, float normalizedTime, bool followUpsOpen, bool isPlaying)
         {
             Node = node;
             Attack = attack;
             NormalizedTime = normalizedTime;
             FollowUpsOpen = followUpsOpen;
+            IsPlaying = isPlaying;
         }
 
-        public static ResolveInput Idle(ChainNode node) => new ResolveInput(node, null, 0f, true);
+        public static ResolveInput Idle(ChainNode node) => new ResolveInput(node, null, 0f, true, false);
     }
 
     /// <summary>What the resolver chose, and which press it spent on it.</summary>
@@ -132,7 +136,8 @@ namespace ArkhamCombat.Combat
 
         /// <summary>
         /// The gate a global edge passes before its condition is even asked. Evade needs the current
-        /// attack's evade window, or no attack at all; Counter needs a counterable attack incoming;
+        /// attack's evade window, or an idle character; a plain action playing cannot be evaded out of.
+        /// Counter needs a counterable attack incoming;
         /// Stun and a global Strike have no gate of their own.
         /// </summary>
         public static bool InterruptAllowed(Edge edge, in ResolveInput input, CombatContext context)
@@ -140,7 +145,8 @@ namespace ArkhamCombat.Combat
             switch (edge.Intent)
             {
                 case IntentKind.Evade:
-                    return input.Attack == null || input.Attack.CancelEvade.Contains(input.NormalizedTime);
+                    return !input.IsPlaying
+                           || (input.Attack != null && input.Attack.CancelEvade.Contains(input.NormalizedTime));
                 case IntentKind.Counter:
                     return context != null && context.IncomingAttackCounterable;
                 default:

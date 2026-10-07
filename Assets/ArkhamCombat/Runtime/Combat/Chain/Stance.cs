@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using UnityEngine;
 
@@ -23,11 +24,13 @@ namespace ArkhamCombat.Combat
         [SerializeField, Min(0f)] private float chainResetSeconds = 0.6f;
 
         private readonly Dictionary<string, ChainNode> byId = new Dictionary<string, ChainNode>();
+        [NonSerialized] private List<Edge> sortedGlobalEdges;
         private bool prepared;
 
         public string RootId => root;
         public IReadOnlyList<ChainNode> Nodes => nodes;
-        public IReadOnlyList<Edge> GlobalEdges => globalEdges;
+        /// <summary>In priority order once prepared; the authored list is never reordered.</summary>
+        public IReadOnlyList<Edge> GlobalEdges => sortedGlobalEdges ?? globalEdges;
         public float ChainResetSeconds => chainResetSeconds;
 
         /// <summary>Null when the root id names no node; <see cref="Validate"/> reports that.</summary>
@@ -92,18 +95,7 @@ namespace ArkhamCombat.Combat
 
         private void SortGlobalEdges()
         {
-            for (int i = 1; i < globalEdges.Count; i++)
-            {
-                Edge edge = globalEdges[i];
-                int j = i - 1;
-                while (j >= 0 && globalEdges[j].Priority > edge.Priority)
-                {
-                    globalEdges[j + 1] = globalEdges[j];
-                    j--;
-                }
-
-                globalEdges[j + 1] = edge;
-            }
+            sortedGlobalEdges = EdgeOrder.Sorted(globalEdges, sortedGlobalEdges);
         }
 
         private void OnEnable() => Prepare();
@@ -136,7 +128,7 @@ namespace ArkhamCombat.Combat
                     errors.Add($"'{name}': node id '{node.Id}' is used more than once.");
                 }
 
-                if (node.Id != root && node.Attack == null && (node.Pool == null || node.Pool.IsEmpty))
+                if (node.Id != root && node.HasNothingToPlay)
                 {
                     errors.Add($"'{name}': node '{node.Id}' has neither an attack nor a pool entry.");
                 }
@@ -173,9 +165,13 @@ namespace ArkhamCombat.Combat
                 {
                     errors.Add($"'{name}': {owner} edge {i} ({edge.Intent}) has no destination.");
                 }
-                else if (!byId.ContainsKey(edge.Destination))
+                else if (!byId.TryGetValue(edge.Destination, out ChainNode target))
                 {
                     errors.Add($"'{name}': {owner} edge {i} ({edge.Intent}) points at unknown node '{edge.Destination}'.");
+                }
+                else if (target.HasNothingToPlay)
+                {
+                    errors.Add($"'{name}': {owner} edge {i} ({edge.Intent}) points at '{edge.Destination}', which has nothing to play.");
                 }
             }
         }

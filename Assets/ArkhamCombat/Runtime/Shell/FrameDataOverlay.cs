@@ -33,7 +33,8 @@ namespace ArkhamCombat.Shell
 
         private void OnGUI()
         {
-            if (runner == null)
+            // Repaint only: nothing here needs a Layout pass, and the strings are built per event.
+            if (runner == null || Event.current.type != EventType.Repaint)
             {
                 return;
             }

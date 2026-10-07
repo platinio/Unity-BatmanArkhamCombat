@@ -12,8 +12,6 @@ namespace ArkhamCombat.Player
     {
         private Vector3 pending;
 
-        public bool HasPending => pending.sqrMagnitude > 0f;
-
         public void Displace(Vector3 planarDelta)
         {
             planarDelta.y = 0f;

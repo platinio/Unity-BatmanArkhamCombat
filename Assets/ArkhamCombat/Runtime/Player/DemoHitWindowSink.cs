@@ -31,7 +31,11 @@ namespace ArkhamCombat.Player
 
                 if (toTarget.magnitude <= attack.StrikeDistance + config.HitRangeMargin)
                 {
-                    scene.Dummy?.ReceiveHit(attack);
+                    if (scene.Dummy != null)
+                    {
+                        scene.Dummy.ReceiveHit(attack);
+                    }
+
                     meter.Increment(ComboIncrementReason.StrikeLanded);
                     return;
                 }

@@ -39,7 +39,7 @@ namespace ArkhamCombat.Player
 
             publisher.PublishStickAngle(intent.MoveAtPress);
 
-            FunctionCall<bool>.Bound bound = edge.Condition.For(agent, edge.ToString());
+            FunctionCall<bool>.Bound bound = edge.Condition.For(agent);
             if (bound.TryInvoke(out bool result, out string error))
             {
                 return result;

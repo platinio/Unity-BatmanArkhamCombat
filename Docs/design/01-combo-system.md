@@ -361,7 +361,25 @@ committed first and its pointer bumped here.
 - The Editor rewrote `Assets/Settings/*.asset` and `ProjectSettings/ProjectSettings.asset` during the
   baseline build (URP prefiltering, static batching). Not part of this change; discard or keep as you see fit.
 
+### Review outcome
+
+An independent review of the change (2026-10-07) found no correctness defect in the core. Applied from
+it: edges are sorted into runtime lists so `OnValidate` never reorders the authored data; the lunge rule
+lives once on `AttackDefinition` and both the warp and the `targetBeyondLunge` fact read it; the installer
+validates the stance and every attack at scene load; an edge to a node with nothing to play is a
+validation error; Evade is gated on idle or the evade window, so a plain reaction cannot be evaded out of;
+facts are written only on change; a queued press continues the chain during recovery without a frame in
+Locomotion; `CombatBrain` takes its `CharacterBrain` from its own object; null guards in the flash and spin
+cues and the hit sink; the overlay draws on Repaint only; tests for the cancel-versus-interrupt rule, a
+press inside an open window, a moving warp target, the code interrupt path and the lunge parity. Left
+open, by cost: a `GameObjectContext` on the player before enemies share the runner (today the runner,
+sinks and driver are scene singletons); EditMode tests for the Player assembly's pure pieces (`SideOf`,
+the hit sink rule); the fist as a child of the body; the dead `SampleScene` build entry was replaced by
+`CombatArena`.
+
 ### Verification
 
-Baseline before the change: EditMode 879 passed, PlayMode 111 passed, player build failed (missing scene,
-see above). After the change: see the review outcome below.
+Baseline before the change: EditMode 879 passed, PlayMode 111 passed, player build failed (a build
+settings entry for a scene that no longer existed). After the review fixes: EditMode 968 passed (879 plus
+the 89 new tests), PlayMode 111 passed, player build `Succeeded` with `CombatArena.unity`, 0 errors. The
+chain was played end to end in `CombatArena` with a clean console.

@@ -44,8 +44,39 @@ namespace ArkhamCombat.Tests
             });
 
             List<string> errors = Errors(stance);
+            Assert.AreEqual(2, errors.Count, string.Join("\n", errors));
+            Assert.IsTrue(errors.Exists(e => e.Contains("'Empty' has neither")), "the node itself is reported");
+            Assert.IsTrue(errors.Exists(e => e.Contains("points at 'Empty', which has nothing to play")), "and so is the edge into it");
+        }
+
+        [Test]
+        public void AnEdgeToANodeWithNothingToPlay_IsReported()
+        {
+            Stance stance = Stance("Neutral", new[]
+            {
+                new ChainNode("Neutral", (AttackDefinition)null, new Edge(IntentKind.Strike, "S1")),
+                new ChainNode("S1", jab, new Edge(IntentKind.Strike, "Neutral"))
+            });
+
+            List<string> errors = Errors(stance);
             Assert.AreEqual(1, errors.Count, string.Join("\n", errors));
-            StringAssert.Contains("'Empty' has neither", errors[0]);
+            StringAssert.Contains("points at 'Neutral', which has nothing to play", errors[0]);
+        }
+
+        [Test]
+        public void Prepare_LeavesTheAuthoredEdgeOrderAlone()
+        {
+            Edge low = new Edge(IntentKind.Strike, "A", 1);
+            Edge high = new Edge(IntentKind.Strike, "B", 2);
+            ChainNode node = new ChainNode("N", jab, high, low);
+            Stance stance = Stance("N", new[] { node, new ChainNode("A", jab), new ChainNode("B", jab) });
+
+            Assert.AreSame(low, node.Edges[0], "the sorted view leads with the lower priority");
+
+            UnityEditor.SerializedProperty authored = new UnityEditor.SerializedObject(stance)
+                .FindProperty("nodes").GetArrayElementAtIndex(0).FindPropertyRelative("edges");
+            Assert.AreEqual("B", authored.GetArrayElementAtIndex(0).FindPropertyRelative("destination").stringValue,
+                "the serialized list keeps the designer's order; it is not the cache");
         }
 
         [Test]

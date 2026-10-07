@@ -42,7 +42,7 @@ namespace ArkhamCombat.Editor
                 new PresentationCue(0.3f, new SquashCue(), 0.2f, 0.15f));
 
             AttackDefinition roundhouse = Attack("RoundhouseKick", 0.8f, new Window(0.4f, 0.6f), new Window(0.6f, 0.95f), new Window(0f, 0.35f), new Window(0f, 0.35f), 1.4f, 4.5f,
-                new PresentationCue(0f, new LeanCue(), 0.25f, -10f),
+                new PresentationCue(0f, new LeanCue(), 0.15f, -10f),
                 new PresentationCue(0.2f, new SpinCue(), 0.5f, 1f),
                 new PresentationCue(0.55f, new SquashCue(), 0.2f, 0.2f));
 
