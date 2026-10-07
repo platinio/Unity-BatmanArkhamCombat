@@ -28,3 +28,6 @@
 [submodule "Assets/ArcaneOnyx/UnityExtensions"]
 	path = Assets/ArcaneOnyx/UnityExtensions
 	url = https://github.com/platinio/Unity-EditorExtension.git
+[submodule "Assets/ArcaneOnyx/CharacterController"]
+	path = Assets/ArcaneOnyx/CharacterController
+	url = https://github.com/platinio/Unity-CharacterController.git
