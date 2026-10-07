@@ -1,0 +1,19 @@
+{
+    "name": "ArkhamCombat.Player",
+    "rootNamespace": "ArkhamCombat.Player",
+    "references": [
+        "ArcaneOnyx.TPCharacterController",
+        "ArcaneOnyx.UnityExtensions.Runtime",
+        "MackySoft.SerializeReferenceExtensions",
+        "Zenject"
+    ],
+    "includePlatforms": [],
+    "excludePlatforms": [],
+    "allowUnsafeCode": false,
+    "overrideReferences": false,
+    "precompiledReferences": [],
+    "autoReferenced": true,
+    "defineConstraints": [],
+    "versionDefines": [],
+    "noEngineReferences": false
+}

@@ -1,0 +1,18 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 72977cb3cb513294c945c376c8e2e100, type: 3}
+  m_Name: StaticInstallerManifest
+  m_EditorClassIdentifier: Zenject::Zenject.StaticInstallerManifest
+  installers:
+  - {fileID: 11400000, guid: 9d6b50f3d4bf8754fa31ff382fb67bdc, type: 2}
+  - {fileID: 11400000, guid: 7c2e9d1a4b5f4c8e9d0a1b2c3d4e5f0e, type: 2}
+  - {fileID: 11400000, guid: 7c2e9d1a4b5f4c8e9d0a1b2c3d4e5f0f, type: 2}

@@ -1,0 +1,27 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 7c2e9d1a4b5f4c8e9d0a1b2c3d4e5f0c, type: 3}
+  m_Name: PlayerStaticInstaller
+  m_EditorClassIdentifier: ArkhamCombat.Player::ArkhamCombat.Player.PlayerStaticInstaller
+  profile: {fileID: 11400000, guid: 3b4deb06eabb294488e233033626bc09, type: 2}
+  states:
+  - rid: 1000
+  - rid: 1001
+  references:
+    version: 2
+    RefIds:
+    - rid: 1000
+      type: {class: LocomotionStateBinding, ns: ArcaneOnyx.TPCharacterController.States, asm: ArcaneOnyx.TPCharacterController}
+      data:
+    - rid: 1001
+      type: {class: AirborneStateBinding, ns: ArcaneOnyx.TPCharacterController.States, asm: ArcaneOnyx.TPCharacterController}
+      data:
