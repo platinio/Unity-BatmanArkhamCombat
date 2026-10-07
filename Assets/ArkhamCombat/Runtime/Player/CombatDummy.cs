@@ -4,10 +4,11 @@ using UnityEngine;
 namespace ArkhamCombat.Player
 {
     /// <summary>
-    /// A thing to hit until enemies exist. Publishes a state string the context reads as
-    /// targetState, counts hits, and flashes so a landed strike is visible on a capsule.
+    /// A thing to hit until enemies exist: the stand-in <see cref="ICombatTarget"/>. Publishes a
+    /// state string, counts hits, and flashes so a landed strike is visible on a capsule. An enemy's
+    /// status component implements the same interface and nothing player-side changes.
     /// </summary>
-    public sealed class CombatDummy : MonoBehaviour
+    public sealed class CombatDummy : MonoBehaviour, ICombatTarget
     {
         private static readonly int BaseColor = Shader.PropertyToID("_BaseColor");
         private static readonly int LegacyColor = Shader.PropertyToID("_Color");
@@ -24,6 +25,9 @@ namespace ArkhamCombat.Player
         private float flashUntil;
 
         public string State => state;
+        public bool IsValid => this != null && isActiveAndEnabled;
+        public Vector3 Position => transform.position;
+
         public int HitsTaken { get; private set; }
         public AttackDefinition LastHitBy { get; private set; }
 
@@ -35,7 +39,7 @@ namespace ArkhamCombat.Player
             colourProperty = material != null && material.HasProperty(BaseColor) ? BaseColor : LegacyColor;
         }
 
-        public void ReceiveHit(AttackDefinition attack)
+        public void Receive(AttackDefinition attack)
         {
             HitsTaken++;
             LastHitBy = attack;

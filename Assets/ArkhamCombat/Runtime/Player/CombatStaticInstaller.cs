@@ -55,6 +55,7 @@ namespace ArkhamCombat.Player
             Container.Bind(typeof(MotorDisplacementSink), typeof(IDisplacementSink)).To<MotorDisplacementSink>().AsSingle();
             Container.Bind<IHitWindowSink>().To<DemoHitWindowSink>().AsSingle();
 
+            Container.Bind<ITargetRoster>().To<SceneTargetRoster>().AsSingle();
             Container.Bind<ITargetPicker>().To<StandInTargetPicker>().AsSingle();
             Container.Bind<ActionRunner>().AsSingle();
         }

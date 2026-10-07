@@ -4,8 +4,8 @@ namespace ArkhamCombat.Combat
 {
     /// <summary>
     /// Decides who the next action is aimed at. Asked once per frame with where the character is and
-    /// where the player is pointing; answers with a target that may be invalid when nothing
-    /// qualifies. The spec 04 picker replaces the stand-in behind this without touching the brain.
+    /// where the player is pointing; answers null when nothing qualifies. The spec 04 picker replaces
+    /// the stand-in behind this without touching the brain.
     /// </summary>
     public interface ITargetPicker
     {

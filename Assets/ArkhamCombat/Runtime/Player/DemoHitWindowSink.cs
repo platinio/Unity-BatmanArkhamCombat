@@ -24,18 +24,14 @@ namespace ArkhamCombat.Player
 
         public void Arm(AttackDefinition attack, IActionTarget target)
         {
-            if (target is TransformTarget scene && scene.IsValid)
+            if (target is ICombatTarget victim && victim.IsValid)
             {
-                Vector3 toTarget = scene.Position - character.position;
+                Vector3 toTarget = victim.Position - character.position;
                 toTarget.y = 0f;
 
                 if (toTarget.magnitude <= attack.StrikeDistance + config.HitRangeMargin)
                 {
-                    if (scene.Dummy != null)
-                    {
-                        scene.Dummy.ReceiveHit(attack);
-                    }
-
+                    victim.Receive(attack);
                     meter.Increment(ComboIncrementReason.StrikeLanded);
                     return;
                 }

@@ -10,7 +10,7 @@ run them.
 |---|---|---|---|
 | `ArkhamCombat.Combat` | `Runtime/Combat` | Actions and windows, the chain (stance, nodes, edges, pools), the resolver, the meter, the action runner and its trace, the presentation clock and the seams the rest plugs into | The character controller (intents), VisualScriptingExtension (Functions). Never DOTween, never Zenject: a test asserts both |
 | `ArkhamCombat.Presentation` | `Runtime/Presentation` | The DOTween driver and the cue kinds | Combat, DOTween |
-| `ArkhamCombat.Player` | `Runtime/Player` | The combat installer, the combat brain, the `Attacking` state, the fact publisher, the Function evaluator, and the stand-ins for target selection and the hit check | Everything above, BH3 for the fact writer |
+| `ArkhamCombat.Player` | `Runtime/Player` | The combat installer, the combat brain, the `Attacking` state, the fact publisher, the Function evaluator, and the stand-ins behind the core seams: `StandInTargetPicker` (`ITargetPicker`), `SceneTargetRoster` (`ITargetRoster`), `CombatDummy` (`ICombatTarget`), `DemoHitWindowSink` (`IHitWindowSink`) | Everything above, BH3 for the fact writer |
 | `ArkhamCombat.Shell` | `Runtime/Shell` | The frame-data overlay and the camera demo | Combat, Camera |
 | `ArkhamCombat.Editor` | `Editor` | The node id dropdown and the fixture builder | |
 | `ArkhamCombat.Tests` | `Tests/EditMode` | EditMode tests for everything in Combat | |

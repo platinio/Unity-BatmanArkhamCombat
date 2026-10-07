@@ -63,8 +63,7 @@ namespace ArkhamCombat.Player
 
                 context.TargetDistance = toTarget.magnitude;
                 context.TargetSide = SideOf(forward, toTarget);
-                TransformTarget scene = target as TransformTarget;
-                context.TargetState = scene?.Dummy != null ? scene.Dummy.State : string.Empty;
+                context.TargetState = target is ICombatTarget combatant ? combatant.State : string.Empty;
 
                 // The same rule the warp refuses by, so the fact and the overlay's warp-refused flag agree.
                 context.TargetBeyondLunge = currentAttack != null
