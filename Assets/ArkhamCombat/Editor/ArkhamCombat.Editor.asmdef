@@ -1,18 +1,15 @@
 {
-    "name": "ArkhamCombat.Player",
-    "rootNamespace": "ArkhamCombat.Player",
+    "name": "ArkhamCombat.Editor",
+    "rootNamespace": "ArkhamCombat.Editor",
     "references": [
         "ArcaneOnyx.TPCharacterController",
-        "ArcaneOnyx.UnityExtensions.Runtime",
-        "ArcaneOnyx.BehaviorTree",
-        "ArcaneOnyx.VisualScriptingExtension.Runtime",
         "ArkhamCombat.Combat",
         "ArkhamCombat.Presentation",
-        "MackySoft.SerializeReferenceExtensions",
-        "Unity.VisualScripting.Core",
-        "Zenject"
+        "ArkhamCombat.Player"
     ],
-    "includePlatforms": [],
+    "includePlatforms": [
+        "Editor"
+    ],
     "excludePlatforms": [],
     "allowUnsafeCode": false,
     "overrideReferences": false,

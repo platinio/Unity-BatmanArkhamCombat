@@ -1,0 +1,23 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 7c067c4c55deed2429250c375df3acef, type: 3}
+  m_Name: CombatConfig
+  m_EditorClassIdentifier: ArkhamCombat.Player::ArkhamCombat.Player.CombatConfig
+  stance: {fileID: 11400000, guid: 417965012c9051c4fa318b5cbb6e89c1, type: 2}
+  meter:
+    tiers: 030000000500000008000000
+    meterTimeoutSeconds: 2.5
+  faceTurnSmoothTime: 0.05
+  idleMaxLunge: 4
+  targetMaxDistance: 8
+  targetMaxAngle: 110
+  hitRangeMargin: 0.6

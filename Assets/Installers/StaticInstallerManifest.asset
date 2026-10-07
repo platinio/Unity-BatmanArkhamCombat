@@ -14,5 +14,6 @@ MonoBehaviour:
   m_EditorClassIdentifier: Zenject::Zenject.StaticInstallerManifest
   installers:
   - {fileID: 11400000, guid: 9d6b50f3d4bf8754fa31ff382fb67bdc, type: 2}
+  - {fileID: 11400000, guid: 64980026eb77a1a4ba57951348c26dac, type: 2}
   - {fileID: 11400000, guid: 7c2e9d1a4b5f4c8e9d0a1b2c3d4e5f0e, type: 2}
   - {fileID: 11400000, guid: 7c2e9d1a4b5f4c8e9d0a1b2c3d4e5f0f, type: 2}

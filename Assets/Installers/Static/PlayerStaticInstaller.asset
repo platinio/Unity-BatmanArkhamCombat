@@ -16,12 +16,16 @@ MonoBehaviour:
   states:
   - rid: 1000
   - rid: 1001
+  - rid: 3135146534942277833
   references:
     version: 2
     RefIds:
     - rid: 1000
       type: {class: LocomotionStateBinding, ns: ArcaneOnyx.TPCharacterController.States, asm: ArcaneOnyx.TPCharacterController}
-      data:
+      data: 
     - rid: 1001
       type: {class: AirborneStateBinding, ns: ArcaneOnyx.TPCharacterController.States, asm: ArcaneOnyx.TPCharacterController}
-      data:
+      data: 
+    - rid: 3135146534942277833
+      type: {class: AttackingStateBinding, ns: ArkhamCombat.Player, asm: ArkhamCombat.Player}
+      data: 

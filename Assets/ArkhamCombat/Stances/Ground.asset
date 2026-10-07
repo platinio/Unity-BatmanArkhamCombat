@@ -1,0 +1,87 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 11a53246ec9c27345b88e872ffde4d71, type: 3}
+  m_Name: Ground
+  m_EditorClassIdentifier: ArkhamCombat.Combat::ArkhamCombat.Combat.Stance
+  root: Neutral
+  nodes:
+  - id: Neutral
+    attack: {fileID: 0}
+    pool:
+      attacks: []
+      policy:
+        rid: 3135146534942277824
+    edges:
+    - intent: 0
+      condition:
+        function: {fileID: 0}
+        arguments: []
+      priority: 2
+      destination: S1
+  - id: S1
+    attack: {fileID: 0}
+    pool:
+      attacks:
+      - {fileID: 11400000, guid: 57c02750bb6bdf74d8a2f615033df455, type: 2}
+      - {fileID: 11400000, guid: 86332dfe60f01de49865387f9779acd5, type: 2}
+      policy:
+        rid: 3135146534942277825
+    edges:
+    - intent: 0
+      condition:
+        function: {fileID: 0}
+        arguments: []
+      priority: 0
+      destination: S2
+  - id: S2
+    attack: {fileID: 11400000, guid: 5913c62127663b34ab776301bee1c4c5, type: 2}
+    pool:
+      attacks: []
+      policy:
+        rid: 3135146534942277826
+    edges:
+    - intent: 0
+      condition:
+        function: {fileID: 0}
+        arguments: []
+      priority: 0
+      destination: S3
+  - id: S3
+    attack: {fileID: 11400000, guid: 7dacb37d8f457a14899983f70b227388, type: 2}
+    pool:
+      attacks: []
+      policy:
+        rid: 3135146534942277827
+    edges:
+    - intent: 0
+      condition:
+        function: {fileID: 0}
+        arguments: []
+      priority: 0
+      destination: S1
+  globalEdges: []
+  chainResetSeconds: 0.6
+  references:
+    version: 2
+    RefIds:
+    - rid: 3135146534942277824
+      type: {class: NoRepeatPolicy, ns: ArkhamCombat.Combat, asm: ArkhamCombat.Combat}
+      data: 
+    - rid: 3135146534942277825
+      type: {class: TargetSidePolicy, ns: ArkhamCombat.Combat, asm: ArkhamCombat.Combat}
+      data: 
+    - rid: 3135146534942277826
+      type: {class: NoRepeatPolicy, ns: ArkhamCombat.Combat, asm: ArkhamCombat.Combat}
+      data: 
+    - rid: 3135146534942277827
+      type: {class: NoRepeatPolicy, ns: ArkhamCombat.Combat, asm: ArkhamCombat.Combat}
+      data: 

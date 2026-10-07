@@ -1,11 +1,9 @@
 {
-    "name": "ArkhamCombat.Shell",
-    "rootNamespace": "ArkhamCombat.Shell",
+    "name": "ArkhamCombat.Presentation",
+    "rootNamespace": "ArkhamCombat.Presentation",
     "references": [
-        "ArcaneOnyx.TPCharacterController",
-        "ArkhamCombat.Camera",
         "ArkhamCombat.Combat",
-        "Zenject"
+        "MackySoft.SerializeReferenceExtensions"
     ],
     "includePlatforms": [],
     "excludePlatforms": [],
