@@ -12,19 +12,17 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 1be85df5662a0334f826920153db0f8b, type: 3}
   m_Name: ArkhamInputConfig
   m_EditorClassIdentifier: ArcaneOnyx.TPCharacterController::ArcaneOnyx.TPCharacterController.Configuration.InputConfig
-  actions: {fileID: -944628639613478452, guid: 2293ac291c4d62245ba18e4559d79524, type: 3}
-  actionMapName: Gameplay
-  moveAction: Move
-  lookAction: Look
-  sprintAction: Sprint
+  moveAction: {fileID: 848195449944836603, guid: 2293ac291c4d62245ba18e4559d79524, type: 3}
+  lookAction: {fileID: 6349357987181163514, guid: 2293ac291c4d62245ba18e4559d79524, type: 3}
+  sprintAction: {fileID: -1659966429909121621, guid: 2293ac291c4d62245ba18e4559d79524, type: 3}
   pressBindings:
-  - actionName: Strike
+  - action: {fileID: -5154798284343846440, guid: 2293ac291c4d62245ba18e4559d79524, type: 3}
     kind: {fileID: 11400000, guid: ba9cd6679aa44c144bb87a8e99f640be, type: 2}
-  - actionName: Counter
+  - action: {fileID: -5224636071045918809, guid: 2293ac291c4d62245ba18e4559d79524, type: 3}
     kind: {fileID: 11400000, guid: b4c3884cf89a4ae4f99f251cbdd386b5, type: 2}
-  - actionName: Evade
+  - action: {fileID: 5625636783675040812, guid: 2293ac291c4d62245ba18e4559d79524, type: 3}
     kind: {fileID: 11400000, guid: fd7d3c32ea399d546bb3da590da64df3, type: 2}
-  - actionName: Stun
+  - action: {fileID: 3796778068334942248, guid: 2293ac291c4d62245ba18e4559d79524, type: 3}
     kind: {fileID: 11400000, guid: f9caf163a3e751242a74cd88f6f962be, type: 2}
   moveDeadzone: 0.15
   mouseSensitivity: {x: 0.12, y: 0.09}

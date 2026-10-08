@@ -78,7 +78,7 @@ The intent buffer lives in the character controller submodule (`ArcaneOnyx.TPCha
 |---|---|
 | `IntentKind` | A kind of press as an asset, holding `secondsQueued`. What a press meant, not which button it was. The controller defines none; this game's four live in `Assets/ArkhamCombat/Intents`: `Strike`, `Counter`, `Evade`, `Stun`. Compared by asset |
 | `Intent` | One press: kind, `PressedAt` on the buffer's clock, the move vector read at the press, lifetime (its kind's seconds queued). A reference type so "consume exactly this press" is trivially right |
-| `PressBinding` | On `InputConfig`: an action name and the kind its press queues |
+| `PressBinding` | On `InputConfig`: a reference to an input action and the kind its press queues |
 | `IntentBuffer` | Holds presses until consumed or expired. `Push`, `FindNewest(kind)`, `TryConsume(intent)`, `Tick(deltaTime)`, `ExpireAll`, the `Queued` list. Raises `Pushed`, `Consumed`, `Expired` for the trace. Decides nothing |
 | `PlayerInputReader` | Pushes the binding's kind on each press binding's `performed`, stamping the move vector read at that instant; samples Move, Look and Sprint once per frame; ticks the buffer |
 
@@ -173,7 +173,7 @@ The intent buffer lives in the character controller submodule (`ArcaneOnyx.TPCha
   interrupts. A condition is a Function returning bool; empty means always.
 - **A kind of press**: Create → ArcaneOnyx → TP Character Controller → Intent Kind, set its seconds
   queued, add an action for it to `Settings/ArkhamControls.inputactions` and a press binding to
-  `Settings/ArkhamInputConfig.asset`.
+  `Settings/ArkhamInputConfig.asset` that references the action and the kind.
 - **Wiring**: `CombatConfig` names the stance and the evade and counter kinds; the `CombatStaticInstaller` asset in
   `Assets/Installers/Static` points at the config and picks the combat events. The player installer
   points at `Settings/ArkhamCharacterProfile.asset`, the game's own profile: the controller's motor,
