@@ -8,19 +8,19 @@ namespace ArkhamCombat.Tests
 {
     public class StandInTargetPickerTests
     {
-        private sealed class FakeTarget : ICombatTarget
+        private sealed class PointCombatTarget : ICombatTarget
         {
             public bool IsValid { get; set; } = true;
             public Vector3 Position { get; set; }
             public string State => "Idle";
             public AttackDefinition LastReceived;
 
-            public FakeTarget(Vector3 position) => Position = position;
+            public PointCombatTarget(Vector3 position) => Position = position;
 
             public void Receive(AttackDefinition attack) => LastReceived = attack;
         }
 
-        private sealed class FakeRoster : ITargetRoster
+        private sealed class ListRoster : ITargetRoster
         {
             public readonly List<ICombatTarget> Targets = new List<ICombatTarget>();
 
@@ -28,23 +28,23 @@ namespace ArkhamCombat.Tests
         }
 
         private CombatConfig config;
-        private FakeRoster roster;
+        private ListRoster roster;
         private ITargetPicker picker;
 
         [SetUp]
         public void SetUp()
         {
             config = ScriptableObject.CreateInstance<CombatConfig>();
-            roster = new FakeRoster();
+            roster = new ListRoster();
             picker = new StandInTargetPicker(config, roster);
         }
 
         [TearDown]
         public void TearDown() => Object.DestroyImmediate(config);
 
-        private FakeTarget Add(Vector3 position)
+        private PointCombatTarget AddTargetAt(Vector3 position)
         {
-            FakeTarget target = new FakeTarget(position);
+            PointCombatTarget target = new PointCombatTarget(position);
             roster.Targets.Add(target);
             return target;
         }
@@ -52,8 +52,8 @@ namespace ArkhamCombat.Tests
         [Test]
         public void PicksTheNearestTargetAlongThePreferredDirection()
         {
-            FakeTarget near = Add(new Vector3(0f, 0f, 2f));
-            Add(new Vector3(0f, 0f, 5f));
+            PointCombatTarget near = AddTargetAt(new Vector3(0f, 0f, 2f));
+            AddTargetAt(new Vector3(0f, 0f, 5f));
 
             Assert.AreSame(near, picker.Pick(Vector3.zero, Vector3.forward));
         }
@@ -61,8 +61,8 @@ namespace ArkhamCombat.Tests
         [Test]
         public void PrefersATargetInTheDirectionOverACloserOneBehind()
         {
-            Add(new Vector3(0f, 0f, -1.5f));
-            FakeTarget ahead = Add(new Vector3(0f, 0f, 3f));
+            AddTargetAt(new Vector3(0f, 0f, -1.5f));
+            PointCombatTarget ahead = AddTargetAt(new Vector3(0f, 0f, 3f));
 
             Assert.AreSame(ahead, picker.Pick(Vector3.zero, Vector3.forward), "the one behind is outside the angle limit");
         }
@@ -70,7 +70,7 @@ namespace ArkhamCombat.Tests
         [Test]
         public void NothingInRange_GivesNull()
         {
-            Add(new Vector3(0f, 0f, 50f));
+            AddTargetAt(new Vector3(0f, 0f, 50f));
 
             Assert.IsNull(picker.Pick(Vector3.zero, Vector3.forward));
         }
@@ -78,9 +78,9 @@ namespace ArkhamCombat.Tests
         [Test]
         public void AnInvalidTarget_IsSkipped()
         {
-            FakeTarget gone = Add(new Vector3(0f, 0f, 1f));
+            PointCombatTarget gone = AddTargetAt(new Vector3(0f, 0f, 1f));
             gone.IsValid = false;
-            FakeTarget alive = Add(new Vector3(0f, 0f, 3f));
+            PointCombatTarget alive = AddTargetAt(new Vector3(0f, 0f, 3f));
 
             Assert.AreSame(alive, picker.Pick(Vector3.zero, Vector3.forward));
         }
@@ -88,8 +88,8 @@ namespace ArkhamCombat.Tests
         [Test]
         public void WithNoPreferredDirection_DistanceAloneDecides()
         {
-            Add(new Vector3(0f, 0f, 3f));
-            FakeTarget behindButNear = Add(new Vector3(0f, 0f, -1f));
+            AddTargetAt(new Vector3(0f, 0f, 3f));
+            PointCombatTarget behindButNear = AddTargetAt(new Vector3(0f, 0f, -1f));
 
             Assert.AreSame(behindButNear, picker.Pick(Vector3.zero, Vector3.zero));
         }
@@ -100,23 +100,23 @@ namespace ArkhamCombat.Tests
         [Test]
         public void FindsEveryCombatTargetComponentInTheScene_OnFirstRead()
         {
-            GameObject a = new GameObject("a");
-            GameObject b = new GameObject("b");
-            CombatDummy dummyA = a.AddComponent<CombatDummy>();
-            CombatDummy dummyB = b.AddComponent<CombatDummy>();
+            GameObject firstObject = new GameObject("a");
+            GameObject secondObject = new GameObject("b");
+            CombatDummy firstDummy = firstObject.AddComponent<CombatDummy>();
+            CombatDummy secondDummy = secondObject.AddComponent<CombatDummy>();
 
             try
             {
                 SceneTargetRoster roster = new SceneTargetRoster();
                 IReadOnlyList<ICombatTarget> targets = roster.Targets;
 
-                CollectionAssert.Contains(targets, dummyA);
-                CollectionAssert.Contains(targets, dummyB);
+                CollectionAssert.Contains(targets, firstDummy);
+                CollectionAssert.Contains(targets, secondDummy);
             }
             finally
             {
-                Object.DestroyImmediate(a);
-                Object.DestroyImmediate(b);
+                Object.DestroyImmediate(firstObject);
+                Object.DestroyImmediate(secondObject);
             }
         }
     }

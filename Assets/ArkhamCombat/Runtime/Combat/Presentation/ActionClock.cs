@@ -11,9 +11,13 @@ namespace ArkhamCombat.Combat
     /// </summary>
     public sealed class ActionClock
     {
+        /// <summary>A time before every cue, so the cues at zero count as crossed when the action starts.</summary>
+        private const float BeforeStart = float.NegativeInfinity;
+
+        /// <summary>Cues not fired yet, earliest first.</summary>
         private readonly List<PresentationCue> schedule = new List<PresentationCue>();
-        private float elapsed;
-        private float previousT;
+
+        private float elapsedSeconds;
         private float speed = 1f;
 
         public ActionDefinition Action { get; private set; }
@@ -22,8 +26,8 @@ namespace ArkhamCombat.Combat
 
         public float NormalizedTime { get; private set; }
 
-        /// <summary>True once the clock has reached the end of the action. Stays true until Play or Stop.</summary>
-        public bool Finished => IsPlaying && NormalizedTime >= 1f;
+        /// <summary>Stays true until Play or Stop.</summary>
+        public bool IsFinished => IsPlaying && NormalizedTime >= 1f;
 
         public float Speed
         {
@@ -35,16 +39,43 @@ namespace ArkhamCombat.Combat
         public event Action<PresentationCue> CueDue;
 
         /// <summary>
-        /// Starts the action. Cues at time zero fire here rather than on the first tick so a frozen
-        /// clock (speed zero) fires nothing, which is what hit-stop relies on.
+        /// Cues at time zero fire here rather than on the first tick so a frozen clock (speed zero)
+        /// fires nothing, which is what hit-stop relies on.
         /// </summary>
         public void Play(ActionDefinition action)
         {
             Action = action ?? throw new ArgumentNullException(nameof(action));
-            elapsed = 0f;
+            elapsedSeconds = 0f;
             NormalizedTime = 0f;
-            previousT = 0f;
 
+            ScheduleCues(action);
+            FireCuesCrossedBetween(BeforeStart, NormalizedTime);
+        }
+
+        public void Stop()
+        {
+            Action = null;
+            schedule.Clear();
+            elapsedSeconds = 0f;
+            NormalizedTime = 0f;
+        }
+
+        public void Tick(float deltaTime)
+        {
+            if (!IsPlaying)
+            {
+                return;
+            }
+
+            float previousTime = NormalizedTime;
+            elapsedSeconds += Mathf.Max(0f, deltaTime) * speed;
+            NormalizedTime = Mathf.Clamp01(elapsedSeconds / Action.Duration);
+
+            FireCuesCrossedBetween(previousTime, NormalizedTime);
+        }
+
+        private void ScheduleCues(ActionDefinition action)
+        {
             schedule.Clear();
             IReadOnlyList<PresentationCue> cues = action.Cues;
             for (int i = 0; i < cues.Count; i++)
@@ -55,12 +86,17 @@ namespace ArkhamCombat.Combat
                 }
             }
 
-            // Insertion sort by time: stable, so two cues at the same time keep authored order.
+            SortScheduleByTime();
+        }
+
+        /// <summary>An insertion sort because it is stable: two cues at the same time keep authored order.</summary>
+        private void SortScheduleByTime()
+        {
             for (int i = 1; i < schedule.Count; i++)
             {
                 PresentationCue cue = schedule[i];
                 int j = i - 1;
-                while (j >= 0 && schedule[j].At > cue.At)
+                while (j >= 0 && schedule[j].FiresAt > cue.FiresAt)
                 {
                     schedule[j + 1] = schedule[j];
                     j--;
@@ -68,48 +104,18 @@ namespace ArkhamCombat.Combat
 
                 schedule[j + 1] = cue;
             }
-
-            int fired = 0;
-            while (fired < schedule.Count && schedule[fired].At <= 0f)
-            {
-                CueDue?.Invoke(schedule[fired]);
-                fired++;
-            }
-
-            schedule.RemoveRange(0, fired);
         }
 
-        public void Stop()
+        private void FireCuesCrossedBetween(float previousTime, float currentTime)
         {
-            Action = null;
-            schedule.Clear();
-            elapsed = 0f;
-            NormalizedTime = 0f;
-            previousT = 0f;
-        }
-
-        public void Tick(float deltaTime)
-        {
-            if (!IsPlaying)
+            int firedCount = 0;
+            while (firedCount < schedule.Count && Window.IsCrossedBetween(previousTime, currentTime, schedule[firedCount].FiresAt))
             {
-                return;
+                CueDue?.Invoke(schedule[firedCount]);
+                firedCount++;
             }
 
-            elapsed += Mathf.Max(0f, deltaTime) * speed;
-            previousT = NormalizedTime;
-            NormalizedTime = Mathf.Clamp01(elapsed / Action.Duration);
-
-            int fired = 0;
-            while (fired < schedule.Count && Window.Crossed(previousT, NormalizedTime, schedule[fired].At))
-            {
-                CueDue?.Invoke(schedule[fired]);
-                fired++;
-            }
-
-            if (fired > 0)
-            {
-                schedule.RemoveRange(0, fired);
-            }
+            schedule.RemoveRange(0, firedCount);
         }
     }
 }

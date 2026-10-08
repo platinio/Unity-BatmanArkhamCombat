@@ -9,18 +9,18 @@ namespace ArkhamCombat.Tests
     {
         private ActionClock clock;
         private RecordingCue cue;
-        private List<string> fired;
+        private List<string> firedCueTimes;
 
         [SetUp]
         public void SetUp()
         {
             clock = new ActionClock();
             cue = new RecordingCue(() => clock.NormalizedTime);
-            fired = new List<string>();
-            clock.CueDue += c =>
+            firedCueTimes = new List<string>();
+            clock.CueDue += dueCue =>
             {
-                fired.Add($"{c.At:0.00}");
-                cue.Play(null, c);
+                firedCueTimes.Add($"{dueCue.FiresAt:0.00}");
+                cue.Play(null, dueCue);
             };
         }
 
@@ -38,9 +38,9 @@ namespace ArkhamCombat.Tests
                 clock.Tick(0.1f);
             }
 
-            CollectionAssert.AreEqual(new[] { "0.25", "0.50", "0.75" }, fired);
-            Assert.AreEqual(3, cue.FiredAt.Count);
-            Assert.AreEqual(0.3f, cue.FiredAt[0], 1e-4f, "the 0.25 cue fired on the tick that reached 0.3");
+            CollectionAssert.AreEqual(new[] { "0.25", "0.50", "0.75" }, firedCueTimes);
+            Assert.AreEqual(3, cue.PlayedAt.Count);
+            Assert.AreEqual(0.3f, cue.PlayedAt[0], 1e-4f, "the cue at 0.25 fired on the tick that reached 0.3");
         }
 
         [Test]
@@ -48,7 +48,7 @@ namespace ArkhamCombat.Tests
         {
             clock.Play(Action("A", 1f, new PresentationCue(0f, cue)));
 
-            CollectionAssert.AreEqual(new[] { "0.00" }, fired);
+            CollectionAssert.AreEqual(new[] { "0.00" }, firedCueTimes);
         }
 
         [Test]
@@ -56,11 +56,11 @@ namespace ArkhamCombat.Tests
         {
             clock.Play(Action("A", 0.5f, new PresentationCue(1f, cue)));
             clock.Tick(0.4f);
-            Assert.IsEmpty(fired);
+            Assert.IsEmpty(firedCueTimes);
 
             clock.Tick(0.2f);
-            CollectionAssert.AreEqual(new[] { "1.00" }, fired);
-            Assert.IsTrue(clock.Finished);
+            CollectionAssert.AreEqual(new[] { "1.00" }, firedCueTimes);
+            Assert.IsTrue(clock.IsFinished);
             Assert.AreEqual(1f, clock.NormalizedTime);
         }
 
@@ -75,12 +75,12 @@ namespace ArkhamCombat.Tests
                 clock.Tick(0.1f);
             }
 
-            Assert.IsEmpty(fired);
+            Assert.IsEmpty(firedCueTimes);
             Assert.AreEqual(0f, clock.NormalizedTime);
 
             clock.Speed = 1f;
             clock.Tick(0.1f);
-            CollectionAssert.AreEqual(new[] { "0.10" }, fired);
+            CollectionAssert.AreEqual(new[] { "0.10" }, firedCueTimes);
         }
 
         [Test]
@@ -101,7 +101,7 @@ namespace ArkhamCombat.Tests
             clock.Stop();
             clock.Tick(1f);
 
-            Assert.IsEmpty(fired);
+            Assert.IsEmpty(firedCueTimes);
             Assert.IsFalse(clock.IsPlaying);
             Assert.AreEqual(0f, clock.NormalizedTime);
         }
@@ -114,7 +114,7 @@ namespace ArkhamCombat.Tests
             clock.Play(Action("B", 1f, new PresentationCue(0.3f, cue)));
             clock.Tick(0.35f);
 
-            CollectionAssert.AreEqual(new[] { "0.30" }, fired, "only B's cue, and only once");
+            CollectionAssert.AreEqual(new[] { "0.30" }, firedCueTimes, "only B's cue, and only once");
         }
     }
 }

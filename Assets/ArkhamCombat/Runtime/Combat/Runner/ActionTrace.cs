@@ -23,7 +23,7 @@ namespace ArkhamCombat.Combat
             public Intent Intent;
 
             /// <summary>Normalized action time of the press, or seconds into the idle stretch.</summary>
-            public float At;
+            public float PressedAt;
 
             public MarkStatus Status;
         }
@@ -41,11 +41,11 @@ namespace ArkhamCombat.Combat
             /// <summary>How far the action got before it ended, 1 when it ran out, or seconds idled.</summary>
             public float EndedAt;
 
-            public bool Ended;
-            public bool Interrupted;
+            public bool HasEnded;
+            public bool WasInterrupted;
 
             /// <summary>Whether the warp refused because the target was beyond the lunge limit.</summary>
-            public bool WarpRefused;
+            public bool WasWarpRefused;
 
             public readonly List<Mark> Marks = new List<Mark>();
         }
@@ -62,14 +62,16 @@ namespace ArkhamCombat.Combat
         /// <summary>Oldest first, the current record last.</summary>
         public IReadOnlyList<Record> Records => records;
 
+        private bool IsCurrentRecordIdle => Current != null && Current.IsIdle;
+
         public ActionTrace(IntentBuffer intents, int capacity = 8)
         {
             this.capacity = capacity;
             if (intents != null)
             {
-                intents.Pushed += OnPushed;
-                intents.Consumed += OnConsumed;
-                intents.Expired += OnExpired;
+                intents.Pushed += OnIntentPushed;
+                intents.Consumed += OnIntentConsumed;
+                intents.Expired += OnIntentExpired;
             }
 
             BeginIdle();
@@ -77,77 +79,87 @@ namespace ArkhamCombat.Combat
 
         public void BeginAction(ChainNode node, ActionDefinition action)
         {
-            Push(new Record { NodeId = node?.Id, Action = action });
+            StartRecord(new Record { NodeId = node?.Id, Action = action });
         }
 
-        public void EndAction(float normalizedTime, bool interrupted)
+        public void EndAction(float normalizedTime, bool wasInterrupted)
         {
             if (Current == null || Current.IsIdle)
             {
                 return;
             }
 
-            Current.Ended = true;
+            Current.HasEnded = true;
             Current.EndedAt = normalizedTime;
-            Current.Interrupted = interrupted;
+            Current.WasInterrupted = wasInterrupted;
         }
 
         public void BeginIdle()
         {
-            if (Current != null && Current.IsIdle)
+            if (IsCurrentRecordIdle)
             {
                 return;
             }
 
-            Push(new Record());
+            StartRecord(new Record());
         }
 
         public void MarkWarpRefused()
         {
             if (Current != null)
             {
-                Current.WarpRefused = true;
+                Current.WasWarpRefused = true;
             }
         }
 
-        private void Push(Record record)
+        private void StartRecord(Record record)
         {
-            if (Current != null && Current.IsIdle)
+            if (IsCurrentRecordIdle)
             {
-                Current.Ended = true;
-                Current.EndedAt = CurrentTime;
+                EndIdleStretch();
             }
 
             records.Add(record);
             Current = record;
             CurrentTime = 0f;
 
+            DropRecordsOverCapacity();
+        }
+
+        private void EndIdleStretch()
+        {
+            Current.HasEnded = true;
+            Current.EndedAt = CurrentTime;
+        }
+
+        private void DropRecordsOverCapacity()
+        {
             while (records.Count > capacity)
             {
-                Record dropped = records[0];
+                Record oldest = records[0];
                 records.RemoveAt(0);
-                for (int i = 0; i < dropped.Marks.Count; i++)
+                for (int i = 0; i < oldest.Marks.Count; i++)
                 {
-                    marksByIntent.Remove(dropped.Marks[i].Intent);
+                    marksByIntent.Remove(oldest.Marks[i].Intent);
                 }
             }
         }
 
-        private void OnPushed(Intent intent)
+        private void OnIntentPushed(Intent intent)
         {
             if (Current == null)
             {
                 return;
             }
 
-            Mark mark = new Mark { Intent = intent, At = CurrentTime, Status = MarkStatus.Live };
+            Mark mark = new Mark { Intent = intent, PressedAt = CurrentTime, Status = MarkStatus.Live };
             Current.Marks.Add(mark);
             marksByIntent[intent] = mark;
         }
 
-        private void OnConsumed(Intent intent) => SetStatus(intent, MarkStatus.Consumed);
+        private void OnIntentConsumed(Intent intent) => SetStatus(intent, MarkStatus.Consumed);
 
-        private void OnExpired(Intent intent) => SetStatus(intent, MarkStatus.Expired);
+        private void OnIntentExpired(Intent intent) => SetStatus(intent, MarkStatus.Expired);
 
         private void SetStatus(Intent intent, MarkStatus status)
         {

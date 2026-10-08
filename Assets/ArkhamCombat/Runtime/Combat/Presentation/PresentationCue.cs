@@ -47,7 +47,7 @@ namespace ArkhamCombat.Combat
     public sealed class PresentationCue
     {
         [Tooltip("Normalized action time the cue fires.")]
-        [SerializeField, Range(0f, 1f)] private float at;
+        [SerializeField, Range(0f, 1f)] private float firesAt;
 
         [SerializeReference, SubclassSelector] private ICueKind kind;
 
@@ -65,15 +65,15 @@ namespace ArkhamCombat.Combat
 
         public PresentationCue() { }
 
-        public PresentationCue(float at, ICueKind kind, float duration = 0.15f, float strength = 1f)
+        public PresentationCue(float firesAt, ICueKind kind, float duration = 0.15f, float strength = 1f)
         {
-            this.at = at;
+            this.firesAt = firesAt;
             this.kind = kind;
             this.duration = duration;
             this.strength = strength;
         }
 
-        public float At => at;
+        public float FiresAt => firesAt;
         public ICueKind Kind => kind;
         public float Duration => duration;
         public float Strength => strength;

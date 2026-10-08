@@ -6,16 +6,16 @@ using UnityEngine;
 
 namespace ArkhamCombat.Tests
 {
-    /// <summary>Builders and fakes shared by the combat tests.</summary>
+    /// <summary>Builders and test doubles shared by the combat tests.</summary>
     public static class CombatTestDoubles
     {
         public static AttackDefinition Attack(
             string name,
             float duration = 1f,
-            Window? active = null,
-            Window? cancelAttack = null,
-            Window? cancelEvade = null,
-            Window? warp = null,
+            Window? hitWindow = null,
+            Window? comboWindow = null,
+            Window? evadeWindow = null,
+            Window? warpWindow = null,
             float strikeDistance = 1f,
             float maxLunge = 4f,
             params PresentationCue[] cues)
@@ -24,10 +24,10 @@ namespace ArkhamCombat.Tests
             attack.name = name;
             attack.Configure(duration, cues);
             attack.ConfigureAttack(
-                active ?? new Window(0.3f, 0.5f),
-                cancelAttack ?? new Window(0.5f, 0.9f),
-                cancelEvade ?? new Window(0f, 0.3f),
-                warp ?? new Window(0f, 0.3f),
+                hitWindow ?? new Window(0.3f, 0.5f),
+                comboWindow ?? new Window(0.5f, 0.9f),
+                evadeWindow ?? new Window(0f, 0.3f),
+                warpWindow ?? new Window(0f, 0.3f),
                 strikeDistance,
                 maxLunge);
             return attack;
@@ -49,70 +49,77 @@ namespace ArkhamCombat.Tests
             return stance;
         }
 
-        public static IntentBuffer Buffer(float lifetime = 0.25f) => new IntentBuffer(IntentLifetimes.Uniform(lifetime));
+        /// <summary>A node like the root, which plays nothing and only leads somewhere.</summary>
+        public static ChainNode NodeWithNothingToPlay(string id, params Edge[] edges) => new ChainNode(id, (AttackDefinition)null, edges);
 
-        /// <summary>Answers each edge by destination; edges it has no answer for pass.</summary>
-        public sealed class FakeConditions : IConditionEvaluator
+        public static IntentBuffer IntentBufferKeepingPressesFor(float seconds = 0.25f) =>
+            new IntentBuffer(IntentLifetimes.SameForEveryKind(seconds));
+
+        /// <summary>Passes every edge except those whose destination was denied, and records each edge it is asked about.</summary>
+        public sealed class RecordingConditions : IConditionEvaluator
         {
-            public readonly Dictionary<string, bool> ByDestination = new Dictionary<string, bool>();
-            public readonly List<Edge> Asked = new List<Edge>();
+            public readonly List<Edge> AskedEdges = new List<Edge>();
+            private readonly HashSet<string> deniedDestinations = new HashSet<string>();
 
-            public FakeConditions Deny(string destination)
+            public RecordingConditions Deny(string destinationId)
             {
-                ByDestination[destination] = false;
+                deniedDestinations.Add(destinationId);
                 return this;
             }
 
-            public bool Evaluate(Edge edge, CombatContext context, Intent intent)
+            public bool IsConditionMet(Edge edge, CombatContext context, Intent intent)
             {
-                Asked.Add(edge);
-                return !ByDestination.TryGetValue(edge.Destination, out bool allowed) || allowed;
+                AskedEdges.Add(edge);
+                return !deniedDestinations.Contains(edge.DestinationId);
             }
         }
 
+        /// <summary>Writes each event as a short line, so a test can assert on what happened in order.</summary>
         public sealed class RecordingEvents : ICombatEvents
         {
             public readonly List<string> Log = new List<string>();
 
-            public void ComboChanged(int count, int tier) => Log.Add($"changed {count} {tier}");
+            public void ComboChanged(int count, int tier) => Log.Add($"combo {count} tier {tier}");
 
             public void ComboReset(ComboResetReason reason) => Log.Add($"reset {reason}");
 
-            public void ActionStarted(ActionDefinition action, bool interrupt) => Log.Add($"{(interrupt ? "interrupt" : "start")} {action.name}");
+            public void ActionStarted(ActionDefinition action, bool isInterrupt) =>
+                Log.Add(isInterrupt ? $"interrupt with {action.name}" : $"start {action.name}");
 
-            public void ActionEnded(ActionDefinition action, bool interrupted) => Log.Add($"{(interrupted ? "cut" : "end")} {action.name}");
+            public void ActionEnded(ActionDefinition action, bool wasInterrupted) =>
+                Log.Add(wasInterrupted ? $"interrupted {action.name}" : $"end {action.name}");
         }
 
-        public sealed class RecordingHits : IHitWindowSink
+        public sealed class RecordingHitWindowListener : IHitWindowListener
         {
-            public int Armed;
-            public int Disarmed;
-            public bool IsArmed;
-            public AttackDefinition LastAttack;
+            public int OpenedCount;
+            public int ClosedCount;
+            public bool IsOpen;
+            public AttackDefinition LastOpenedFor;
 
-            public void Arm(AttackDefinition attack, IActionTarget target)
+            public void HitWindowOpened(AttackDefinition attack, IActionTarget target)
             {
-                Armed++;
-                IsArmed = true;
-                LastAttack = attack;
+                OpenedCount++;
+                IsOpen = true;
+                LastOpenedFor = attack;
             }
 
-            public void Disarm()
+            public void HitWindowClosed()
             {
-                Disarmed++;
-                IsArmed = false;
+                ClosedCount++;
+                IsOpen = false;
             }
         }
 
-        public sealed class RecordingSink : IDisplacementSink
+        public sealed class RecordingWarpMover : IWarpMover
         {
-            public Vector3 Total;
-            public int Calls;
+            public Vector3 TotalMovement;
+            public int MoveCount;
 
-            public void Displace(Vector3 planarDelta)
+            public void MoveBy(Vector3 planarOffset)
             {
-                Total += planarDelta;
-                Calls++;
+                TotalMovement += planarOffset;
+                MoveCount++;
             }
         }
 
@@ -126,12 +133,12 @@ namespace ArkhamCombat.Tests
 
         public sealed class RecordingCue : ICueKind
         {
-            public readonly List<float> FiredAt = new List<float>();
-            private readonly Func<float> clock;
+            public readonly List<float> PlayedAt = new List<float>();
+            private readonly Func<float> readClockTime;
 
-            public RecordingCue(Func<float> clock) => this.clock = clock;
+            public RecordingCue(Func<float> readClockTime) => this.readClockTime = readClockTime;
 
-            public void Play(ICueTarget target, PresentationCue cue) => FiredAt.Add(clock());
+            public void Play(ICueTarget target, PresentationCue cue) => PlayedAt.Add(readClockTime());
         }
     }
 }

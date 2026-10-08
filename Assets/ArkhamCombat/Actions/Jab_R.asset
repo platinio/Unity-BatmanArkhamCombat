@@ -14,7 +14,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: ArkhamCombat.Combat::ArkhamCombat.Combat.AttackDefinition
   duration: 0.45
   cues:
-  - at: 0
+  - firesAt: 0
     kind:
       rid: 3135146534942277819
     duration: 0.2
@@ -44,7 +44,7 @@ MonoBehaviour:
       m_PostInfinity: 2
       m_RotationOrder: 4
     colour: {r: 1, g: 1, b: 1, a: 1}
-  - at: 0.2
+  - firesAt: 0.2
     kind:
       rid: 3135146534942277820
     duration: 0.25
@@ -75,24 +75,24 @@ MonoBehaviour:
       m_RotationOrder: 4
     colour: {r: 1, g: 1, b: 1, a: 1}
   tags: []
-  active:
+  hitWindow:
     start: 0.25
     end: 0.45
-  cancelAttack:
+  comboWindow:
     start: 0.45
     end: 0.95
-  cancelEvade:
+  evadeWindow:
     start: 0
     end: 0.25
-  warp:
+  warpWindow:
     start: 0
     end: 0.25
   strikeDistance: 1.1
   maxLunge: 4
   damage: 10
   reaction: 0
-  counterable: 1
-  unblockable: 0
+  isCounterable: 1
+  isUnblockable: 0
   references:
     version: 2
     RefIds:

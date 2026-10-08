@@ -19,7 +19,7 @@ namespace ArkhamCombat.Tests
         [Test]
         public void ACueWithoutAKind_IsReported()
         {
-            ActionDefinition action = Action("Bad", 0.5f, new PresentationCue(0.5f, null));
+            ActionDefinition action = Action("Bad", 0.5f, new PresentationCue(firesAt: 0.5f, kind: null));
             List<string> errors = new List<string>();
 
             Assert.IsFalse(action.Validate(errors));
@@ -30,12 +30,12 @@ namespace ArkhamCombat.Tests
         [Test]
         public void AReversedWindow_IsReportedByName()
         {
-            AttackDefinition attack = Attack("Bad", active: new Window(0.6f, 0.4f));
+            AttackDefinition attack = Attack("Bad", hitWindow: new Window(0.6f, 0.4f));
             List<string> errors = new List<string>();
 
             Assert.IsFalse(attack.Validate(errors));
             Assert.AreEqual(1, errors.Count);
-            StringAssert.Contains("active", errors[0]);
+            StringAssert.Contains("hitWindow", errors[0]);
         }
 
         [Test]

@@ -1,4 +1,5 @@
 using ArkhamCombat.Combat;
+using ArkhamCombat.Presentation;
 using UnityEngine;
 
 namespace ArkhamCombat.Player
@@ -10,19 +11,16 @@ namespace ArkhamCombat.Player
     /// </summary>
     public sealed class CombatDummy : MonoBehaviour, ICombatTarget
     {
-        private static readonly int BaseColor = Shader.PropertyToID("_BaseColor");
-        private static readonly int LegacyColor = Shader.PropertyToID("_Color");
-
         [Tooltip("Published as the targetState fact: Idle, Staggered, and so on.")]
         [SerializeField] private string state = "Idle";
 
         [SerializeField, Min(0f)] private float flashSeconds = 0.15f;
-        [SerializeField] private Color hitColour = Color.white;
+        [SerializeField] private Color flashColour = Color.white;
 
         private Renderer bodyRenderer;
-        private MaterialPropertyBlock block;
+        private MaterialPropertyBlock propertyBlock;
         private int colourProperty;
-        private float flashUntil;
+        private float flashEndsAt;
 
         public string State => state;
         public bool IsValid => this != null && isActiveAndEnabled;
@@ -31,36 +29,48 @@ namespace ArkhamCombat.Player
         public int HitsTaken { get; private set; }
         public AttackDefinition LastHitBy { get; private set; }
 
+        private bool IsFlashing => flashEndsAt > 0f;
+
         private void Awake()
         {
             bodyRenderer = GetComponentInChildren<Renderer>();
-            block = new MaterialPropertyBlock();
-            Material material = bodyRenderer != null ? bodyRenderer.sharedMaterial : null;
-            colourProperty = material != null && material.HasProperty(BaseColor) ? BaseColor : LegacyColor;
+            propertyBlock = new MaterialPropertyBlock();
+            colourProperty = MaterialColourProperty.Of(bodyRenderer != null ? bodyRenderer.sharedMaterial : null);
+        }
+
+        private void Update()
+        {
+            if (IsFlashing && Time.time >= flashEndsAt)
+            {
+                EndFlash();
+            }
         }
 
         public void Receive(AttackDefinition attack)
         {
             HitsTaken++;
             LastHitBy = attack;
-            flashUntil = Time.time + flashSeconds;
+            StartFlash();
+        }
+
+        private void StartFlash()
+        {
+            flashEndsAt = Time.time + flashSeconds;
 
             if (bodyRenderer != null)
             {
-                block.SetColor(colourProperty, hitColour);
-                bodyRenderer.SetPropertyBlock(block);
+                propertyBlock.SetColor(colourProperty, flashColour);
+                bodyRenderer.SetPropertyBlock(propertyBlock);
             }
         }
 
-        private void Update()
+        private void EndFlash()
         {
-            if (flashUntil > 0f && Time.time >= flashUntil)
+            flashEndsAt = 0f;
+
+            if (bodyRenderer != null)
             {
-                flashUntil = 0f;
-                if (bodyRenderer != null)
-                {
-                    bodyRenderer.SetPropertyBlock(null);
-                }
+                bodyRenderer.SetPropertyBlock(null);
             }
         }
     }

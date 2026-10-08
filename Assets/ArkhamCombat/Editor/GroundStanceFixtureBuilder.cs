@@ -20,6 +20,10 @@ namespace ArkhamCombat.Editor
         private const string ActionsFolder = "Assets/ArkhamCombat/Actions";
         private const string StancesFolder = "Assets/ArkhamCombat/Stances";
         private const string SettingsFolder = "Assets/ArkhamCombat/Settings";
+        private const string StancePath = StancesFolder + "/Ground.asset";
+        private const string CombatConfigPath = SettingsFolder + "/CombatConfig.asset";
+        private const string CombatConfigStanceField = "stance";
+        private const string LogPrefix = "[Fixture]";
 
         [MenuItem("ArkhamCombat/Build Ground Stance Fixture")]
         public static void Build()
@@ -28,69 +32,121 @@ namespace ArkhamCombat.Editor
             EnsureFolder(StancesFolder);
             EnsureFolder(SettingsFolder);
 
-            AttackDefinition jabL = Attack("Jab_L", 0.45f, new Window(0.25f, 0.45f), new Window(0.45f, 0.95f), new Window(0f, 0.25f), new Window(0f, 0.25f), 1.1f, 4f,
-                new PresentationCue(0f, new LeanCue(), 0.2f, 8f),
-                new PresentationCue(0.2f, new PunchCue(), 0.25f, 0.35f));
+            Stance stance = BuildStance();
+            ReportStanceProblems(stance);
+            PointCombatConfigAt(stance);
 
-            AttackDefinition jabR = Attack("Jab_R", 0.45f, new Window(0.25f, 0.45f), new Window(0.45f, 0.95f), new Window(0f, 0.25f), new Window(0f, 0.25f), 1.1f, 4f,
-                new PresentationCue(0f, new LeanCue(), 0.2f, 8f),
-                new PresentationCue(0.2f, new PunchCue(), 0.25f, 0.35f));
+            AssetDatabase.SaveAssets();
+            Debug.Log($"{LogPrefix} Ground stance fixture built: {ActionsFolder}, {StancePath}, {CombatConfigPath}");
+        }
 
-            AttackDefinition cross = Attack("Cross", 0.55f, new Window(0.3f, 0.5f), new Window(0.5f, 0.95f), new Window(0f, 0.3f), new Window(0f, 0.3f), 1.1f, 4f,
-                new PresentationCue(0.05f, new LeanCue(), 0.3f, 12f),
-                new PresentationCue(0.25f, new PunchCue(), 0.3f, 0.5f),
-                new PresentationCue(0.3f, new SquashCue(), 0.2f, 0.15f));
-
-            AttackDefinition roundhouse = Attack("RoundhouseKick", 0.8f, new Window(0.4f, 0.6f), new Window(0.6f, 0.95f), new Window(0f, 0.35f), new Window(0f, 0.35f), 1.4f, 4.5f,
-                new PresentationCue(0f, new LeanCue(), 0.15f, -10f),
-                new PresentationCue(0.2f, new SpinCue(), 0.5f, 1f),
-                new PresentationCue(0.55f, new SquashCue(), 0.2f, 0.2f));
-
-            Stance stance = LoadOrCreate<Stance>($"{StancesFolder}/Ground.asset");
+        private static Stance BuildStance()
+        {
+            Stance stance = LoadOrCreate<Stance>(StancePath);
             stance.Configure(
-                "Neutral",
-                new[]
+                root: "Neutral",
+                nodes: new[]
                 {
-                    new ChainNode("Neutral", (AttackDefinition)null, new Edge(IntentKind.Strike, "S1", 2)),
-                    new ChainNode("S1", new VariantPool(new TargetSidePolicy(), jabL, jabR), new Edge(IntentKind.Strike, "S2")),
-                    new ChainNode("S2", cross, new Edge(IntentKind.Strike, "S3")),
-                    new ChainNode("S3", roundhouse, new Edge(IntentKind.Strike, "S1"))
+                    new ChainNode("Neutral", attack: null, new Edge(IntentKind.Strike, "S1", priority: 2)),
+                    new ChainNode("S1", new VariantPool(new TargetSidePolicy(), Jab("Jab_L"), Jab("Jab_R")), new Edge(IntentKind.Strike, "S2")),
+                    new ChainNode("S2", Cross(), new Edge(IntentKind.Strike, "S3")),
+                    new ChainNode("S3", RoundhouseKick(), new Edge(IntentKind.Strike, "S1"))
                 },
                 chainResetSeconds: 0.6f);
             EditorUtility.SetDirty(stance);
+            return stance;
+        }
 
-            List<string> errors = new List<string>();
-            if (!stance.Validate(errors))
-            {
-                Debug.LogError($"[Fixture] Ground stance has problems:\n{string.Join("\n", errors)}", stance);
-            }
+        private static AttackDefinition Jab(string name)
+        {
+            return Attack(
+                name,
+                duration: 0.45f,
+                hitWindow: new Window(0.25f, 0.45f),
+                comboWindow: new Window(0.45f, 0.95f),
+                evadeWindow: new Window(0f, 0.25f),
+                warpWindow: new Window(0f, 0.25f),
+                strikeDistance: 1.1f,
+                maxLunge: 4f,
+                cues: new[]
+                {
+                    new PresentationCue(firesAt: 0f, new LeanCue(), duration: 0.2f, strength: 8f),
+                    new PresentationCue(firesAt: 0.2f, new PunchCue(), duration: 0.25f, strength: 0.35f)
+                });
+        }
 
-            CombatConfig config = LoadOrCreate<CombatConfig>($"{SettingsFolder}/CombatConfig.asset");
-            SerializedObject serialized = new SerializedObject(config);
-            serialized.FindProperty("stance").objectReferenceValue = stance;
-            serialized.ApplyModifiedPropertiesWithoutUndo();
-            EditorUtility.SetDirty(config);
+        private static AttackDefinition Cross()
+        {
+            return Attack(
+                "Cross",
+                duration: 0.55f,
+                hitWindow: new Window(0.3f, 0.5f),
+                comboWindow: new Window(0.5f, 0.95f),
+                evadeWindow: new Window(0f, 0.3f),
+                warpWindow: new Window(0f, 0.3f),
+                strikeDistance: 1.1f,
+                maxLunge: 4f,
+                cues: new[]
+                {
+                    new PresentationCue(firesAt: 0.05f, new LeanCue(), duration: 0.3f, strength: 12f),
+                    new PresentationCue(firesAt: 0.25f, new PunchCue(), duration: 0.3f, strength: 0.5f),
+                    new PresentationCue(firesAt: 0.3f, new SquashCue(), duration: 0.2f, strength: 0.15f)
+                });
+        }
 
-            AssetDatabase.SaveAssets();
-            Debug.Log($"[Fixture] Ground stance fixture built: {ActionsFolder}, {StancesFolder}/Ground.asset, {SettingsFolder}/CombatConfig.asset");
+        private static AttackDefinition RoundhouseKick()
+        {
+            return Attack(
+                "RoundhouseKick",
+                duration: 0.8f,
+                hitWindow: new Window(0.4f, 0.6f),
+                comboWindow: new Window(0.6f, 0.95f),
+                evadeWindow: new Window(0f, 0.35f),
+                warpWindow: new Window(0f, 0.35f),
+                strikeDistance: 1.4f,
+                maxLunge: 4.5f,
+                cues: new[]
+                {
+                    new PresentationCue(firesAt: 0f, new LeanCue(), duration: 0.15f, strength: -10f),
+                    new PresentationCue(firesAt: 0.2f, new SpinCue(), duration: 0.5f, strength: 1f),
+                    new PresentationCue(firesAt: 0.55f, new SquashCue(), duration: 0.2f, strength: 0.2f)
+                });
         }
 
         private static AttackDefinition Attack(
             string name,
             float duration,
-            Window active,
-            Window cancelAttack,
-            Window cancelEvade,
-            Window warp,
+            Window hitWindow,
+            Window comboWindow,
+            Window evadeWindow,
+            Window warpWindow,
             float strikeDistance,
             float maxLunge,
-            params PresentationCue[] cues)
+            PresentationCue[] cues)
         {
             AttackDefinition attack = LoadOrCreate<AttackDefinition>($"{ActionsFolder}/{name}.asset");
             attack.Configure(duration, cues);
-            attack.ConfigureAttack(active, cancelAttack, cancelEvade, warp, strikeDistance, maxLunge);
+            attack.ConfigureAttack(hitWindow, comboWindow, evadeWindow, warpWindow, strikeDistance, maxLunge);
             EditorUtility.SetDirty(attack);
             return attack;
+        }
+
+        private static void ReportStanceProblems(Stance stance)
+        {
+            List<string> errors = new List<string>();
+            if (!stance.Validate(errors))
+            {
+                Debug.LogError($"{LogPrefix} Ground stance has problems:\n{string.Join("\n", errors)}", stance);
+            }
+        }
+
+        private static void PointCombatConfigAt(Stance stance)
+        {
+            CombatConfig config = LoadOrCreate<CombatConfig>(CombatConfigPath);
+            SerializedObject serializedConfig = new SerializedObject(config);
+            serializedConfig.FindProperty(CombatConfigStanceField).objectReferenceValue = stance;
+            serializedConfig.ApplyModifiedPropertiesWithoutUndo();
+            EditorUtility.SetDirty(config);
         }
 
         private static T LoadOrCreate<T>(string path) where T : ScriptableObject
@@ -114,9 +170,9 @@ namespace ArkhamCombat.Editor
             }
 
             string parent = Path.GetDirectoryName(path)?.Replace(Path.DirectorySeparatorChar, Path.AltDirectorySeparatorChar);
-            string leaf = Path.GetFileName(path);
+            string folderName = Path.GetFileName(path);
             EnsureFolder(parent);
-            AssetDatabase.CreateFolder(parent, leaf);
+            AssetDatabase.CreateFolder(parent, folderName);
         }
     }
 }

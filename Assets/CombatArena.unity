@@ -1854,7 +1854,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: ArkhamCombat.Player::ArkhamCombat.Player.CombatDummy
   state: Idle
   flashSeconds: 0.15
-  hitColour: {r: 1, g: 1, b: 1, a: 1}
+  flashColour: {r: 1, g: 1, b: 1, a: 1}
 --- !u!1 &2010000020
 GameObject:
   m_ObjectHideFlags: 0
@@ -1984,7 +1984,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: ArkhamCombat.Player::ArkhamCombat.Player.CombatDummy
   state: Idle
   flashSeconds: 0.15
-  hitColour: {r: 1, g: 1, b: 1, a: 1}
+  flashColour: {r: 1, g: 1, b: 1, a: 1}
 --- !u!1 &2010000030
 GameObject:
   m_ObjectHideFlags: 0
@@ -2114,7 +2114,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: ArkhamCombat.Player::ArkhamCombat.Player.CombatDummy
   state: Idle
   flashSeconds: 0.15
-  hitColour: {r: 1, g: 1, b: 1, a: 1}
+  flashColour: {r: 1, g: 1, b: 1, a: 1}
 --- !u!1 &2010000100
 GameObject:
   m_ObjectHideFlags: 0

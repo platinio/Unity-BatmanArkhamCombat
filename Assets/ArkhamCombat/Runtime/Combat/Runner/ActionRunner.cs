@@ -6,12 +6,12 @@ using UnityEngine;
 namespace ArkhamCombat.Combat
 {
     /// <summary>
-    /// Owns the current action and its normalized time, read from the presentation driver. Each tick
-    /// it fires every window crossing once, arms and disarms the hit sink, feeds the warp to the
-    /// displacement sink, and asks the resolver whether a queued press takes the chain somewhere:
-    /// global interrupts at any time, follow-ups while the cancel window is open or nothing plays.
-    /// After an action ends the chain position is kept for the stance's reset time of idle seconds,
-    /// then collapses to the root. An agent without a stance drives it through <see cref="PlayAction"/>.
+    /// Plays the character's actions one after another. Every frame it moves the current action's
+    /// clock forward, opens and closes the action's windows (warp, hit, combo), and checks whether a
+    /// queued press should start the next action: the next attack of the combo while the combo window
+    /// is open or nothing plays, an evade or a counter at any time. When the character stays idle for
+    /// the stance's reset time, the combo starts over. A character without a stance, like an enemy,
+    /// drives it through <see cref="PlayAction"/>.
     /// </summary>
     public sealed class ActionRunner
     {
@@ -20,17 +20,17 @@ namespace ArkhamCombat.Combat
         private readonly CombatContext context;
         private readonly ComboResolver resolver;
         private readonly IPresentationDriver driver;
-        private readonly IDisplacementSink displacement;
-        private readonly IHitWindowSink hits;
+        private readonly IWarpMover warpMover;
+        private readonly IHitWindowListener hitWindowListener;
         private readonly ICombatEvents events;
         private readonly System.Random random;
-        private readonly Dictionary<ChainNode, AttackDefinition> lastPicked = new Dictionary<ChainNode, AttackDefinition>();
+        private readonly Dictionary<ChainNode, AttackDefinition> lastAttackPickedAtNode = new Dictionary<ChainNode, AttackDefinition>();
 
-        private bool playing;
-        private bool armed;
-        private bool cancelOpen;
-        private bool warpOpen;
-        private bool warpActive;
+        private bool isPlaying;
+        private bool isHitWindowOpen;
+        private bool isComboWindowOpen;
+        private bool isWarpWindowOpen;
+        private bool isWarping;
         private float idleSeconds;
 
         public ActionRunner(
@@ -39,8 +39,8 @@ namespace ArkhamCombat.Combat
             CombatContext context,
             IConditionEvaluator conditions,
             IPresentationDriver driver,
-            IDisplacementSink displacement,
-            IHitWindowSink hits,
+            IWarpMover warpMover,
+            IHitWindowListener hitWindowListener,
             ICombatEvents events,
             System.Random random = null)
         {
@@ -48,8 +48,8 @@ namespace ArkhamCombat.Combat
             this.intents = intents;
             this.context = context ?? new CombatContext();
             this.driver = driver ?? throw new ArgumentNullException(nameof(driver));
-            this.displacement = displacement ?? new NullDisplacementSink();
-            this.hits = hits ?? new NullHitWindowSink();
+            this.warpMover = warpMover ?? new NullWarpMover();
+            this.hitWindowListener = hitWindowListener ?? new NullHitWindowListener();
             this.events = events ?? new NullCombatEvents();
             this.random = random ?? new System.Random();
 
@@ -76,38 +76,50 @@ namespace ArkhamCombat.Combat
         /// <summary>Null while idle or while a plain action plays.</summary>
         public AttackDefinition CurrentAttack => CurrentAction as AttackDefinition;
 
-        public bool IsPlaying => playing;
-        public float NormalizedTime => playing ? driver.NormalizedTime : 0f;
-        public bool HitArmed => armed;
-        public bool CancelWindowOpen => cancelOpen;
-        public bool WarpOpen => warpOpen;
+        public bool IsPlaying => isPlaying;
+        public float NormalizedTime => isPlaying ? driver.NormalizedTime : 0f;
+        public bool IsHitWindowOpen => isHitWindowOpen;
+        public bool IsComboWindowOpen => isComboWindowOpen;
+        public bool IsWarpWindowOpen => isWarpWindowOpen;
 
-        /// <summary>True when the current attack's warp was skipped because the target was beyond the lunge limit.</summary>
-        public bool WarpRefused { get; private set; }
+        /// <summary>True when the current attack did not warp because the target was beyond its lunge limit.</summary>
+        public bool WasWarpRefused { get; private set; }
 
-        /// <summary>Seconds spent idle since the last action ended or the last press was spent. Drives the chain reset.</summary>
+        /// <summary>Seconds since the last action ended. Once they reach the stance's reset time the combo starts over.</summary>
         public float IdleSeconds => idleSeconds;
 
+        private bool HasValidTarget => Target != null && Target.IsValid;
+
         /// <summary>
-        /// One frame. <paramref name="position"/> is the character's current position, for the warp;
-        /// <paramref name="canStartChain"/> says whether an idle character may begin an action now
-        /// (grounded, not in a reaction).
+        /// <paramref name="canStartFromIdle"/> is false while the character is airborne or in a hit
+        /// reaction; a press then waits instead of starting an action.
         /// </summary>
-        public void Tick(float deltaTime, Vector3 position, bool canStartChain)
+        public void Tick(float deltaTime, Vector3 position, bool canStartFromIdle)
         {
             deltaTime = Mathf.Max(0f, deltaTime);
 
-            if (playing)
+            if (isPlaying)
             {
-                TickPlaying(deltaTime, position);
+                AdvanceCurrentAction(deltaTime, position);
             }
             else
             {
-                TickIdle(deltaTime, position, canStartChain);
+                AdvanceIdleTime(deltaTime);
+                RestartComboAfterLongIdle();
+            }
+
+            if (TryStartActionFromPress(position, canStartFromIdle))
+            {
+                return;
+            }
+
+            if (isPlaying && HasCurrentActionEnded())
+            {
+                EndCurrentActionAndGoIdle(wasInterrupted: false);
             }
         }
 
-        /// <summary>Plays a node now, replacing whatever runs. The code-driven interrupt path.</summary>
+        /// <summary>Plays a node now, replacing whatever runs. For code that interrupts the combo, not for presses.</summary>
         public void Interrupt(ChainNode node, Vector3 position)
         {
             if (node == null)
@@ -115,114 +127,114 @@ namespace ArkhamCombat.Combat
                 return;
             }
 
-            Start(node, Pick(node), position, interrupt: true);
+            StartAction(node, PickAttack(node), position, isInterrupt: true);
         }
 
-        /// <summary>Plays an action outside the chain: reactions, and every enemy action.</summary>
-        public void PlayAction(ActionDefinition action, Vector3 position) => Start(null, action, position, interrupt: playing);
+        /// <summary>Plays an action outside the combo: reactions, and every enemy action.</summary>
+        public void PlayAction(ActionDefinition action, Vector3 position) => StartAction(null, action, position, isInterrupt: isPlaying);
 
-        /// <summary>Drops the current action, disarming if needed. For an external interrupt with nothing to play yet.</summary>
+        /// <summary>For an external interrupt that has nothing to play yet.</summary>
         public void Cancel()
         {
-            if (!playing)
+            if (!isPlaying)
             {
                 return;
             }
 
-            Finish(interrupted: true, stopDriver: true);
-            Trace.BeginIdle();
+            EndCurrentActionAndGoIdle(wasInterrupted: true);
         }
 
-        private void TickPlaying(float deltaTime, Vector3 position)
+        private void AdvanceCurrentAction(float deltaTime, Vector3 position)
         {
-            float previous = driver.NormalizedTime;
+            float previousTime = driver.NormalizedTime;
             driver.Tick(deltaTime);
-            float t = driver.NormalizedTime;
-            Trace.CurrentTime = t;
+            float currentTime = driver.NormalizedTime;
+            Trace.CurrentTime = currentTime;
 
-            AttackDefinition attack = CurrentAttack;
-            if (attack != null)
+            if (CurrentAttack != null)
             {
-                ProcessCrossings(attack, previous, t, position);
-            }
-
-            if (stance != null && CurrentNode != null)
-            {
-                Resolution resolution = resolver.Resolve(
-                    stance, new ResolveInput(CurrentNode, attack, t, cancelOpen, isPlaying: true), intents, context);
-
-                if (resolution.Matched)
-                {
-                    idleSeconds = 0f;
-                    Start(resolution.Destination, Pick(resolution.Destination), position, resolution.IsInterrupt);
-                    return;
-                }
-            }
-
-            if (t >= 1f)
-            {
-                Finish(interrupted: false, stopDriver: true);
-                Trace.BeginIdle();
+                HandleAttackWindows(CurrentAttack, previousTime, currentTime, position);
             }
         }
 
-        private void TickIdle(float deltaTime, Vector3 position, bool canStartChain)
+        private void AdvanceIdleTime(float deltaTime)
         {
             idleSeconds += deltaTime;
             Trace.CurrentTime += deltaTime;
+        }
 
-            if (stance == null)
+        /// <summary>A short pause keeps the combo where it was, so the player can resume it.</summary>
+        private void RestartComboAfterLongIdle()
+        {
+            if (stance != null && idleSeconds >= stance.ChainResetSeconds)
             {
-                return;
-            }
-
-            ChainNode root = stance.Root;
-            if (CurrentNode != root && idleSeconds >= stance.ChainResetSeconds)
-            {
-                CurrentNode = root;
-            }
-
-            if (!canStartChain || CurrentNode == null)
-            {
-                return;
-            }
-
-            Resolution resolution = resolver.Resolve(stance, ResolveInput.Idle(CurrentNode), intents, context);
-            if (resolution.Matched)
-            {
-                idleSeconds = 0f;
-                Start(resolution.Destination, Pick(resolution.Destination), position, resolution.IsInterrupt);
+                CurrentNode = stance.Root;
             }
         }
 
-        private AttackDefinition Pick(ChainNode node)
+        private bool HasCurrentActionEnded() => driver.NormalizedTime >= 1f;
+
+        private bool TryStartActionFromPress(Vector3 position, bool canStartFromIdle)
         {
-            lastPicked.TryGetValue(node, out AttackDefinition last);
-            AttackDefinition pick = node.Pick(new VariantPickContext(last, context.TargetSide, random));
+            if (stance == null || CurrentNode == null)
+            {
+                return false;
+            }
+
+            if (!isPlaying && !canStartFromIdle)
+            {
+                return false;
+            }
+
+            Resolution resolution = resolver.Resolve(stance, DescribeCurrentSituation(), intents, context);
+            if (!resolution.HasMatch)
+            {
+                return false;
+            }
+
+            ChainNode nextNode = resolution.Destination;
+            StartAction(nextNode, PickAttack(nextNode), position, resolution.IsInterrupt);
+            return true;
+        }
+
+        private ComboSituation DescribeCurrentSituation()
+        {
+            if (!isPlaying)
+            {
+                return ComboSituation.Idle(CurrentNode);
+            }
+
+            return new ComboSituation(CurrentNode, CurrentAttack, driver.NormalizedTime, isComboWindowOpen, isPlaying: true);
+        }
+
+        /// <summary>Remembers the pick so a pool can avoid playing the same attack twice in a row.</summary>
+        private AttackDefinition PickAttack(ChainNode node)
+        {
+            lastAttackPickedAtNode.TryGetValue(node, out AttackDefinition lastPick);
+            AttackDefinition pick = node.PickAttack(new VariantPickContext(lastPick, context.TargetSide, random));
             if (pick != null)
             {
-                lastPicked[node] = pick;
+                lastAttackPickedAtNode[node] = pick;
             }
 
             return pick;
         }
 
         /// <summary>
-        /// Begins an action at this node. A running action is finished first with its close events,
-        /// so a hitbox never survives the move that armed it; it counts as interrupted only when a
-        /// global edge replaced it, a follow-up is a cancel the move allowed. Windows that start at zero fire here,
-        /// so the warp or the hit frames of a fast move are not a frame late.
+        /// A null node plays the action outside the combo. A running action is ended first, so its
+        /// hit window never stays open behind it. That action counts as interrupted only when an
+        /// interrupt replaced it; the next attack of the combo is something the action allowed.
         /// </summary>
-        private void Start(ChainNode node, ActionDefinition action, Vector3 position, bool interrupt)
+        private void StartAction(ChainNode node, ActionDefinition action, Vector3 position, bool isInterrupt)
         {
             if (action == null)
             {
                 return;
             }
 
-            if (playing)
+            if (isPlaying)
             {
-                Finish(interrupted: interrupt, stopDriver: false);
+                EndCurrentAction(wasInterrupted: isInterrupt);
             }
 
             if (node != null)
@@ -231,133 +243,166 @@ namespace ArkhamCombat.Combat
             }
 
             CurrentAction = action;
-            playing = true;
-            armed = false;
-            cancelOpen = false;
-            warpOpen = false;
-            warpActive = false;
-            WarpRefused = false;
+            isPlaying = true;
+            idleSeconds = 0f;
+            WasWarpRefused = false;
 
             driver.Play(action);
             Trace.BeginAction(node, action);
-            events.ActionStarted(action, interrupt);
+            events.ActionStarted(action, isInterrupt);
 
             if (action is AttackDefinition attack)
             {
-                ProcessCrossings(attack, -1f, 0f, position);
+                HandleWindowsStartingAtZero(attack, position);
             }
         }
 
-        private void Finish(bool interrupted, bool stopDriver)
+        private void EndCurrentAction(bool wasInterrupted)
         {
-            if (armed)
+            if (isHitWindowOpen)
             {
-                armed = false;
-                hits.Disarm();
+                hitWindowListener.HitWindowClosed();
             }
 
-            ActionDefinition ended = CurrentAction;
-            float t = driver.NormalizedTime;
+            ActionDefinition endedAction = CurrentAction;
+            float endedAtTime = driver.NormalizedTime;
 
-            playing = false;
-            cancelOpen = false;
-            warpOpen = false;
-            warpActive = false;
+            CloseAllWindows();
+            isPlaying = false;
             CurrentAction = null;
             idleSeconds = 0f;
 
-            if (stopDriver)
-            {
-                driver.Stop();
-            }
-
-            Trace.EndAction(t, interrupted);
-            events.ActionEnded(ended, interrupted);
+            Trace.EndAction(endedAtTime, wasInterrupted);
+            events.ActionEnded(endedAction, wasInterrupted);
         }
 
-        private void ProcessCrossings(AttackDefinition attack, float previous, float t, Vector3 position)
+        private void EndCurrentActionAndGoIdle(bool wasInterrupted)
         {
-            Window warp = attack.Warp;
-            if (warp.Opened(previous, t))
+            EndCurrentAction(wasInterrupted);
+            driver.Stop();
+            Trace.BeginIdle();
+        }
+
+        private void CloseAllWindows()
+        {
+            isHitWindowOpen = false;
+            isComboWindowOpen = false;
+            isWarpWindowOpen = false;
+            isWarping = false;
+        }
+
+        /// <summary>
+        /// Windows that start at zero would otherwise wait for the first tick and be a frame late.
+        /// Pretending the clock came from just before zero makes them open now.
+        /// </summary>
+        private void HandleWindowsStartingAtZero(AttackDefinition attack, Vector3 position)
+        {
+            HandleAttackWindows(attack, -1f, 0f, position);
+        }
+
+        private void HandleAttackWindows(AttackDefinition attack, float previousTime, float currentTime, Vector3 position)
+        {
+            HandleWarp(attack, previousTime, currentTime, position);
+            HandleHitWindow(attack, previousTime, currentTime);
+            HandleComboWindow(attack, previousTime, currentTime);
+        }
+
+        private void HandleWarp(AttackDefinition attack, float previousTime, float currentTime, Vector3 position)
+        {
+            Window warpWindow = attack.WarpWindow;
+            if (warpWindow.IsOpen(previousTime, currentTime))
             {
-                warpOpen = true;
-                BeginWarp(attack, position);
+                StartWarp(attack, position);
             }
 
-            if (warpOpen && warpActive)
+            if (isWarping)
             {
-                ApplyWarp(attack, previous, t, position);
+                MoveTowardTarget(attack, previousTime, currentTime, position);
             }
 
-            if (warp.Closed(previous, t))
+            if (warpWindow.IsClosed(previousTime, currentTime))
             {
-                warpOpen = false;
-                warpActive = false;
-            }
-
-            if (attack.Active.Opened(previous, t))
-            {
-                armed = true;
-                hits.Arm(attack, Target);
-            }
-
-            if (attack.Active.Closed(previous, t))
-            {
-                armed = false;
-                hits.Disarm();
-            }
-
-            if (attack.CancelAttack.Opened(previous, t))
-            {
-                cancelOpen = true;
-            }
-
-            if (attack.CancelAttack.Closed(previous, t))
-            {
-                cancelOpen = false;
+                StopWarp();
             }
         }
 
-        private void BeginWarp(AttackDefinition attack, Vector3 position)
+        private void HandleHitWindow(AttackDefinition attack, float previousTime, float currentTime)
         {
-            warpActive = false;
-            if (Target == null || !Target.IsValid)
+            if (attack.HitWindow.IsOpen(previousTime, currentTime))
+            {
+                isHitWindowOpen = true;
+                hitWindowListener.HitWindowOpened(attack, Target);
+            }
+
+            if (attack.HitWindow.IsClosed(previousTime, currentTime))
+            {
+                isHitWindowOpen = false;
+                hitWindowListener.HitWindowClosed();
+            }
+        }
+
+        private void HandleComboWindow(AttackDefinition attack, float previousTime, float currentTime)
+        {
+            if (attack.ComboWindow.IsOpen(previousTime, currentTime))
+            {
+                isComboWindowOpen = true;
+            }
+
+            if (attack.ComboWindow.IsClosed(previousTime, currentTime))
+            {
+                isComboWindowOpen = false;
+            }
+        }
+
+        /// <summary>A target beyond the attack's lunge limit refuses the warp, and the attack plays in place.</summary>
+        private void StartWarp(AttackDefinition attack, Vector3 position)
+        {
+            isWarpWindowOpen = true;
+            isWarping = false;
+
+            if (!HasValidTarget)
             {
                 return;
             }
 
             if (attack.IsBeyondLunge(position, Target.Position))
             {
-                WarpRefused = true;
+                WasWarpRefused = true;
                 Trace.MarkWarpRefused();
                 return;
             }
 
-            warpActive = true;
+            isWarping = true;
+        }
+
+        private void StopWarp()
+        {
+            isWarpWindowOpen = false;
+            isWarping = false;
         }
 
         /// <summary>
-        /// Moves the remaining distance in proportion to the slice of the warp window this tick
-        /// covers, so the character arrives exactly as the window closes however the frames fall,
-        /// and re-aims every tick if the target moves.
+        /// Moves a share of the distance still left to the target: the share of the warp window's
+        /// remaining time that this frame covers. The character arrives exactly as the window closes
+        /// whatever the frame rate, and follows the target if it moves.
         /// </summary>
-        private void ApplyWarp(AttackDefinition attack, float previous, float t, Vector3 position)
+        private void MoveTowardTarget(AttackDefinition attack, float previousTime, float currentTime, Vector3 position)
         {
-            if (Target == null || !Target.IsValid)
+            if (!HasValidTarget)
             {
-                warpActive = false;
+                isWarping = false;
                 return;
             }
 
-            Window warp = attack.Warp;
-            float from = Mathf.Max(previous, warp.Start);
-            float to = Mathf.Min(t, warp.End);
-            float span = warp.End - from;
-            float fraction = span <= 1e-5f ? 1f : Mathf.Clamp01((to - from) / span);
+            Window warpWindow = attack.WarpWindow;
+            float frameStart = Mathf.Max(previousTime, warpWindow.Start);
+            float frameEnd = Mathf.Min(currentTime, warpWindow.End);
+            float timeLeftInWindow = warpWindow.End - frameStart;
+            float shareOfDistance = timeLeftInWindow <= 1e-5f ? 1f : Mathf.Clamp01((frameEnd - frameStart) / timeLeftInWindow);
 
-            Vector3 remaining = attack.WarpDestination(position, Target.Position) - position;
-            remaining.y = 0f;
-            displacement.Displace(remaining * fraction);
+            Vector3 distanceLeft = attack.WarpDestination(position, Target.Position) - position;
+            distanceLeft.y = 0f;
+            warpMover.MoveBy(distanceLeft * shareOfDistance);
         }
     }
 }

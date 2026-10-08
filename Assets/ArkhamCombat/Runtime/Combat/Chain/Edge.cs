@@ -25,14 +25,14 @@ namespace ArkhamCombat.Combat
         [Tooltip("Lower runs first within a node.")]
         [SerializeField] private int priority;
 
-        [SerializeField, ChainNodeId] private string destination;
+        [SerializeField, ChainNodeId] private string destinationId;
 
         public Edge() { }
 
-        public Edge(IntentKind intent, string destination, int priority = 0)
+        public Edge(IntentKind intent, string destinationId, int priority = 0)
         {
             this.intent = intent;
-            this.destination = destination;
+            this.destinationId = destinationId;
             this.priority = priority;
         }
 
@@ -40,8 +40,8 @@ namespace ArkhamCombat.Combat
         public FunctionCall<bool> Condition => condition;
         public bool HasCondition => condition != null && condition.Function != null;
         public int Priority => priority;
-        public string Destination => destination;
+        public string DestinationId => destinationId;
 
-        public override string ToString() => $"{intent} -> {destination} (p{priority})";
+        public override string ToString() => $"{intent} -> {destinationId} (p{priority})";
     }
 }

@@ -12,25 +12,28 @@ namespace ArkhamCombat.Combat
     }
 
     /// <summary>
-    /// An action that can hit. Adds the four windows the runner fires events on, the travel numbers
-    /// the warp uses, and the fields the hit pipeline and the enemies read. Windows are normalized
-    /// so nothing downstream changes if a clip ever replaces the duration.
+    /// An action that can hit. Adds the four windows that time it, the travel numbers the warp uses,
+    /// and the fields the hit pipeline and the enemies read. Windows are normalized so nothing
+    /// downstream changes if a clip ever replaces the duration.
     /// </summary>
     [CreateAssetMenu(menuName = "ArkhamCombat/Attack", fileName = "Attack")]
     public sealed class AttackDefinition : ActionDefinition
     {
+        /// <summary>Closer than this the character stands on the target and has no direction to back off along.</summary>
+        private const float StandingOnTargetSquaredDistance = 1e-6f;
+
         [Header("Windows (normalized time)")]
-        [Tooltip("Hit frames. The hit pipeline arms at the start and disarms at the end.")]
-        [SerializeField] private Window active = new Window(0.3f, 0.5f);
+        [Tooltip("While open, this attack can hit.")]
+        [SerializeField] private Window hitWindow = new Window(0.3f, 0.5f);
 
-        [Tooltip("While open, a queued Strike may chain into a follow-up.")]
-        [SerializeField] private Window cancelAttack = new Window(0.5f, 0.9f);
+        [Tooltip("While open, a queued Strike starts the next attack in the chain.")]
+        [SerializeField] private Window comboWindow = new Window(0.5f, 0.9f);
 
-        [Tooltip("While open, a queued Evade may cancel this attack.")]
-        [SerializeField] private Window cancelEvade = new Window(0f, 0.3f);
+        [Tooltip("While open, a queued Evade may interrupt this attack.")]
+        [SerializeField] private Window evadeWindow = new Window(0f, 0.3f);
 
-        [Tooltip("The character is displaced toward the target over this span.")]
-        [SerializeField] private Window warp = new Window(0f, 0.3f);
+        [Tooltip("The character is moved toward the target over this span.")]
+        [SerializeField] private Window warpWindow = new Window(0f, 0.3f);
 
         [Header("Travel")]
         [Tooltip("Where the warp wants to end: this far from the target, on the character's side.")]
@@ -44,62 +47,62 @@ namespace ArkhamCombat.Combat
         [SerializeField] private HitReaction reaction = HitReaction.Flinch;
 
         [Tooltip("Read by enemies and the counter prompt: the receiver may counter this.")]
-        [SerializeField] private bool counterable = true;
+        [SerializeField] private bool isCounterable = true;
 
         [Tooltip("Read by enemies and the telegraph colour: this cannot be countered, only evaded.")]
-        [SerializeField] private bool unblockable;
+        [SerializeField] private bool isUnblockable;
 
-        public Window Active => active;
-        public Window CancelAttack => cancelAttack;
-        public Window CancelEvade => cancelEvade;
-        public Window Warp => warp;
+        public Window HitWindow => hitWindow;
+        public Window ComboWindow => comboWindow;
+        public Window EvadeWindow => evadeWindow;
+        public Window WarpWindow => warpWindow;
         public float StrikeDistance => strikeDistance;
         public float MaxLunge => maxLunge;
         public float Damage => damage;
         public HitReaction Reaction => reaction;
-        public bool Counterable => counterable;
-        public bool Unblockable => unblockable;
+        public bool IsCounterable => isCounterable;
+        public bool IsUnblockable => isUnblockable;
 
         /// <summary>Sets the attack fields from code. For tests and the fixture builder.</summary>
         public void ConfigureAttack(
-            Window active,
-            Window cancelAttack,
-            Window cancelEvade,
-            Window warp,
+            Window hitWindow,
+            Window comboWindow,
+            Window evadeWindow,
+            Window warpWindow,
             float strikeDistance,
             float maxLunge,
             float damage = 10f,
             HitReaction reaction = HitReaction.Flinch,
-            bool counterable = true,
-            bool unblockable = false)
+            bool isCounterable = true,
+            bool isUnblockable = false)
         {
-            this.active = active;
-            this.cancelAttack = cancelAttack;
-            this.cancelEvade = cancelEvade;
-            this.warp = warp;
+            this.hitWindow = hitWindow;
+            this.comboWindow = comboWindow;
+            this.evadeWindow = evadeWindow;
+            this.warpWindow = warpWindow;
             this.strikeDistance = strikeDistance;
             this.maxLunge = maxLunge;
             this.damage = damage;
             this.reaction = reaction;
-            this.counterable = counterable;
-            this.unblockable = unblockable;
+            this.isCounterable = isCounterable;
+            this.isUnblockable = isUnblockable;
         }
 
         /// <summary>
-        /// Where the warp wants to end: strikeDistance from the target, on the character's side. A
-        /// character standing on the target backs off along -Z so the result is still defined.
+        /// strikeDistance from the target, on the character's side. A character standing on the
+        /// target backs off along -Z so the result is still defined.
         /// </summary>
         public Vector3 WarpDestination(Vector3 position, Vector3 targetPosition)
         {
-            Vector3 away = position - targetPosition;
-            away.y = 0f;
+            Vector3 awayFromTarget = position - targetPosition;
+            awayFromTarget.y = 0f;
 
-            if (away.sqrMagnitude < 1e-6f)
+            if (awayFromTarget.sqrMagnitude < StandingOnTargetSquaredDistance)
             {
-                away = Vector3.back;
+                awayFromTarget = Vector3.back;
             }
 
-            return targetPosition + away.normalized * strikeDistance;
+            return targetPosition + awayFromTarget.normalized * strikeDistance;
         }
 
         /// <summary>Planar distance the warp would travel from here to its end point.</summary>
@@ -119,20 +122,15 @@ namespace ArkhamCombat.Combat
 
         public override bool Validate(List<string> errors)
         {
-            bool ok = base.Validate(errors);
+            bool isValid = base.Validate(errors);
 
-            ok &= ValidateWindow(nameof(active), active, errors);
-            ok &= ValidateWindow(nameof(cancelAttack), cancelAttack, errors);
-            ok &= ValidateWindow(nameof(cancelEvade), cancelEvade, errors);
-            ok &= ValidateWindow(nameof(warp), warp, errors);
+            isValid &= ValidateWindow(nameof(hitWindow), hitWindow, errors);
+            isValid &= ValidateWindow(nameof(comboWindow), comboWindow, errors);
+            isValid &= ValidateWindow(nameof(evadeWindow), evadeWindow, errors);
+            isValid &= ValidateWindow(nameof(warpWindow), warpWindow, errors);
+            isValid &= ValidateLungeReachesStrikeDistance(errors);
 
-            if (maxLunge < strikeDistance)
-            {
-                errors.Add($"'{name}': maxLunge ({maxLunge:0.00}) is shorter than strikeDistance ({strikeDistance:0.00}); the warp could never reach its own end point.");
-                ok = false;
-            }
-
-            return ok;
+            return isValid;
         }
 
         private bool ValidateWindow(string label, Window window, List<string> errors)
@@ -143,6 +141,17 @@ namespace ArkhamCombat.Combat
             }
 
             errors.Add($"'{name}': {label} {error}.");
+            return false;
+        }
+
+        private bool ValidateLungeReachesStrikeDistance(List<string> errors)
+        {
+            if (maxLunge >= strikeDistance)
+            {
+                return true;
+            }
+
+            errors.Add($"'{name}': maxLunge ({maxLunge:0.00}) is shorter than strikeDistance ({strikeDistance:0.00}); the warp could never reach its own end point.");
             return false;
         }
     }

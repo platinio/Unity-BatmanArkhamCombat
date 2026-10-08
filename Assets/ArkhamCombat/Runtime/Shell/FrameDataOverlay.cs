@@ -13,17 +13,39 @@ namespace ArkhamCombat.Shell
     /// </summary>
     public sealed class FrameDataOverlay : MonoBehaviour
     {
+        private const float LabelWidth = 900f;
+        private const float HeaderHeight = 20f;
+        private const float HeaderSpacing = 24f;
+        private const float CaptionHeight = 18f;
+        private const float RowHeight = 40f;
+
         private const float BarWidth = 420f;
         private const float BarHeight = 12f;
-        private const float RowHeight = 40f;
+        private const int WindowBandCount = 4;
+        private const float MinimumBandWidth = 1f;
+
+        private const float TickWidth = 2f;
+        private const float CueTickOverhang = 2f;
+        private const float PlayheadOverhang = 3f;
+        private const float PressTickHeight = 6f;
+        private const float PressLabelWidth = 40f;
+        private const float PressLabelHeight = 16f;
+        private const int PressLabelKindLetters = 2;
+
+        private const float ActionLength = 1f;
         private const float IdleSecondsShown = 2f;
 
-        private static readonly Color WarpColour = new Color(1f, 0.85f, 0.2f);
-        private static readonly Color ActiveColour = new Color(1f, 0.25f, 0.2f);
-        private static readonly Color CancelAttackColour = new Color(0.3f, 1f, 0.4f);
-        private static readonly Color CancelEvadeColour = new Color(0.4f, 0.6f, 1f);
+        private static readonly Color WarpWindowColour = new Color(1f, 0.85f, 0.2f);
+        private static readonly Color HitWindowColour = new Color(1f, 0.25f, 0.2f);
+        private static readonly Color ComboWindowColour = new Color(0.3f, 1f, 0.4f);
+        private static readonly Color EvadeWindowColour = new Color(0.4f, 0.6f, 1f);
         private static readonly Color CueColour = new Color(1f, 0.4f, 1f);
         private static readonly Color BarBackground = new Color(0.15f, 0.15f, 0.15f, 0.9f);
+        private static readonly Color PlayheadColour = Color.white;
+        private static readonly Color EarlyEndColour = new Color(1f, 1f, 1f, 0.5f);
+        private static readonly Color ConsumedPressColour = Color.green;
+        private static readonly Color ExpiredPressColour = Color.red;
+        private static readonly Color WaitingPressColour = Color.yellow;
 
         [Tooltip("Top-left corner of the strip.")]
         [SerializeField] private Vector2 origin = new Vector2(12f, 80f);
@@ -40,105 +62,179 @@ namespace ArkhamCombat.Shell
             }
 
             float y = origin.y;
-            GUI.Label(new Rect(origin.x, y, 900f, 20f), Header());
-            y += 24f;
+            GUI.Label(new Rect(origin.x, y, LabelWidth, HeaderHeight), HeaderText());
+            y += HeaderSpacing;
 
+            DrawRecordsNewestFirst(origin.x, y);
+        }
+
+        private string HeaderText()
+        {
+            string node = runner.CurrentNode != null ? runner.CurrentNode.Id : "-";
+            return $"Combo {meter.Count} (tier {meter.Tier})   node {node}   t {runner.NormalizedTime:0.00}{OpenWindowsText()}";
+        }
+
+        private string OpenWindowsText()
+        {
+            return (runner.IsHitWindowOpen ? " HIT" : string.Empty)
+                   + (runner.IsComboWindowOpen ? " COMBO" : string.Empty)
+                   + (runner.IsWarpWindowOpen ? " WARP" : string.Empty)
+                   + (runner.WasWarpRefused ? " warp-refused" : string.Empty);
+        }
+
+        private void DrawRecordsNewestFirst(float x, float y)
+        {
             IReadOnlyList<ActionTrace.Record> records = runner.Trace.Records;
             for (int i = records.Count - 1; i >= 0; i--)
             {
-                DrawRecord(records[i], ReferenceEquals(records[i], runner.Trace.Current), origin.x, y);
+                DrawRecord(records[i], x, y);
                 y += RowHeight;
             }
         }
 
-        private string Header()
+        private void DrawRecord(ActionTrace.Record record, float x, float y)
         {
-            string node = runner.CurrentNode != null ? runner.CurrentNode.Id : "-";
-            string flags = (runner.HitArmed ? " ARMED" : string.Empty)
-                           + (runner.CancelWindowOpen ? " CANCEL" : string.Empty)
-                           + (runner.WarpOpen ? " WARP" : string.Empty)
-                           + (runner.WarpRefused ? " warp-refused" : string.Empty);
+            GUI.Label(new Rect(x, y, LabelWidth, CaptionHeight), CaptionText(record));
 
-            return $"Combo {meter.Count} (tier {meter.Tier})   node {node}   t {runner.NormalizedTime:0.00}{flags}";
-        }
-
-        private void DrawRecord(ActionTrace.Record record, bool isCurrent, float x, float y)
-        {
-            GUI.Label(new Rect(x, y, 900f, 18f), Caption(record, isCurrent));
-            Rect bar = new Rect(x, y + 18f, BarWidth, BarHeight);
-
+            Rect bar = new Rect(x, y + CaptionHeight, BarWidth, BarHeight);
             Fill(bar, BarBackground);
 
-            AttackDefinition attack = record.Attack;
-            if (attack != null)
+            if (record.Attack != null)
             {
-                float band = BarHeight / 4f;
-                Band(bar, 0f, band, attack.Warp, WarpColour);
-                Band(bar, band, band, attack.Active, ActiveColour);
-                Band(bar, band * 2f, band, attack.CancelAttack, CancelAttackColour);
-                Band(bar, band * 3f, band, attack.CancelEvade, CancelEvadeColour);
+                DrawWindowBands(bar, record.Attack);
             }
 
             if (record.Action != null)
             {
-                IReadOnlyList<PresentationCue> cues = record.Action.Cues;
-                for (int i = 0; i < cues.Count; i++)
-                {
-                    if (cues[i] != null)
-                    {
-                        Fill(new Rect(bar.x + cues[i].At * BarWidth - 1f, bar.y - 2f, 2f, BarHeight + 4f), CueColour);
-                    }
-                }
+                DrawCueTicks(bar, record.Action);
             }
 
-            float length = record.IsIdle ? Mathf.Max(IdleSecondsShown, record.Ended ? record.EndedAt : runner.Trace.CurrentTime) : 1f;
-
-            if (isCurrent && !record.IsIdle && runner.IsPlaying)
+            if (IsPlayingNow(record))
             {
-                Fill(new Rect(bar.x + runner.NormalizedTime * BarWidth - 1f, bar.y - 3f, 2f, BarHeight + 6f), Color.white);
+                DrawTickAcrossBar(bar, runner.NormalizedTime, PlayheadOverhang, PlayheadColour);
             }
-            else if (record.Ended && !record.IsIdle && record.EndedAt < 1f)
+            else if (HasEndedEarly(record))
             {
-                Fill(new Rect(bar.x + record.EndedAt * BarWidth - 1f, bar.y - 3f, 2f, BarHeight + 6f), new Color(1f, 1f, 1f, 0.5f));
+                DrawTickAcrossBar(bar, record.EndedAt, PlayheadOverhang, EarlyEndColour);
             }
 
-            for (int i = 0; i < record.Marks.Count; i++)
-            {
-                ActionTrace.Mark mark = record.Marks[i];
-                float at = Mathf.Clamp01(mark.At / length);
-                Color colour = mark.Status == ActionTrace.MarkStatus.Consumed ? Color.green
-                    : mark.Status == ActionTrace.MarkStatus.Expired ? Color.red
-                    : Color.yellow;
-
-                Fill(new Rect(bar.x + at * BarWidth - 1f, bar.y - 6f, 2f, 6f), colour);
-                GUI.color = colour;
-                GUI.Label(new Rect(bar.x + at * BarWidth + 2f, bar.y - 16f, 40f, 16f), MarkLabel(mark));
-                GUI.color = Color.white;
-            }
+            DrawPresses(bar, record);
         }
 
-        private string Caption(ActionTrace.Record record, bool isCurrent)
+        private string CaptionText(ActionTrace.Record record)
         {
             if (record.IsIdle)
             {
-                float seconds = record.Ended ? record.EndedAt : runner.Trace.CurrentTime;
-                return $"idle {seconds:0.00}s";
+                return $"idle {IdleSeconds(record):0.00}s";
             }
 
-            string status = !record.Ended ? "playing"
-                : record.Interrupted ? $"interrupted at {record.EndedAt:0.00}"
-                : record.EndedAt < 1f ? $"cancelled at {record.EndedAt:0.00}"
-                : "ended";
-            string warp = record.WarpRefused ? "  warp refused" : string.Empty;
+            string warp = record.WasWarpRefused ? "  warp refused" : string.Empty;
             string node = record.NodeId ?? "-";
 
-            return $"{node}  {record.Action.name}  {record.Action.Duration:0.00}s  {status}{warp}";
+            return $"{node}  {record.Action.name}  {record.Action.Duration:0.00}s  {EndingText(record)}{warp}";
         }
 
-        private static string MarkLabel(ActionTrace.Mark mark)
+        private static string EndingText(ActionTrace.Record record)
         {
-            string kind = mark.Intent.Kind.ToString().Substring(0, 2);
-            switch (mark.Status)
+            if (!record.HasEnded)
+            {
+                return "playing";
+            }
+
+            if (record.WasInterrupted)
+            {
+                return $"interrupted at {record.EndedAt:0.00}";
+            }
+
+            return record.EndedAt < ActionLength ? $"ended early at {record.EndedAt:0.00}" : "ended";
+        }
+
+        private bool IsPlayingNow(ActionTrace.Record record)
+        {
+            return ReferenceEquals(record, runner.Trace.Current) && !record.IsIdle && runner.IsPlaying;
+        }
+
+        private static bool HasEndedEarly(ActionTrace.Record record)
+        {
+            return record.HasEnded && !record.IsIdle && record.EndedAt < ActionLength;
+        }
+
+        private float IdleSeconds(ActionTrace.Record record)
+        {
+            return record.HasEnded ? record.EndedAt : runner.Trace.CurrentTime;
+        }
+
+        /// <summary>An action's presses are in normalized time; an idle stretch's are in seconds.</summary>
+        private float TimeAcrossBar(ActionTrace.Record record)
+        {
+            return record.IsIdle ? Mathf.Max(IdleSecondsShown, IdleSeconds(record)) : ActionLength;
+        }
+
+        private static void DrawWindowBands(Rect bar, AttackDefinition attack)
+        {
+            DrawWindowBand(bar, 0, attack.WarpWindow, WarpWindowColour);
+            DrawWindowBand(bar, 1, attack.HitWindow, HitWindowColour);
+            DrawWindowBand(bar, 2, attack.ComboWindow, ComboWindowColour);
+            DrawWindowBand(bar, 3, attack.EvadeWindow, EvadeWindowColour);
+        }
+
+        /// <summary>An empty window still gets a sliver, so it is visibly there.</summary>
+        private static void DrawWindowBand(Rect bar, int bandIndex, Window window, Color colour)
+        {
+            float bandHeight = bar.height / WindowBandCount;
+            float width = Mathf.Max(MinimumBandWidth, window.Length * bar.width);
+            Fill(new Rect(bar.x + window.Start * bar.width, bar.y + bandIndex * bandHeight, width, bandHeight), colour);
+        }
+
+        private static void DrawCueTicks(Rect bar, ActionDefinition action)
+        {
+            IReadOnlyList<PresentationCue> cues = action.Cues;
+            for (int i = 0; i < cues.Count; i++)
+            {
+                if (cues[i] != null)
+                {
+                    DrawTickAcrossBar(bar, cues[i].FiresAt, CueTickOverhang, CueColour);
+                }
+            }
+        }
+
+        private void DrawPresses(Rect bar, ActionTrace.Record record)
+        {
+            float timeAcrossBar = TimeAcrossBar(record);
+            for (int i = 0; i < record.Marks.Count; i++)
+            {
+                ActionTrace.Mark press = record.Marks[i];
+                float shareOfBar = Mathf.Clamp01(press.PressedAt / timeAcrossBar);
+                DrawPress(bar, shareOfBar, press);
+            }
+        }
+
+        private static void DrawPress(Rect bar, float shareOfBar, ActionTrace.Mark press)
+        {
+            Color colour = PressColour(press.Status);
+            float tickX = bar.x + shareOfBar * BarWidth;
+
+            Fill(new Rect(tickX - TickWidth / 2f, bar.y - PressTickHeight, TickWidth, PressTickHeight), colour);
+
+            GUI.color = colour;
+            GUI.Label(new Rect(tickX + TickWidth, bar.y - PressLabelHeight, PressLabelWidth, PressLabelHeight), PressLabel(press));
+            GUI.color = Color.white;
+        }
+
+        private static Color PressColour(ActionTrace.MarkStatus status)
+        {
+            switch (status)
+            {
+                case ActionTrace.MarkStatus.Consumed: return ConsumedPressColour;
+                case ActionTrace.MarkStatus.Expired: return ExpiredPressColour;
+                default: return WaitingPressColour;
+            }
+        }
+
+        private static string PressLabel(ActionTrace.Mark press)
+        {
+            string kind = press.Intent.Kind.ToString().Substring(0, PressLabelKindLetters);
+            switch (press.Status)
             {
                 case ActionTrace.MarkStatus.Consumed: return kind + "+";
                 case ActionTrace.MarkStatus.Expired: return kind + "x";
@@ -146,10 +242,10 @@ namespace ArkhamCombat.Shell
             }
         }
 
-        private static void Band(Rect bar, float offsetY, float height, Window window, Color colour)
+        private static void DrawTickAcrossBar(Rect bar, float shareOfBar, float overhang, Color colour)
         {
-            float width = Mathf.Max(1f, window.Length * bar.width);
-            Fill(new Rect(bar.x + window.Start * bar.width, bar.y + offsetY, width, height), colour);
+            float tickX = bar.x + shareOfBar * BarWidth;
+            Fill(new Rect(tickX - TickWidth / 2f, bar.y - overhang, TickWidth, bar.height + overhang * 2f), colour);
         }
 
         private static void Fill(Rect rect, Color colour)

@@ -8,16 +8,14 @@ using UnityEngine;
 namespace ArkhamCombat.Player
 {
     /// <summary>
-    /// Answers edge conditions by invoking their Functions against the player's agent variables. An
-    /// empty condition is always true. The per-intent stick angle is published right before the
-    /// call, since it belongs to the press being resolved rather than to the frame. A Function that
-    /// cannot run is reported once and treated as false, so a broken graph fails closed.
+    /// Answers edge conditions by running their Functions against the player's agent variables. A
+    /// Function that cannot run is reported once and treated as false, so a broken graph fails closed.
     /// </summary>
     public sealed class FunctionConditionEvaluator : IConditionEvaluator
     {
         private readonly GameObject agent;
         private readonly CombatContextPublisher publisher;
-        private readonly HashSet<Edge> reported = new HashSet<Edge>();
+        private readonly HashSet<Edge> edgesAlreadyReported = new HashSet<Edge>();
 
         public FunctionConditionEvaluator(CharacterMotor motor, CombatContextPublisher publisher, Stance stance)
         {
@@ -26,26 +24,32 @@ namespace ArkhamCombat.Player
 
             if (stance != null)
             {
-                ReportMismatches(stance);
+                ReportInvalidConditions(stance);
             }
         }
 
-        public bool Evaluate(Edge edge, CombatContext context, Intent intent)
+        public bool IsConditionMet(Edge edge, CombatContext context, Intent intent)
         {
             if (!edge.HasCondition)
             {
                 return true;
             }
 
+            // Published here rather than each frame: the stick angle belongs to the press being resolved.
             publisher.PublishStickAngle(intent.MoveAtPress);
 
-            FunctionCall<bool>.Bound bound = edge.Condition.For(agent);
-            if (bound.TryInvoke(out bool result, out string error))
+            return RunCondition(edge);
+        }
+
+        private bool RunCondition(Edge edge)
+        {
+            FunctionCall<bool>.Bound boundCondition = edge.Condition.For(agent);
+            if (boundCondition.TryInvoke(out bool isMet, out string error))
             {
-                return result;
+                return isMet;
             }
 
-            if (reported.Add(edge))
+            if (edgesAlreadyReported.Add(edge))
             {
                 Debug.LogError($"[Combat] Edge {edge}: condition could not run: {error}");
             }
@@ -54,17 +58,17 @@ namespace ArkhamCombat.Player
         }
 
         /// <summary>The load-time check: every authored condition must be a Function whose Result is a bool.</summary>
-        private static void ReportMismatches(Stance stance)
+        private static void ReportInvalidConditions(Stance stance)
         {
             foreach (ChainNode node in stance.Nodes)
             {
-                ReportMismatches(stance, node.Edges);
+                ReportInvalidConditions(stance, node.Edges);
             }
 
-            ReportMismatches(stance, stance.GlobalEdges);
+            ReportInvalidConditions(stance, stance.GlobalEdges);
         }
 
-        private static void ReportMismatches(Stance stance, IReadOnlyList<Edge> edges)
+        private static void ReportInvalidConditions(Stance stance, IReadOnlyList<Edge> edges)
         {
             for (int i = 0; i < edges.Count; i++)
             {

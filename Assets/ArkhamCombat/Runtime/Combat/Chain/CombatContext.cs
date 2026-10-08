@@ -9,6 +9,7 @@ namespace ArkhamCombat.Combat
     /// </summary>
     public sealed class CombatContext
     {
+        /// <summary>The variable names designers read in their Functions. Renaming one breaks every graph that uses it.</summary>
         public static class Keys
         {
             public const string ComboCount = "comboCount";
@@ -36,8 +37,8 @@ namespace ArkhamCombat.Combat
         public int TargetSide;
 
         public string TargetState = string.Empty;
-        public bool TargetBeyondLunge;
-        public bool IncomingAttackCounterable;
+        public bool IsTargetBeyondLunge;
+        public bool IsIncomingAttackCounterable;
 
         /// <summary>Degrees between the stick at press time and the direction to the target. Set per intent being resolved.</summary>
         public float StickAngleToTarget;
@@ -46,16 +47,16 @@ namespace ArkhamCombat.Combat
     /// <summary>
     /// Answers an edge's condition. The real one binds the edge's Function to the agent; tests inject
     /// a fake so the resolver is proven without a graph. Called for every edge, condition or not, so
-    /// an implementation decides what an empty condition means (the real one: always).
+    /// an implementation decides what an empty condition means (the real one: always met).
     /// </summary>
     public interface IConditionEvaluator
     {
-        bool Evaluate(Edge edge, CombatContext context, Intent intent);
+        bool IsConditionMet(Edge edge, CombatContext context, Intent intent);
     }
 
     /// <summary>Every edge matches. The default when nothing authored a condition.</summary>
     public sealed class AlwaysConditionEvaluator : IConditionEvaluator
     {
-        public bool Evaluate(Edge edge, CombatContext context, Intent intent) => true;
+        public bool IsConditionMet(Edge edge, CombatContext context, Intent intent) => true;
     }
 }
