@@ -75,19 +75,19 @@ namespace ArkhamCombat.Combat
         }
 
         /// <summary>Interrupts are tried first so an evade or a counter wins over the next attack of the combo.</summary>
-        public Resolution Resolve(Stance stance, in ComboSituation situation, IntentBuffer intents, CombatContext context)
+        public Resolution Resolve(Stance stance, in ComboSituation situation, IntentBuffer intents, CombatFacts facts)
         {
             if (stance == null || intents == null)
             {
                 return Resolution.None;
             }
 
-            if (TryTakeInterruptEdge(stance, situation, intents, context, out Resolution interrupt))
+            if (TryTakeInterruptEdge(stance, situation, intents, facts, out Resolution interrupt))
             {
                 return interrupt;
             }
 
-            if (TryTakeComboEdge(stance, situation, intents, context, out Resolution followUp))
+            if (TryTakeComboEdge(stance, situation, intents, facts, out Resolution followUp))
             {
                 return followUp;
             }
@@ -100,7 +100,7 @@ namespace ArkhamCombat.Combat
         /// attack's evade window, or an idle character; a plain action playing cannot be evaded out of.
         /// Counter needs a counterable attack incoming. Any other kind has no gate of its own.
         /// </summary>
-        public bool IsInterruptAllowed(Edge edge, in ComboSituation situation, CombatContext context)
+        public bool IsInterruptAllowed(Edge edge, in ComboSituation situation, CombatFacts facts)
         {
             if (edge.IntentKind == interruptKinds.Evade)
             {
@@ -109,24 +109,24 @@ namespace ArkhamCombat.Combat
 
             if (edge.IntentKind == interruptKinds.Counter)
             {
-                return context != null && context.IsIncomingAttackCounterable;
+                return facts != null && facts.IsIncomingAttackCounterable;
             }
 
             return true;
         }
 
-        private bool TryTakeInterruptEdge(Stance stance, in ComboSituation situation, IntentBuffer intents, CombatContext context, out Resolution resolution)
+        private bool TryTakeInterruptEdge(Stance stance, in ComboSituation situation, IntentBuffer intents, CombatFacts facts, out Resolution resolution)
         {
             IReadOnlyList<Edge> globalEdges = stance.GlobalEdges;
             for (int i = 0; i < globalEdges.Count; i++)
             {
                 Edge edge = globalEdges[i];
-                if (edge == null || !IsInterruptAllowed(edge, situation, context))
+                if (edge == null || !IsInterruptAllowed(edge, situation, facts))
                 {
                     continue;
                 }
 
-                if (TryTakeEdge(stance, edge, intents, context, isInterrupt: true, out resolution))
+                if (TryTakeEdge(stance, edge, intents, facts, isInterrupt: true, out resolution))
                 {
                     return true;
                 }
@@ -136,7 +136,7 @@ namespace ArkhamCombat.Combat
             return false;
         }
 
-        private bool TryTakeComboEdge(Stance stance, in ComboSituation situation, IntentBuffer intents, CombatContext context, out Resolution resolution)
+        private bool TryTakeComboEdge(Stance stance, in ComboSituation situation, IntentBuffer intents, CombatFacts facts, out Resolution resolution)
         {
             resolution = Resolution.None;
             if (!situation.CanContinueCombo || situation.Node == null)
@@ -148,7 +148,7 @@ namespace ArkhamCombat.Combat
             for (int i = 0; i < edges.Count; i++)
             {
                 Edge edge = edges[i];
-                if (edge != null && TryTakeEdge(stance, edge, intents, context, isInterrupt: false, out resolution))
+                if (edge != null && TryTakeEdge(stance, edge, intents, facts, isInterrupt: false, out resolution))
                 {
                     return true;
                 }
@@ -158,7 +158,7 @@ namespace ArkhamCombat.Combat
         }
 
         /// <summary>Consumes the newest matching press only when the edge leads somewhere and its condition is met.</summary>
-        private bool TryTakeEdge(Stance stance, Edge edge, IntentBuffer intents, CombatContext context, bool isInterrupt, out Resolution resolution)
+        private bool TryTakeEdge(Stance stance, Edge edge, IntentBuffer intents, CombatFacts facts, bool isInterrupt, out Resolution resolution)
         {
             resolution = Resolution.None;
 
@@ -178,7 +178,7 @@ namespace ArkhamCombat.Combat
                 return false;
             }
 
-            if (!conditions.IsConditionMet(edge, context, intent))
+            if (!conditions.IsConditionMet(edge, facts, intent))
             {
                 return false;
             }

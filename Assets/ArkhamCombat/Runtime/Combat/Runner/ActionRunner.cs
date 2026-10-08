@@ -17,7 +17,7 @@ namespace ArkhamCombat.Combat
     {
         private readonly Stance stance;
         private readonly IntentBuffer intents;
-        private readonly CombatContext context;
+        private readonly CombatFacts facts;
         private readonly ComboResolver resolver;
         private readonly IPresentationDriver driver;
         private readonly IWarpMover warpMover;
@@ -36,7 +36,7 @@ namespace ArkhamCombat.Combat
         public ActionRunner(
             Stance stance,
             IntentBuffer intents,
-            CombatContext context,
+            CombatFacts facts,
             IConditionEvaluator conditions,
             InterruptKinds interruptKinds,
             IPresentationDriver driver,
@@ -47,7 +47,7 @@ namespace ArkhamCombat.Combat
         {
             this.stance = stance;
             this.intents = intents;
-            this.context = context ?? new CombatContext();
+            this.facts = facts ?? new CombatFacts();
             this.driver = driver ?? throw new ArgumentNullException(nameof(driver));
             this.warpMover = warpMover ?? new NullWarpMover();
             this.hitWindowListener = hitWindowListener ?? new NullHitWindowListener();
@@ -187,7 +187,7 @@ namespace ArkhamCombat.Combat
                 return false;
             }
 
-            Resolution resolution = resolver.Resolve(stance, DescribeCurrentSituation(), intents, context);
+            Resolution resolution = resolver.Resolve(stance, DescribeCurrentSituation(), intents, facts);
             if (!resolution.HasMatch)
             {
                 return false;
@@ -212,7 +212,7 @@ namespace ArkhamCombat.Combat
         private AttackDefinition PickAttack(ChainNode node)
         {
             lastAttackPickedAtNode.TryGetValue(node, out AttackDefinition lastPick);
-            AttackDefinition pick = node.PickAttack(new VariantPickContext(lastPick, context.TargetSide, random));
+            AttackDefinition pick = node.PickAttack(new VariantPickContext(lastPick, facts.TargetSide, random));
             if (pick != null)
             {
                 lastAttackPickedAtNode[node] = pick;

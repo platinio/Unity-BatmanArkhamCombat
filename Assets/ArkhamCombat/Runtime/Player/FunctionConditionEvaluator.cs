@@ -14,13 +14,13 @@ namespace ArkhamCombat.Player
     public sealed class FunctionConditionEvaluator : IConditionEvaluator
     {
         private readonly GameObject agent;
-        private readonly CombatContextPublisher publisher;
+        private readonly CombatFactsUpdater factsUpdater;
         private readonly HashSet<Edge> edgesAlreadyReported = new HashSet<Edge>();
 
-        public FunctionConditionEvaluator(CharacterMotor motor, CombatContextPublisher publisher, Stance stance)
+        public FunctionConditionEvaluator(CharacterMotor motor, CombatFactsUpdater factsUpdater, Stance stance)
         {
             agent = motor.gameObject;
-            this.publisher = publisher;
+            this.factsUpdater = factsUpdater;
 
             if (stance != null)
             {
@@ -28,15 +28,15 @@ namespace ArkhamCombat.Player
             }
         }
 
-        public bool IsConditionMet(Edge edge, CombatContext context, Intent intent)
+        public bool IsConditionMet(Edge edge, CombatFacts facts, Intent intent)
         {
             if (!edge.HasCondition)
             {
                 return true;
             }
 
-            // Published here rather than each frame: the stick angle belongs to the press being resolved.
-            publisher.PublishStickAngle(intent.MoveAtPress);
+            // Updated here rather than each frame: the stick angle belongs to the press being resolved.
+            factsUpdater.UpdateStickAngle(intent.MoveAtPress);
 
             return RunCondition(edge);
         }

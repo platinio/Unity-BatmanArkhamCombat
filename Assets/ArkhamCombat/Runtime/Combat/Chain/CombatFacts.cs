@@ -4,10 +4,10 @@ namespace ArkhamCombat.Combat
 {
     /// <summary>
     /// The facts an edge condition may read, filled once per frame before the resolver runs. A plain
-    /// mutable object: the publisher writes it and mirrors it onto the agent's variables under the
+    /// mutable object: the factsUpdater writes it and mirrors it onto the agent's variables under the
     /// keys in <see cref="Keys"/>, so a Function and a test see the same numbers.
     /// </summary>
-    public sealed class CombatContext
+    public sealed class CombatFacts
     {
         /// <summary>The variable names designers read in their Functions. Renaming one breaks every graph that uses it.</summary>
         public static class Keys
@@ -51,12 +51,12 @@ namespace ArkhamCombat.Combat
     /// </summary>
     public interface IConditionEvaluator
     {
-        bool IsConditionMet(Edge edge, CombatContext context, Intent intent);
+        bool IsConditionMet(Edge edge, CombatFacts facts, Intent intent);
     }
 
     /// <summary>Every edge matches. The default when nothing authored a condition.</summary>
     public sealed class AlwaysConditionEvaluator : IConditionEvaluator
     {
-        public bool IsConditionMet(Edge edge, CombatContext context, Intent intent) => true;
+        public bool IsConditionMet(Edge edge, CombatFacts facts, Intent intent) => true;
     }
 }

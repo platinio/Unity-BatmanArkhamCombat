@@ -5,13 +5,13 @@ using UnityEngine;
 namespace ArkhamCombat.Player
 {
     /// <summary>
-    /// A thing to hit until enemies exist: the stand-in <see cref="ICombatTarget"/>. Publishes a
+    /// A thing to hit until enemies exist: the stand-in <see cref="ICombatTarget"/>. Reports a
     /// state string, counts hits, and flashes so a landed strike is visible on a capsule. An enemy's
     /// status component implements the same interface and nothing player-side changes.
     /// </summary>
     public sealed class CombatDummy : MonoBehaviour, ICombatTarget
     {
-        [Tooltip("Published as the targetState fact: Idle, Staggered, and so on.")]
+        [Tooltip("Reported as the targetState fact: Idle, Staggered, and so on.")]
         [SerializeField] private string state = "Idle";
 
         [SerializeField, Min(0f)] private float flashSeconds = 0.15f;

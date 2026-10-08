@@ -21,7 +21,7 @@ namespace ArkhamCombat.Tests
         private ChainNode neutralNode;
         private ChainNode firstStrikeNode;
         private IntentBuffer intents;
-        private CombatContext context;
+        private CombatFacts facts;
         private RecordingConditions conditions;
         private ComboResolver resolver;
 
@@ -52,7 +52,7 @@ namespace ArkhamCombat.Tests
                 });
 
             intents = new IntentBuffer();
-            context = new CombatContext();
+            facts = new CombatFacts();
             conditions = new RecordingConditions();
             resolver = new ComboResolver(conditions, kinds.InterruptKinds);
         }
@@ -168,7 +168,7 @@ namespace ArkhamCombat.Tests
 
             Assert.IsFalse(ResolveWhilePlaying(firstStrikeNode, jab, EarlyInTheAttack).HasMatch);
 
-            context.IsIncomingAttackCounterable = true;
+            facts.IsIncomingAttackCounterable = true;
             Assert.AreEqual("CounterNode", ResolveWhilePlaying(firstStrikeNode, jab, EarlyInTheAttack).Destination.Id);
         }
 
@@ -179,7 +179,7 @@ namespace ArkhamCombat.Tests
             Stance brokenStance = Stance("Broken", new[] { broken });
             Press(kinds.Strike);
 
-            Resolution result = resolver.Resolve(brokenStance, ComboSituation.Idle(broken), intents, context);
+            Resolution result = resolver.Resolve(brokenStance, ComboSituation.Idle(broken), intents, facts);
 
             Assert.IsFalse(result.HasMatch);
             Assert.AreEqual(1, intents.Queued.Count);
@@ -199,10 +199,10 @@ namespace ArkhamCombat.Tests
         private void Press(IntentKind kind) => intents.Push(kind, Vector2.zero);
 
         private Resolution ResolveIdleAt(ChainNode node) =>
-            resolver.Resolve(stance, ComboSituation.Idle(node), intents, context);
+            resolver.Resolve(stance, ComboSituation.Idle(node), intents, facts);
 
         /// <summary>A null <paramref name="attack"/> stands for a plain action, such as a reaction.</summary>
         private Resolution ResolveWhilePlaying(ChainNode node, AttackDefinition attack, float normalizedTime, bool canContinueCombo = true) =>
-            resolver.Resolve(stance, new ComboSituation(node, attack, normalizedTime, canContinueCombo, isPlaying: true), intents, context);
+            resolver.Resolve(stance, new ComboSituation(node, attack, normalizedTime, canContinueCombo, isPlaying: true), intents, facts);
     }
 }

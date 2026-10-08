@@ -8,13 +8,13 @@ using UnityEngine;
 namespace ArkhamCombat.Player
 {
     /// <summary>
-    /// Fills the <see cref="CombatContext"/> each frame and mirrors it onto the player's agent
+    /// Fills the <see cref="CombatFacts"/> each frame and mirrors it onto the player's agent
     /// variables through the BH3 writer, so Functions read the same facts the resolver does and the
     /// keys show in Variable Watch. Target side and stick angle are character-relative.
     /// </summary>
-    public sealed class CombatContextPublisher
+    public sealed class CombatFactsUpdater
     {
-        private const string Source = "CombatContext";
+        private const string Source = "CombatFacts";
         private const float NegligibleSqrMagnitude = 1e-4f;
 
         private const int TargetOnTheLeft = -1;
@@ -26,7 +26,7 @@ namespace ArkhamCombat.Player
 
         private readonly GameObject agent;
         private readonly Transform character;
-        private readonly CombatContext context;
+        private readonly CombatFacts facts;
         private readonly ComboMeter meter;
         private readonly CombatConfig config;
         private readonly IMovementFrame frame;
@@ -39,29 +39,29 @@ namespace ArkhamCombat.Player
         private bool? lastWrittenIsTargetBeyondLunge;
         private bool? lastWrittenIsIncomingAttackCounterable;
 
-        public CombatContextPublisher(
+        public CombatFactsUpdater(
             CharacterMotor motor,
-            CombatContext context,
+            CombatFacts facts,
             ComboMeter meter,
             CombatConfig config,
             IMovementFrame frame)
         {
             agent = motor.gameObject;
             character = motor.transform;
-            this.context = context;
+            this.facts = facts;
             this.meter = meter;
             this.config = config;
             this.frame = frame;
         }
 
-        public void Publish(IActionTarget target, AttackDefinition currentAttack)
+        public void UpdateFacts(IActionTarget target, AttackDefinition currentAttack)
         {
-            context.ComboCount = meter.Count;
-            context.ComboTier = meter.Tier;
-            context.HasTarget = target != null && target.IsValid;
-            context.IsIncomingAttackCounterable = false;
+            facts.ComboCount = meter.Count;
+            facts.ComboTier = meter.Tier;
+            facts.HasTarget = target != null && target.IsValid;
+            facts.IsIncomingAttackCounterable = false;
 
-            if (context.HasTarget)
+            if (facts.HasTarget)
             {
                 DescribeTarget(target, currentAttack);
             }
@@ -74,10 +74,10 @@ namespace ArkhamCombat.Player
         }
 
         /// <summary>Degrees between where the stick pointed at the press and the target. Zero with no stick or no target.</summary>
-        public void PublishStickAngle(Vector2 moveAtPress)
+        public void UpdateStickAngle(Vector2 moveAtPress)
         {
             float angle = 0f;
-            bool canMeasureAngle = context.HasTarget
+            bool canMeasureAngle = facts.HasTarget
                                    && moveAtPress.sqrMagnitude > NegligibleSqrMagnitude
                                    && toTarget.sqrMagnitude > NegligibleSqrMagnitude;
             if (canMeasureAngle)
@@ -87,8 +87,8 @@ namespace ArkhamCombat.Player
                 angle = Vector3.SignedAngle(stick, toTarget, Vector3.up);
             }
 
-            context.StickAngleToTarget = angle;
-            Write(CombatContext.Keys.StickAngleToTarget, angle);
+            facts.StickAngleToTarget = angle;
+            Write(CombatFacts.Keys.StickAngleToTarget, angle);
         }
 
         /// <summary>-1 when the target is left of the facing, 1 when right, 0 inside a narrow dead-ahead band.</summary>
@@ -112,35 +112,35 @@ namespace ArkhamCombat.Player
             Vector3 forward = character.forward;
             forward.y = 0f;
 
-            context.TargetDistance = toTarget.magnitude;
-            context.TargetSide = SideOf(forward, toTarget);
-            context.TargetState = target is ICombatTarget combatant ? combatant.State : string.Empty;
+            facts.TargetDistance = toTarget.magnitude;
+            facts.TargetSide = SideOf(forward, toTarget);
+            facts.TargetState = target is ICombatTarget combatant ? combatant.State : string.Empty;
 
             // The same rule the warp refuses by, so the fact and the overlay's warp-refused flag agree.
-            context.IsTargetBeyondLunge = currentAttack != null
+            facts.IsTargetBeyondLunge = currentAttack != null
                 ? currentAttack.IsBeyondLunge(character.position, target.Position)
-                : context.TargetDistance > config.MaxLungeWhileIdle;
+                : facts.TargetDistance > config.MaxLungeWhileIdle;
         }
 
         private void DescribeNoTarget()
         {
             toTarget = Vector3.zero;
-            context.TargetDistance = float.PositiveInfinity;
-            context.TargetSide = TargetDeadAhead;
-            context.TargetState = string.Empty;
-            context.IsTargetBeyondLunge = true;
+            facts.TargetDistance = float.PositiveInfinity;
+            facts.TargetSide = TargetDeadAhead;
+            facts.TargetState = string.Empty;
+            facts.IsTargetBeyondLunge = true;
         }
 
         // Only changed values are written: each write boxes and goes through the agent's variables.
         private void WriteChangedFactsToAgent()
         {
-            WriteIfChanged(CombatContext.Keys.ComboCount, context.ComboCount, ref lastWrittenComboCount);
-            WriteIfChanged(CombatContext.Keys.ComboTier, context.ComboTier, ref lastWrittenComboTier);
-            WriteIfChanged(CombatContext.Keys.TargetDistance, context.TargetDistance, ref lastWrittenTargetDistance);
-            WriteIfChanged(CombatContext.Keys.TargetSide, context.TargetSide, ref lastWrittenTargetSide);
-            WriteIfChanged(CombatContext.Keys.TargetState, context.TargetState, ref lastWrittenTargetState);
-            WriteIfChanged(CombatContext.Keys.TargetBeyondLunge, context.IsTargetBeyondLunge, ref lastWrittenIsTargetBeyondLunge);
-            WriteIfChanged(CombatContext.Keys.IncomingAttackCounterable, context.IsIncomingAttackCounterable, ref lastWrittenIsIncomingAttackCounterable);
+            WriteIfChanged(CombatFacts.Keys.ComboCount, facts.ComboCount, ref lastWrittenComboCount);
+            WriteIfChanged(CombatFacts.Keys.ComboTier, facts.ComboTier, ref lastWrittenComboTier);
+            WriteIfChanged(CombatFacts.Keys.TargetDistance, facts.TargetDistance, ref lastWrittenTargetDistance);
+            WriteIfChanged(CombatFacts.Keys.TargetSide, facts.TargetSide, ref lastWrittenTargetSide);
+            WriteIfChanged(CombatFacts.Keys.TargetState, facts.TargetState, ref lastWrittenTargetState);
+            WriteIfChanged(CombatFacts.Keys.TargetBeyondLunge, facts.IsTargetBeyondLunge, ref lastWrittenIsTargetBeyondLunge);
+            WriteIfChanged(CombatFacts.Keys.IncomingAttackCounterable, facts.IsIncomingAttackCounterable, ref lastWrittenIsIncomingAttackCounterable);
         }
 
         private void WriteIfChanged<T>(string key, T value, ref T lastWritten) where T : IEquatable<T>

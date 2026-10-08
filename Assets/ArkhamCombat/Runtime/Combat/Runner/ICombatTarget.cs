@@ -9,7 +9,7 @@ namespace ArkhamCombat.Combat
     /// </summary>
     public interface ICombatTarget : IActionTarget
     {
-        /// <summary>Published as the targetState fact: Idle, Staggered, and so on.</summary>
+        /// <summary>Reported as the targetState fact: Idle, Staggered, and so on.</summary>
         string State { get; }
 
         /// <summary>Takes a hit. The hit pipeline decides the reaction; the target applies it.</summary>

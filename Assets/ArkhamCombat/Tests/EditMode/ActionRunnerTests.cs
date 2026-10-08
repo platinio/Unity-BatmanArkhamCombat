@@ -27,7 +27,7 @@ namespace ArkhamCombat.Tests
         private AttackDefinition cross;
         private Stance stance;
         private IntentBuffer intents;
-        private CombatContext context;
+        private CombatFacts facts;
         private NullPresentationDriver driver;
         private RecordingWarpMover warpMover;
         private RecordingHitWindowListener hitWindowListener;
@@ -53,7 +53,7 @@ namespace ArkhamCombat.Tests
                 ChainResetSeconds);
 
             intents = new IntentBuffer();
-            context = new CombatContext();
+            facts = new CombatFacts();
             driver = new NullPresentationDriver();
             warpMover = new RecordingWarpMover();
             hitWindowListener = new RecordingHitWindowListener();
@@ -387,7 +387,7 @@ namespace ArkhamCombat.Tests
         }
 
         private ActionRunner CreateRunner() =>
-            new ActionRunner(stance, intents, context, new AlwaysConditionEvaluator(), kinds.InterruptKinds, driver, warpMover, hitWindowListener, events);
+            new ActionRunner(stance, intents, facts, new AlwaysConditionEvaluator(), kinds.InterruptKinds, driver, warpMover, hitWindowListener, events);
 
         private void Press(IntentKind kind) => intents.Push(kind, Vector2.zero);
 

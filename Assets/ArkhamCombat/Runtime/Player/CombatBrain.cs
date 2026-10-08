@@ -23,7 +23,7 @@ namespace ArkhamCombat.Player
         private CharacterBrain characterBrain;
         private CharacterMotor motor;
         private ActionRunner runner;
-        private CombatContextPublisher publisher;
+        private CombatFactsUpdater factsUpdater;
         private ITargetPicker targetPicker;
         private ComboMeter meter;
 
@@ -35,13 +35,13 @@ namespace ArkhamCombat.Player
         private void Construct(
             CharacterMotor motor,
             ActionRunner runner,
-            CombatContextPublisher publisher,
+            CombatFactsUpdater factsUpdater,
             ITargetPicker targetPicker,
             ComboMeter meter)
         {
             this.motor = motor;
             this.runner = runner;
-            this.publisher = publisher;
+            this.factsUpdater = factsUpdater;
             this.targetPicker = targetPicker;
             this.meter = meter;
         }
@@ -69,7 +69,7 @@ namespace ArkhamCombat.Player
             float deltaTime = Time.deltaTime;
 
             PickTarget();
-            publisher.Publish(runner.Target, runner.CurrentAttack);
+            factsUpdater.UpdateFacts(runner.Target, runner.CurrentAttack);
             meter.Tick(deltaTime);
             runner.Tick(deltaTime, transform.position, CanStartActionFromIdle());
             EnterAttackingStateWhileAnActionPlays();

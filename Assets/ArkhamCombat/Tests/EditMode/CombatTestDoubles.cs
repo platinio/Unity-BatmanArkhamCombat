@@ -99,7 +99,7 @@ namespace ArkhamCombat.Tests
                 return this;
             }
 
-            public bool IsConditionMet(Edge edge, CombatContext context, Intent intent)
+            public bool IsConditionMet(Edge edge, CombatFacts facts, Intent intent)
             {
                 AskedEdges.Add(edge);
                 return !deniedDestinations.Contains(edge.DestinationId);

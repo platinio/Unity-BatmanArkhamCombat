@@ -26,7 +26,7 @@ Input System callback          PlayerInputReader pushes Intent{Kind, PressedAt, 
         │
 CombatBrain.Update  (runs before CharacterBrain)
         │  ITargetPicker.Pick(position, stick or facing)  ──► ActionRunner.Target
-        │  CombatContextPublisher.Publish  ──► CombatContext + agent variables (facts)
+        │  CombatFactsUpdater.UpdateFacts  ──► CombatFacts + agent variables
         │  ComboMeter.Tick                 ──► timeout reset
         │  ActionRunner.Tick(deltaTime, position, CanStartActionFromIdle())
         │       playing: IPresentationDriver.Tick  ──► ActionClock advances, cues fire
@@ -61,7 +61,7 @@ Attacking after an action ended (recovery), never from Airborne or a reaction.
 |---|---|---|---|
 | `ArkhamCombat.Combat` | `Runtime/Combat` | The core: actions and windows, the chain, the resolver, the meter, the runner, the clock, the interfaces the runner talks through | The character controller (intent types), VisualScriptingExtension (`FunctionCall<bool>` on edges). Never DOTween, never Zenject; a test asserts both |
 | `ArkhamCombat.Presentation` | `Runtime/Presentation` | The DOTween driver and the cue kinds | Combat, DOTween |
-| `ArkhamCombat.Player` | `Runtime/Player` | The installer, the combat brain, the `Attacking` state, the fact publisher, the Function evaluator, and the stand-ins behind the core's interfaces | Combat, Presentation, BH3 (fact writer), Zenject |
+| `ArkhamCombat.Player` | `Runtime/Player` | The installer, the combat brain, the `Attacking` state, the fact factsUpdater, the Function evaluator, and the stand-ins behind the core's interfaces | Combat, Presentation, BH3 (fact writer), Zenject |
 | `ArkhamCombat.Shell` | `Runtime/Shell` | The frame-data overlay and the camera demo | Combat, Camera |
 | `ArkhamCombat.Camera` | `Runtime/Camera` | Group framing math and the combat framing source | Character controller |
 | `ArkhamCombat.Editor` | `Editor` | The node id dropdown and the fixture builder | |
@@ -99,7 +99,7 @@ The intent buffer lives in the character controller submodule (`ArcaneOnyx.TPCha
 | `ChainNode` | A position: id, one attack or a `VariantPool`, edges in priority order. The root may play nothing |
 | `Edge` | `intentKind` (an `IntentKind` asset), optional `FunctionCall<bool>` condition, priority, destination id. `[ChainNodeId]` gives the designer a dropdown |
 | `VariantPool`, `IVariantPolicy` | A list of attacks and the rule to pick one: `NoRepeatPolicy`, `RandomPolicy`, `TargetSidePolicy` (left hand for a target on the left, falls back to no-repeat with no side known) |
-| `CombatContext` | The facts a condition may read, filled each frame: combo count and tier, target distance, side, state, beyond-lunge, incoming counterable, stick angle. `Keys` names them for the agent variables |
+| `CombatFacts` | The facts a condition may read, filled each frame: combo count and tier, target distance, side, state, beyond-lunge, incoming counterable, stick angle. `Keys` names them for the agent variables |
 | `InterruptKinds` | Which kinds are the evade and the counter, handed to the resolver from `CombatConfig` by the installer, because the core cannot reference the player assembly |
 | `IConditionEvaluator` | Answers an edge's condition with `IsConditionMet`. Tests use a recording stand-in; the real one runs the Function |
 | `ComboResolver` | Picks the edge a queued press takes, without side effects beyond consuming that press. Global edges first, each only when allowed (the evade kind needs the attack's evade window or an idle character; the counter kind needs an incoming attack that can be countered; any other kind has no gate), then the node's edges while the combo can continue. Consumes exactly one intent per match; an unmatched press stays queued. Reads a `ComboSituation` and returns a `Resolution`: destination, edge, consumed intent, whether it was an interrupt |
@@ -144,11 +144,11 @@ The intent buffer lives in the character controller submodule (`ArcaneOnyx.TPCha
 | Type | Responsibility |
 |---|---|
 | `CombatConfig` | The asset: the stance, which kinds are the evade and the counter (`evadeKind`, `counterKind`), the meter settings, the facing turn time, and the tunables the stand-ins use |
-| `CombatStaticInstaller` | Binds the combat graph scene-wide: config, stance, combat events (picked on the asset), context, meter, intent buffer (from the input reader), publisher, condition evaluator, driver (found in the hierarchy), warp mover and hit window listener, roster, picker, runner. Binds the `InterruptKinds` from the config. Validates the config's evade and counter kinds, the stance and every attack at scene load and logs each problem |
+| `CombatStaticInstaller` | Binds the combat graph scene-wide: config, stance, combat events (picked on the asset), combat facts, meter, intent buffer (from the input reader), facts updater, condition evaluator, driver (found in the hierarchy), warp mover and hit window listener, roster, picker, runner. Binds the `InterruptKinds` from the config. Validates the config's evade and counter kinds, the stance and every attack at scene load and logs each problem |
 | `CombatBrain` | The per-frame orchestration described above, running before the character brain. Switches the state machine into `Attacking` when the runner starts |
 | `AttackingState` | The character while an action plays: the warp mover's pending movement becomes the frame's planar velocity, the character turns toward the target, gravity is held during the warp. Hands back to Locomotion when the runner goes idle. A follow-up is not a state change |
 | `MotorWarpMover` | Collects the warp movement for the frame; the attacking state takes it once |
-| `CombatContextPublisher` | Fills `CombatContext` each frame and mirrors it onto the agent's variables through BH3's writer, writing only what changed, so Functions and Variable Watch see the same facts. Publishes the per-press stick angle right before a condition runs |
+| `CombatFactsUpdater` | Fills `CombatFacts` each frame and mirrors it onto the agent's variables through BH3's writer, writing only what changed, so Functions and Variable Watch see the same facts. Updates the per-press stick angle right before a condition runs |
 | `FunctionConditionEvaluator` | Runs an edge's Function against the player's agent. Empty condition is true; a Function that cannot run is reported once and treated as false. Checks every authored condition returns a bool at load |
 | `StandInTargetPicker` | Nearest roster target roughly along the stick, or the facing when idle. Replaced by spec 04 |
 | `SceneTargetRoster` | Every `ICombatTarget` component in the scene, read on first use. Replaced by the encounter director |

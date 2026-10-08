@@ -44,7 +44,7 @@ namespace ArkhamCombat.Player
 
         private void BindComboState()
         {
-            Container.Bind<CombatContext>().AsSingle();
+            Container.Bind<CombatFacts>().AsSingle();
             Container.Bind<ComboMeter>()
                 .FromMethod(injectContext => new ComboMeter(
                     injectContext.Container.Resolve<CombatConfig>().Meter,
@@ -55,7 +55,7 @@ namespace ArkhamCombat.Player
 
         private void BindConditions()
         {
-            Container.Bind<CombatContextPublisher>().AsSingle();
+            Container.Bind<CombatFactsUpdater>().AsSingle();
             Container.Bind<IConditionEvaluator>().To<FunctionConditionEvaluator>().AsSingle();
         }
 
