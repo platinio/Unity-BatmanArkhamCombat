@@ -9,29 +9,22 @@ namespace ArkhamCombat.Tests
 {
     public class StanceTests
     {
-        private static AttackDefinition jab;
+        private AttackDefinition jab;
 
         [SetUp]
         public void SetUp() => jab = Attack("Jab");
 
-        private static List<string> Errors(Stance stance)
-        {
-            List<string> errors = new List<string>();
-            stance.Validate(errors);
-            return errors;
-        }
-
         [Test]
-        public void TheWorkedExampleShape_Validates()
+        public void AComboThatLoopsBetweenTwoAttacks_Validates()
         {
             Stance stance = Stance("Neutral", new[]
             {
-                new ChainNode("Neutral", (AttackDefinition)null, new Edge(IntentKind.Strike, "S1")),
+                NodeWithNothingToPlay("Neutral", new Edge(IntentKind.Strike, "S1")),
                 new ChainNode("S1", jab, new Edge(IntentKind.Strike, "S2")),
                 new ChainNode("S2", jab, new Edge(IntentKind.Strike, "S1"))
             });
 
-            Assert.IsEmpty(Errors(stance));
+            Assert.IsEmpty(ValidationErrors(stance));
         }
 
         [Test]
@@ -39,14 +32,14 @@ namespace ArkhamCombat.Tests
         {
             Stance stance = Stance("Neutral", new[]
             {
-                new ChainNode("Neutral", (AttackDefinition)null, new Edge(IntentKind.Strike, "Empty")),
+                NodeWithNothingToPlay("Neutral", new Edge(IntentKind.Strike, "Empty")),
                 new ChainNode("Empty", new VariantPool(new RandomPolicy()))
             });
 
-            List<string> errors = Errors(stance);
+            List<string> errors = ValidationErrors(stance);
             Assert.AreEqual(2, errors.Count, string.Join("\n", errors));
-            Assert.IsTrue(errors.Exists(e => e.Contains("'Empty' has neither")), "the node itself is reported");
-            Assert.IsTrue(errors.Exists(e => e.Contains("points at 'Empty', which has nothing to play")), "and so is the edge into it");
+            Assert.IsTrue(errors.Exists(error => error.Contains("'Empty' has neither")), "the node itself is reported");
+            Assert.IsTrue(errors.Exists(error => error.Contains("points at 'Empty', which has nothing to play")), "and so is the edge into it");
         }
 
         [Test]
@@ -54,11 +47,11 @@ namespace ArkhamCombat.Tests
         {
             Stance stance = Stance("Neutral", new[]
             {
-                new ChainNode("Neutral", (AttackDefinition)null, new Edge(IntentKind.Strike, "S1")),
+                NodeWithNothingToPlay("Neutral", new Edge(IntentKind.Strike, "S1")),
                 new ChainNode("S1", jab, new Edge(IntentKind.Strike, "Neutral"))
             });
 
-            List<string> errors = Errors(stance);
+            List<string> errors = ValidationErrors(stance);
             Assert.AreEqual(1, errors.Count, string.Join("\n", errors));
             StringAssert.Contains("points at 'Neutral', which has nothing to play", errors[0]);
         }
@@ -66,17 +59,17 @@ namespace ArkhamCombat.Tests
         [Test]
         public void Prepare_LeavesTheAuthoredEdgeOrderAlone()
         {
-            Edge low = new Edge(IntentKind.Strike, "A", 1);
-            Edge high = new Edge(IntentKind.Strike, "B", 2);
-            ChainNode node = new ChainNode("N", jab, high, low);
+            Edge runsFirst = new Edge(IntentKind.Strike, "A", priority: 1);
+            Edge runsSecond = new Edge(IntentKind.Strike, "B", priority: 2);
+            ChainNode node = new ChainNode("N", jab, runsSecond, runsFirst);
             Stance stance = Stance("N", new[] { node, new ChainNode("A", jab), new ChainNode("B", jab) });
 
-            Assert.AreSame(low, node.Edges[0], "the sorted view leads with the lower priority");
+            Assert.AreSame(runsFirst, node.Edges[0], "the sorted edges lead with the lower priority number");
 
-            UnityEditor.SerializedProperty authored = new UnityEditor.SerializedObject(stance)
+            UnityEditor.SerializedProperty authoredEdges = new UnityEditor.SerializedObject(stance)
                 .FindProperty("nodes").GetArrayElementAtIndex(0).FindPropertyRelative("edges");
-            Assert.AreEqual("B", authored.GetArrayElementAtIndex(0).FindPropertyRelative("destination").stringValue,
-                "the serialized list keeps the designer's order; it is not the cache");
+            Assert.AreEqual("B", authoredEdges.GetArrayElementAtIndex(0).FindPropertyRelative("destinationId").stringValue,
+                "the serialized list keeps the designer's order; only the sorted copy is reordered");
         }
 
         [Test]
@@ -84,12 +77,12 @@ namespace ArkhamCombat.Tests
         {
             Stance stance = Stance("Neutral", new[]
             {
-                new ChainNode("Neutral", (AttackDefinition)null, new Edge(IntentKind.Strike, "S1")),
+                NodeWithNothingToPlay("Neutral", new Edge(IntentKind.Strike, "S1")),
                 new ChainNode("S1", jab),
                 new ChainNode("Orphan", jab)
             });
 
-            List<string> errors = Errors(stance);
+            List<string> errors = ValidationErrors(stance);
             Assert.AreEqual(1, errors.Count, string.Join("\n", errors));
             StringAssert.Contains("'Orphan' is not reachable", errors[0]);
         }
@@ -99,12 +92,12 @@ namespace ArkhamCombat.Tests
         {
             Stance stance = Stance("Neutral", new[]
                 {
-                    new ChainNode("Neutral", (AttackDefinition)null),
+                    NodeWithNothingToPlay("Neutral"),
                     new ChainNode("Evade", jab)
                 },
                 new[] { new Edge(IntentKind.Evade, "Evade") });
 
-            Assert.IsEmpty(Errors(stance));
+            Assert.IsEmpty(ValidationErrors(stance));
         }
 
         [Test]
@@ -112,10 +105,10 @@ namespace ArkhamCombat.Tests
         {
             Stance stance = Stance("Neutral", new[]
             {
-                new ChainNode("Neutral", (AttackDefinition)null, new Edge(IntentKind.Strike, null), new Edge(IntentKind.Strike, "Nowhere"))
+                NodeWithNothingToPlay("Neutral", new Edge(IntentKind.Strike, null), new Edge(IntentKind.Strike, "Nowhere"))
             });
 
-            List<string> errors = Errors(stance);
+            List<string> errors = ValidationErrors(stance);
             Assert.AreEqual(2, errors.Count, string.Join("\n", errors));
             StringAssert.Contains("has no destination", errors[0]);
             StringAssert.Contains("unknown node 'Nowhere'", errors[1]);
@@ -130,23 +123,23 @@ namespace ArkhamCombat.Tests
                 new ChainNode("A", jab)
             });
 
-            List<string> errors = Errors(stance);
-            Assert.IsTrue(errors.Exists(e => e.Contains("used more than once")), string.Join("\n", errors));
-            Assert.IsTrue(errors.Exists(e => e.Contains("root 'Missing' names no node")), string.Join("\n", errors));
+            List<string> errors = ValidationErrors(stance);
+            Assert.IsTrue(errors.Exists(error => error.Contains("used more than once")), string.Join("\n", errors));
+            Assert.IsTrue(errors.Exists(error => error.Contains("root 'Missing' names no node")), string.Join("\n", errors));
         }
 
         [Test]
         public void Prepare_SortsEdgesByPriority_KeepingAuthoredOrderForTies()
         {
             ChainNode node = new ChainNode("N", jab,
-                new Edge(IntentKind.Strike, "C", 2),
-                new Edge(IntentKind.Strike, "A", 1),
-                new Edge(IntentKind.Strike, "B", 1));
+                new Edge(IntentKind.Strike, "C", priority: 2),
+                new Edge(IntentKind.Strike, "A", priority: 1),
+                new Edge(IntentKind.Strike, "B", priority: 1));
             Stance stance = Stance("N", new[] { node, new ChainNode("A", jab), new ChainNode("B", jab), new ChainNode("C", jab) });
 
-            Assert.AreEqual("A", node.Edges[0].Destination);
-            Assert.AreEqual("B", node.Edges[1].Destination);
-            Assert.AreEqual("C", node.Edges[2].Destination);
+            Assert.AreEqual("A", node.Edges[0].DestinationId);
+            Assert.AreEqual("B", node.Edges[1].DestinationId);
+            Assert.AreEqual("C", node.Edges[2].DestinationId);
             Assert.AreSame(node, stance.Root);
         }
 
@@ -159,66 +152,78 @@ namespace ArkhamCombat.Tests
             Assert.AreEqual("N", node.Id);
             Assert.IsFalse(stance.TryGetNode(null, out _));
         }
+
+        private static List<string> ValidationErrors(Stance stance)
+        {
+            List<string> errors = new List<string>();
+            stance.Validate(errors);
+            return errors;
+        }
     }
 
     public class VariantPolicyTests
     {
-        private AttackDefinition left;
-        private AttackDefinition right;
+        private const int TargetOnTheLeft = -1;
+        private const int TargetOnTheRight = 1;
+        private const int TargetSideUnknown = 0;
+
+        private AttackDefinition leftJab;
+        private AttackDefinition rightJab;
 
         [SetUp]
         public void SetUp()
         {
-            left = Attack("Jab_L");
-            right = Attack("Jab_R");
+            leftJab = Attack("Jab_L");
+            rightJab = Attack("Jab_R");
         }
 
-        private VariantPickContext Context(AttackDefinition last, int side, int seed = 1) => new VariantPickContext(last, side, new Random(seed));
+        private static VariantPickContext PickContext(AttackDefinition lastPicked, int targetSide, int randomSeed = 1) =>
+            new VariantPickContext(lastPicked, targetSide, new Random(randomSeed));
 
         [Test]
         public void NoRepeat_NeverPicksTheLastAttack_WhenThereIsAChoice()
         {
-            VariantPool pool = new VariantPool(new NoRepeatPolicy(), left, right);
-            AttackDefinition last = left;
+            VariantPool pool = new VariantPool(new NoRepeatPolicy(), leftJab, rightJab);
+            AttackDefinition lastPicked = leftJab;
 
-            for (int i = 0; i < 50; i++)
+            for (int seed = 0; seed < 50; seed++)
             {
-                AttackDefinition pick = pool.Pick(Context(last, 0, i));
-                Assert.AreNotSame(last, pick, $"pick {i} repeated");
-                last = pick;
+                AttackDefinition picked = pool.Pick(PickContext(lastPicked, TargetSideUnknown, seed));
+                Assert.AreNotSame(lastPicked, picked, $"pick {seed} repeated the previous attack");
+                lastPicked = picked;
             }
         }
 
         [Test]
         public void NoRepeat_WithASingleEntry_ReturnsItEveryTime()
         {
-            VariantPool pool = new VariantPool(new NoRepeatPolicy(), left);
+            VariantPool pool = new VariantPool(new NoRepeatPolicy(), leftJab);
 
-            Assert.AreSame(left, pool.Pick(Context(left, 0)));
+            Assert.AreSame(leftJab, pool.Pick(PickContext(leftJab, TargetSideUnknown)));
         }
 
         [Test]
         public void TargetSide_LeadsWithTheHandNearerTheTarget()
         {
-            VariantPool pool = new VariantPool(new TargetSidePolicy(), left, right);
+            VariantPool pool = new VariantPool(new TargetSidePolicy(), leftJab, rightJab);
 
-            Assert.AreSame(left, pool.Pick(Context(null, -1)));
-            Assert.AreSame(right, pool.Pick(Context(null, 1)));
+            Assert.AreSame(leftJab, pool.Pick(PickContext(null, TargetOnTheLeft)));
+            Assert.AreSame(rightJab, pool.Pick(PickContext(null, TargetOnTheRight)));
         }
 
         [Test]
         public void TargetSide_WithNoSideKnown_FallsBackToNoRepeat()
         {
-            VariantPool pool = new VariantPool(new TargetSidePolicy(), left, right);
+            VariantPool pool = new VariantPool(new TargetSidePolicy(), leftJab, rightJab);
 
-            Assert.AreSame(right, pool.Pick(Context(left, 0)));
-            Assert.AreSame(left, pool.Pick(Context(right, 0)));
+            Assert.AreSame(rightJab, pool.Pick(PickContext(leftJab, TargetSideUnknown)));
+            Assert.AreSame(leftJab, pool.Pick(PickContext(rightJab, TargetSideUnknown)));
         }
 
         [Test]
         public void AnEmptyPool_PicksNull()
         {
-            Assert.IsNull(new VariantPool(new RandomPolicy()).Pick(Context(null, 0)));
+            Assert.IsNull(new VariantPool(new RandomPolicy()).Pick(PickContext(null, TargetSideUnknown)));
         }
     }
 }

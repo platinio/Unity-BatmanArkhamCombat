@@ -26,7 +26,7 @@ MonoBehaviour:
         function: {fileID: 0}
         arguments: []
       priority: 2
-      destination: S1
+      destinationId: S1
   - id: S1
     attack: {fileID: 0}
     pool:
@@ -41,7 +41,7 @@ MonoBehaviour:
         function: {fileID: 0}
         arguments: []
       priority: 0
-      destination: S2
+      destinationId: S2
   - id: S2
     attack: {fileID: 11400000, guid: 5913c62127663b34ab776301bee1c4c5, type: 2}
     pool:
@@ -54,7 +54,7 @@ MonoBehaviour:
         function: {fileID: 0}
         arguments: []
       priority: 0
-      destination: S3
+      destinationId: S3
   - id: S3
     attack: {fileID: 11400000, guid: 7dacb37d8f457a14899983f70b227388, type: 2}
     pool:
@@ -67,7 +67,7 @@ MonoBehaviour:
         function: {fileID: 0}
         arguments: []
       priority: 0
-      destination: S1
+      destinationId: S1
   globalEdges: []
   chainResetSeconds: 0.6
   references:

@@ -9,159 +9,162 @@ namespace ArkhamCombat.Tests
 {
     public class ComboResolverTests
     {
+        private const float InsideTheEvadeWindow = 0.1f;
+        private const float AfterTheEvadeWindow = 0.5f;
+        private const float InsideTheComboWindow = 0.6f;
+        private const float AfterTheComboWindow = 0.95f;
+        private const float EarlyInTheAttack = 0.1f;
+
         private AttackDefinition jab;
         private Stance stance;
-        private ChainNode neutral;
-        private ChainNode s1;
+        private ChainNode neutralNode;
+        private ChainNode firstStrikeNode;
         private IntentBuffer intents;
         private CombatContext context;
-        private FakeConditions conditions;
+        private RecordingConditions conditions;
         private ComboResolver resolver;
 
         [SetUp]
         public void SetUp()
         {
-            jab = Attack("Jab", cancelEvade: new Window(0f, 0.3f));
-            neutral = new ChainNode("Neutral", (AttackDefinition)null,
-                new Edge(IntentKind.Strike, "GlideKick", 1),
-                new Edge(IntentKind.Strike, "S1", 2));
-            s1 = new ChainNode("S1", jab,
-                new Edge(IntentKind.Strike, "Takedown", 1),
-                new Edge(IntentKind.Strike, "S2", 2));
+            jab = Attack("Jab", evadeWindow: new Window(0f, 0.3f));
+            neutralNode = NodeWithNothingToPlay("Neutral",
+                new Edge(IntentKind.Strike, "GlideKick", priority: 1),
+                new Edge(IntentKind.Strike, "S1", priority: 2));
+            firstStrikeNode = new ChainNode("S1", jab,
+                new Edge(IntentKind.Strike, "Takedown", priority: 1),
+                new Edge(IntentKind.Strike, "S2", priority: 2));
 
             stance = Stance("Neutral",
                 new[]
                 {
-                    neutral, s1,
+                    neutralNode, firstStrikeNode,
                     new ChainNode("S2", jab), new ChainNode("GlideKick", jab), new ChainNode("Takedown", jab),
                     new ChainNode("CounterNode", jab), new ChainNode("EvadeNode", jab), new ChainNode("StunNode", jab)
                 },
                 new[]
                 {
-                    new Edge(IntentKind.Counter, "CounterNode", 0),
-                    new Edge(IntentKind.Evade, "EvadeNode", 1),
-                    new Edge(IntentKind.Stun, "StunNode", 2)
+                    new Edge(IntentKind.Counter, "CounterNode", priority: 0),
+                    new Edge(IntentKind.Evade, "EvadeNode", priority: 1),
+                    new Edge(IntentKind.Stun, "StunNode", priority: 2)
                 });
 
-            intents = Buffer();
+            intents = IntentBufferKeepingPressesFor();
             context = new CombatContext();
-            conditions = new FakeConditions();
+            conditions = new RecordingConditions();
             resolver = new ComboResolver(conditions);
         }
 
-        private Resolution Resolve(ChainNode node, AttackDefinition attack = null, float t = 0f, bool followUps = true) =>
-            resolver.Resolve(stance, new ResolveInput(node, attack, t, followUps, isPlaying: attack != null), intents, context);
-
         [Test]
-        public void EdgesAreTriedInPriorityOrder_AndAFailedConditionFallsThrough()
+        public void EdgesAreTriedInPriorityOrder_AndAFailedConditionMovesOnToTheNextEdge()
         {
             conditions.Deny("GlideKick");
-            intents.Push(IntentKind.Strike, Vector2.zero);
+            Press(IntentKind.Strike);
 
-            Resolution result = Resolve(neutral);
+            Resolution result = ResolveIdleAt(neutralNode);
 
             Assert.AreEqual("S1", result.Destination.Id);
             Assert.IsFalse(result.IsInterrupt);
-            Assert.AreEqual("GlideKick", conditions.Asked[0].Destination, "the lower priority edge was asked first");
+            Assert.AreEqual("GlideKick", conditions.AskedEdges[0].DestinationId, "the edge with the lower priority number is asked first");
         }
 
         [Test]
         public void TheFirstEdgeWhoseConditionPasses_Wins()
         {
-            intents.Push(IntentKind.Strike, Vector2.zero);
+            Press(IntentKind.Strike);
 
-            Assert.AreEqual("Takedown", Resolve(s1, jab, 0.6f).Destination.Id);
+            Assert.AreEqual("Takedown", ResolveWhilePlaying(firstStrikeNode, jab, InsideTheComboWindow).Destination.Id);
         }
 
         [Test]
         public void AnInterrupt_IsTakenBeforeAnyFollowUp()
         {
-            intents.Push(IntentKind.Strike, Vector2.zero);
-            intents.Push(IntentKind.Stun, Vector2.zero);
+            Press(IntentKind.Strike);
+            Press(IntentKind.Stun);
 
-            Resolution result = Resolve(s1, jab, 0.6f);
+            Resolution result = ResolveWhilePlaying(firstStrikeNode, jab, InsideTheComboWindow);
 
             Assert.AreEqual("StunNode", result.Destination.Id);
             Assert.IsTrue(result.IsInterrupt);
-            Assert.AreEqual(IntentKind.Stun, result.Consumed.Kind);
-            Assert.IsNotNull(intents.PeekNewest(IntentKind.Strike), "the strike is still queued");
+            Assert.AreEqual(IntentKind.Stun, result.ConsumedIntent.Kind);
+            Assert.IsNotNull(intents.FindNewest(IntentKind.Strike), "the strike is still queued");
         }
 
         [Test]
-        public void AnIntentThatArrivesWhileTheWindowIsClosed_SurvivesAndMatchesAtTheRoot()
+        public void APressAfterTheComboWindow_StaysQueued_AndMatchesOnceBackAtTheRoot()
         {
-            intents.Push(IntentKind.Strike, Vector2.zero);
+            Press(IntentKind.Strike);
 
-            Resolution closed = Resolve(s1, jab, 0.95f, followUps: false);
-            Assert.IsFalse(closed.Matched);
-            Assert.AreEqual(1, intents.Entries.Count, "nothing was consumed");
+            Resolution afterTheComboWindow = ResolveWhilePlaying(firstStrikeNode, jab, AfterTheComboWindow, canContinueCombo: false);
+            Assert.IsFalse(afterTheComboWindow.HasMatch);
+            Assert.AreEqual(1, intents.Queued.Count, "nothing was consumed");
 
-            Resolution atRoot = resolver.Resolve(stance, ResolveInput.Idle(neutral), intents, context);
-            Assert.AreEqual("GlideKick", atRoot.Destination.Id);
-            Assert.AreEqual(0, intents.Entries.Count);
+            Resolution atTheRoot = ResolveIdleAt(neutralNode);
+            Assert.AreEqual("GlideKick", atTheRoot.Destination.Id);
+            Assert.AreEqual(0, intents.Queued.Count);
         }
 
         [Test]
-        public void ExactlyOneIntent_IsConsumedPerResolve()
+        public void EachResolve_ConsumesExactlyOnePress()
         {
-            intents.Push(IntentKind.Strike, Vector2.zero);
-            intents.Push(IntentKind.Strike, Vector2.zero);
-            intents.Push(IntentKind.Strike, Vector2.zero);
+            Press(IntentKind.Strike);
+            Press(IntentKind.Strike);
+            Press(IntentKind.Strike);
 
-            Assert.IsTrue(Resolve(neutral).Matched);
-            Assert.AreEqual(2, intents.Entries.Count);
+            Assert.IsTrue(ResolveIdleAt(neutralNode).HasMatch);
+            Assert.AreEqual(2, intents.Queued.Count);
         }
 
         [Test]
-        public void TheNewestIntentOfAKind_IsTheOneConsumed()
+        public void TheNewestPressOfAKind_IsTheOneConsumed()
         {
             Intent older = intents.Push(IntentKind.Strike, Vector2.left);
             Intent newer = intents.Push(IntentKind.Strike, Vector2.right);
 
-            Resolution result = Resolve(neutral);
+            Resolution result = ResolveIdleAt(neutralNode);
 
-            Assert.AreSame(newer, result.Consumed);
-            Assert.AreSame(older, intents.Entries[0]);
+            Assert.AreSame(newer, result.ConsumedIntent);
+            Assert.AreSame(older, intents.Queued[0]);
         }
 
         [Test]
-        public void Evade_IsGatedByTheCurrentAttacksEvadeWindow()
+        public void Evade_IsOnlyAllowedInsideTheCurrentAttacksEvadeWindow()
         {
-            intents.Push(IntentKind.Evade, Vector2.zero);
+            Press(IntentKind.Evade);
 
-            Assert.IsFalse(Resolve(s1, jab, 0.5f).Matched, "outside the evade window");
-            Assert.AreEqual(1, intents.Entries.Count, "a gated edge consumes nothing");
-            Assert.AreEqual("EvadeNode", Resolve(s1, jab, 0.1f).Destination.Id);
+            Assert.IsFalse(ResolveWhilePlaying(firstStrikeNode, jab, AfterTheEvadeWindow).HasMatch, "after the evade window");
+            Assert.AreEqual(1, intents.Queued.Count, "an edge that is not allowed consumes nothing");
+            Assert.AreEqual("EvadeNode", ResolveWhilePlaying(firstStrikeNode, jab, InsideTheEvadeWindow).Destination.Id);
         }
 
         [Test]
         public void Evade_IsNotAllowed_WhileAPlainActionPlays()
         {
-            intents.Push(IntentKind.Evade, Vector2.zero);
+            Press(IntentKind.Evade);
 
-            Resolution result = resolver.Resolve(stance, new ResolveInput(s1, null, 0.1f, false, isPlaying: true), intents, context);
+            Resolution result = ResolveWhilePlaying(firstStrikeNode, attack: null, InsideTheEvadeWindow, canContinueCombo: false);
 
-            Assert.IsFalse(result.Matched, "a reaction with no evade window cannot be evaded out of");
-            Assert.AreEqual(1, intents.Entries.Count);
+            Assert.IsFalse(result.HasMatch, "a reaction has no evade window, so it cannot be evaded out of");
+            Assert.AreEqual(1, intents.Queued.Count);
         }
 
         [Test]
         public void Evade_IsAlwaysAllowed_WhenNothingPlays()
         {
-            intents.Push(IntentKind.Evade, Vector2.zero);
+            Press(IntentKind.Evade);
 
-            Assert.AreEqual("EvadeNode", Resolve(neutral).Destination.Id);
+            Assert.AreEqual("EvadeNode", ResolveIdleAt(neutralNode).Destination.Id);
         }
 
         [Test]
-        public void Counter_IsGatedByTheTelegraphFact()
+        public void Counter_IsOnlyAllowedWhileTheIncomingAttackIsCounterable()
         {
-            intents.Push(IntentKind.Counter, Vector2.zero);
+            Press(IntentKind.Counter);
 
-            Assert.IsFalse(Resolve(s1, jab, 0.1f).Matched);
+            Assert.IsFalse(ResolveWhilePlaying(firstStrikeNode, jab, EarlyInTheAttack).HasMatch);
 
-            context.IncomingAttackCounterable = true;
-            Assert.AreEqual("CounterNode", Resolve(s1, jab, 0.1f).Destination.Id);
+            context.IsIncomingAttackCounterable = true;
+            Assert.AreEqual("CounterNode", ResolveWhilePlaying(firstStrikeNode, jab, EarlyInTheAttack).Destination.Id);
         }
 
         [Test]
@@ -169,23 +172,32 @@ namespace ArkhamCombat.Tests
         {
             ChainNode broken = new ChainNode("Broken", jab, new Edge(IntentKind.Strike, "Nowhere"));
             Stance brokenStance = Stance("Broken", new[] { broken });
-            intents.Push(IntentKind.Strike, Vector2.zero);
+            Press(IntentKind.Strike);
 
-            Resolution result = resolver.Resolve(brokenStance, ResolveInput.Idle(broken), intents, context);
+            Resolution result = resolver.Resolve(brokenStance, ComboSituation.Idle(broken), intents, context);
 
-            Assert.IsFalse(result.Matched);
-            Assert.AreEqual(1, intents.Entries.Count);
+            Assert.IsFalse(result.HasMatch);
+            Assert.AreEqual(1, intents.Queued.Count);
         }
 
         [Test]
-        public void NoIntentOfTheRightKind_MeansNoMatch_AndNoConditionAsked()
+        public void AnEdgeWithNoMatchingPress_IsNotAskedAboutItsCondition()
         {
-            intents.Push(IntentKind.Stun, Vector2.zero);
+            Press(IntentKind.Stun);
             conditions.Deny("StunNode");
 
-            Resolve(neutral);
+            ResolveIdleAt(neutralNode);
 
-            Assert.AreEqual(1, conditions.Asked.Count, "only the stun edge had an intent to ask about");
+            Assert.AreEqual(1, conditions.AskedEdges.Count, "only the stun edge had a press to ask about");
         }
+
+        private void Press(IntentKind kind) => intents.Push(kind, Vector2.zero);
+
+        private Resolution ResolveIdleAt(ChainNode node) =>
+            resolver.Resolve(stance, ComboSituation.Idle(node), intents, context);
+
+        /// <summary>A null <paramref name="attack"/> stands for a plain action, such as a reaction.</summary>
+        private Resolution ResolveWhilePlaying(ChainNode node, AttackDefinition attack, float normalizedTime, bool canContinueCombo = true) =>
+            resolver.Resolve(stance, new ComboSituation(node, attack, normalizedTime, canContinueCombo, isPlaying: true), intents, context);
     }
 }

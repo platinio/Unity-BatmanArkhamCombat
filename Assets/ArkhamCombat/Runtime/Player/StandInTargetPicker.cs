@@ -11,6 +11,11 @@ namespace ArkhamCombat.Player
     /// </summary>
     public sealed class StandInTargetPicker : ITargetPicker
     {
+        private const float NegligibleSqrMagnitude = 1e-4f;
+
+        // A target this many degrees off the preferred direction scores as if it were twice as far.
+        private const float AngleThatDoublesTheScore = 90f;
+
         private readonly CombatConfig config;
         private readonly ITargetRoster roster;
 
@@ -24,42 +29,50 @@ namespace ArkhamCombat.Player
         {
             preferredDirection.y = 0f;
 
-            ICombatTarget best = null;
-            float bestScore = float.MaxValue;
+            ICombatTarget bestTarget = null;
+            float lowestScore = float.MaxValue;
 
             IReadOnlyList<ICombatTarget> targets = roster.Targets;
             for (int i = 0; i < targets.Count; i++)
             {
                 ICombatTarget candidate = targets[i];
-                if (candidate == null || !candidate.IsValid)
+                if (TryScore(candidate, origin, preferredDirection, out float score) && score < lowestScore)
                 {
-                    continue;
-                }
-
-                Vector3 toCandidate = candidate.Position - origin;
-                toCandidate.y = 0f;
-
-                float distance = toCandidate.magnitude;
-                if (distance > config.TargetMaxDistance)
-                {
-                    continue;
-                }
-
-                float angle = preferredDirection.sqrMagnitude > 1e-4f ? Vector3.Angle(preferredDirection, toCandidate) : 0f;
-                if (angle > config.TargetMaxAngle)
-                {
-                    continue;
-                }
-
-                float score = distance * (1f + angle / 90f);
-                if (score < bestScore)
-                {
-                    best = candidate;
-                    bestScore = score;
+                    bestTarget = candidate;
+                    lowestScore = score;
                 }
             }
 
-            return best;
+            return bestTarget;
+        }
+
+        /// <summary>Lower is better. False when the candidate is gone, too far, or too far off the preferred direction.</summary>
+        private bool TryScore(ICombatTarget candidate, Vector3 origin, Vector3 preferredDirection, out float score)
+        {
+            score = float.MaxValue;
+            if (candidate == null || !candidate.IsValid)
+            {
+                return false;
+            }
+
+            Vector3 toCandidate = candidate.Position - origin;
+            toCandidate.y = 0f;
+
+            float distance = toCandidate.magnitude;
+            if (distance > config.MaxTargetDistance)
+            {
+                return false;
+            }
+
+            bool hasPreferredDirection = preferredDirection.sqrMagnitude > NegligibleSqrMagnitude;
+            float angle = hasPreferredDirection ? Vector3.Angle(preferredDirection, toCandidate) : 0f;
+            if (angle > config.MaxTargetAngle)
+            {
+                return false;
+            }
+
+            score = distance * (1f + angle / AngleThatDoublesTheScore);
+            return true;
         }
     }
 }

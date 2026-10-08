@@ -11,13 +11,13 @@ namespace ArkhamCombat.Player
     public sealed class SceneTargetRoster : ITargetRoster
     {
         private readonly List<ICombatTarget> targets = new List<ICombatTarget>();
-        private bool scanned;
+        private bool hasScanned;
 
         public IReadOnlyList<ICombatTarget> Targets
         {
             get
             {
-                if (!scanned)
+                if (!hasScanned)
                 {
                     Refresh();
                 }
@@ -37,7 +37,7 @@ namespace ArkhamCombat.Player
                 }
             }
 
-            scanned = true;
+            hasScanned = true;
         }
     }
 }

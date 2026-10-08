@@ -13,6 +13,9 @@ namespace ArkhamCombat.Editor
     [CustomPropertyDrawer(typeof(ChainNodeIdAttribute))]
     public sealed class ChainNodeIdDrawer : PropertyDrawer
     {
+        private const string EmptyIdChoice = "(none)";
+        private const string MissingIdPrefix = "(missing) ";
+
         public override void OnGUI(Rect position, SerializedProperty property, GUIContent label)
         {
             Stance stance = property.serializedObject.targetObject as Stance;
@@ -22,6 +25,32 @@ namespace ArkhamCombat.Editor
                 return;
             }
 
+            DrawNodeIdDropdown(position, property, label, stance);
+        }
+
+        private static void DrawNodeIdDropdown(Rect position, SerializedProperty property, GUIContent label, Stance stance)
+        {
+            string currentId = property.stringValue ?? string.Empty;
+            List<string> choices = NodeIdsOf(stance);
+            int currentIndex = choices.IndexOf(currentId);
+            if (currentIndex < 0)
+            {
+                choices.Insert(0, UnknownIdChoice(currentId));
+                currentIndex = 0;
+            }
+
+            EditorGUI.BeginProperty(position, label, property);
+            int pickedIndex = EditorGUI.Popup(position, label.text, currentIndex, choices.ToArray());
+            if (pickedIndex != currentIndex)
+            {
+                property.stringValue = choices[pickedIndex];
+            }
+
+            EditorGUI.EndProperty();
+        }
+
+        private static List<string> NodeIdsOf(Stance stance)
+        {
             List<string> ids = new List<string>();
             foreach (ChainNode node in stance.Nodes)
             {
@@ -31,22 +60,12 @@ namespace ArkhamCombat.Editor
                 }
             }
 
-            string current = property.stringValue ?? string.Empty;
-            int index = ids.IndexOf(current);
-            if (index < 0)
-            {
-                ids.Insert(0, string.IsNullOrEmpty(current) ? "(none)" : $"(missing) {current}");
-                index = 0;
-            }
+            return ids;
+        }
 
-            EditorGUI.BeginProperty(position, label, property);
-            int picked = EditorGUI.Popup(position, label.text, index, ids.ToArray());
-            if (picked != index)
-            {
-                property.stringValue = ids[picked];
-            }
-
-            EditorGUI.EndProperty();
+        private static string UnknownIdChoice(string id)
+        {
+            return string.IsNullOrEmpty(id) ? EmptyIdChoice : MissingIdPrefix + id;
         }
     }
 }

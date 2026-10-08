@@ -8,45 +8,48 @@ using Zenject;
 namespace ArkhamCombat.Player
 {
     /// <summary>
-    /// Ticks the combat side once per frame, before the character brain ticks the state machine:
-    /// pick a target, publish the facts, run the meter and the runner, and push the state machine
-    /// into Attacking when the runner starts a chain from idle. Leaving the state machine alone
+    /// Runs the combat side once per frame, before the character brain ticks the state machine.
+    /// It only pushes the state machine into Attacking when an action starts; leaving it alone
     /// otherwise is what keeps Locomotion unaware that combat exists. Because this runs first, the
-    /// picker sees the previous frame's stick and a press expires one tick late; at any playable
-    /// frame rate neither is visible.
+    /// target picker sees the previous frame's stick and a press expires one tick late; at any
+    /// playable frame rate neither is visible.
     /// </summary>
     [DefaultExecutionOrder(-10)]
     [RequireComponent(typeof(CharacterBrain))]
     public sealed class CombatBrain : MonoBehaviour
     {
-        private CharacterBrain brain;
+        private const float StickPushedSqrMagnitude = 0.01f;
+
+        private CharacterBrain characterBrain;
         private CharacterMotor motor;
         private ActionRunner runner;
         private CombatContextPublisher publisher;
-        private ITargetPicker picker;
+        private ITargetPicker targetPicker;
         private ComboMeter meter;
 
         public ActionRunner Runner => runner;
+
+        private bool IsCharacterBrainRunning => characterBrain.StateMachine != null && characterBrain.enabled;
 
         [Inject]
         private void Construct(
             CharacterMotor motor,
             ActionRunner runner,
             CombatContextPublisher publisher,
-            ITargetPicker picker,
+            ITargetPicker targetPicker,
             ComboMeter meter)
         {
             this.motor = motor;
             this.runner = runner;
             this.publisher = publisher;
-            this.picker = picker;
+            this.targetPicker = targetPicker;
             this.meter = meter;
         }
 
         private void Awake()
         {
-            // The brain is the one on this object, not whichever one the container found in the scene.
-            brain = GetComponent<CharacterBrain>();
+            // The brain on this object, not whichever one the container found in the scene.
+            characterBrain = GetComponent<CharacterBrain>();
 
             if (runner == null)
             {
@@ -58,41 +61,48 @@ namespace ArkhamCombat.Player
 
         private void Update()
         {
-            CharacterStateMachine machine = brain.StateMachine;
-            if (machine == null || !brain.enabled)
+            if (!IsCharacterBrainRunning)
             {
                 return;
             }
 
             float deltaTime = Time.deltaTime;
 
-            IActionTarget target = picker.Pick(transform.position, PreferredDirection());
-            runner.Target = target;
-            publisher.Publish(target, runner.CurrentAttack);
+            PickTarget();
+            publisher.Publish(runner.Target, runner.CurrentAttack);
             meter.Tick(deltaTime);
-
-            // An idle runner while still in Attacking is recovery, so a queued press continues the chain
-            // without a one-frame trip through Locomotion.
-            bool canStartChain = motor.Ground.IsGrounded
-                                 && (machine.Current is LocomotionState || machine.Current is AttackingState);
-            runner.Tick(deltaTime, transform.position, canStartChain);
-
-            if (runner.IsPlaying && !(machine.Current is AttackingState))
-            {
-                machine.Change<AttackingState>();
-            }
+            runner.Tick(deltaTime, transform.position, CanStartActionFromIdle());
+            EnterAttackingStateWhileAnActionPlays();
         }
+
+        private void PickTarget() => runner.Target = targetPicker.Pick(transform.position, PreferredDirection());
 
         /// <summary>The stick, in the movement frame, while it is pushed; the facing otherwise.</summary>
         private Vector3 PreferredDirection()
         {
-            Vector2 move = brain.Context.Input.Move;
-            if (move.sqrMagnitude > 0.01f)
+            Vector2 move = characterBrain.Context.Input.Move;
+            bool isStickPushed = move.sqrMagnitude > StickPushedSqrMagnitude;
+            if (isStickPushed)
             {
-                return brain.Context.MovementFrame.Frame * new Vector3(move.x, 0f, move.y);
+                return characterBrain.Context.MovementFrame.Frame * new Vector3(move.x, 0f, move.y);
             }
 
             return transform.forward;
         }
+
+        // Attacking counts too: an idle runner while still in Attacking is recovery, so a queued press
+        // continues the combo without a one-frame trip through Locomotion.
+        private bool CanStartActionFromIdle() =>
+            motor.Ground.IsGrounded && (IsInState<LocomotionState>() || IsInState<AttackingState>());
+
+        private void EnterAttackingStateWhileAnActionPlays()
+        {
+            if (runner.IsPlaying && !IsInState<AttackingState>())
+            {
+                characterBrain.StateMachine.Change<AttackingState>();
+            }
+        }
+
+        private bool IsInState<TState>() where TState : ICharacterState => characterBrain.StateMachine.Current is TState;
     }
 }

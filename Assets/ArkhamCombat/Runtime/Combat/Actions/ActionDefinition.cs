@@ -38,7 +38,7 @@ namespace ArkhamCombat.Combat
         /// <summary>Appends every problem to <paramref name="errors"/>. Returns true when there were none.</summary>
         public virtual bool Validate(List<string> errors)
         {
-            int before = errors.Count;
+            int errorCountBefore = errors.Count;
 
             if (duration <= 0f)
             {
@@ -47,25 +47,29 @@ namespace ArkhamCombat.Combat
 
             for (int i = 0; i < cues.Count; i++)
             {
-                PresentationCue cue = cues[i];
-                if (cue == null)
-                {
-                    errors.Add($"'{name}': cue {i} is null.");
-                    continue;
-                }
-
-                if (cue.Kind == null)
-                {
-                    errors.Add($"'{name}': cue {i} has no kind.");
-                }
-
-                if (cue.At < 0f || cue.At > 1f)
-                {
-                    errors.Add($"'{name}': cue {i} fires at {cue.At:0.00}, outside [0, 1].");
-                }
+                ValidateCue(i, cues[i], errors);
             }
 
-            return errors.Count == before;
+            return errors.Count == errorCountBefore;
+        }
+
+        private void ValidateCue(int index, PresentationCue cue, List<string> errors)
+        {
+            if (cue == null)
+            {
+                errors.Add($"'{name}': cue {index} is null.");
+                return;
+            }
+
+            if (cue.Kind == null)
+            {
+                errors.Add($"'{name}': cue {index} has no kind.");
+            }
+
+            if (cue.FiresAt < 0f || cue.FiresAt > 1f)
+            {
+                errors.Add($"'{name}': cue {index} fires at {cue.FiresAt:0.00}, outside [0, 1].");
+            }
         }
     }
 }

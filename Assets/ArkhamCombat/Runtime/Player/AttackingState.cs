@@ -8,7 +8,7 @@ using Zenject;
 namespace ArkhamCombat.Player
 {
     /// <summary>
-    /// The character while an action plays. Movement input never displaces it: the frame's planar
+    /// The character while an action plays. Movement input never moves it: the frame's planar
     /// velocity is whatever the runner's warp produced, and the character turns toward the target.
     /// Gravity is held during the warp so a lunge does not dip. A follow-up is not a state change;
     /// the runner swaps the action and this state keeps ticking, so StateChanged still means
@@ -16,26 +16,30 @@ namespace ArkhamCombat.Player
     /// </summary>
     public sealed class AttackingState : ICharacterState
     {
+        private const float NegligibleDeltaTime = 1e-6f;
+        private const float NegligibleSqrDistance = 1e-4f;
+
         private readonly CharacterContext context;
         private readonly ActionRunner runner;
-        private readonly MotorDisplacementSink displacement;
+        private readonly MotorWarpMover warpMover;
         private readonly CombatConfig config;
 
         public AttackingState(
             CharacterContext context,
             ActionRunner runner,
-            MotorDisplacementSink displacement,
+            MotorWarpMover warpMover,
             CombatConfig config)
         {
             this.context = context;
             this.runner = runner;
-            this.displacement = displacement;
+            this.warpMover = warpMover;
             this.config = config;
         }
 
         public void Enter() { }
 
-        public void Exit() => displacement.Take();
+        // Warp movement left over from this attack must not carry into the next one.
+        public void Exit() => warpMover.TakePendingMovement();
 
         public void Tick(float deltaTime)
         {
@@ -45,49 +49,51 @@ namespace ArkhamCombat.Player
                 return;
             }
 
-            CharacterMotor motor = context.Motor;
-
-            Vector3 delta = displacement.Take();
-            Vector3 velocity = deltaTime > 1e-6f ? delta / deltaTime : Vector3.zero;
-
-            motor.Tick(
+            context.Motor.Tick(
                 new MotionIntent
                 {
-                    PlanarVelocity = velocity,
-                    Rotation = ResolveRotation(deltaTime),
-                    SuppressGravity = runner.WarpOpen
+                    PlanarVelocity = TakeWarpVelocity(deltaTime),
+                    Rotation = TurnTowardTarget(deltaTime),
+                    SuppressGravity = runner.IsWarpWindowOpen
                 },
                 deltaTime);
         }
 
-        /// <summary>Faces the target while one is valid, otherwise holds the current heading.</summary>
-        private Quaternion ResolveRotation(float deltaTime)
+        private Vector3 TakeWarpVelocity(float deltaTime)
+        {
+            Vector3 warpMovement = warpMover.TakePendingMovement();
+            return deltaTime > NegligibleDeltaTime ? warpMovement / deltaTime : Vector3.zero;
+        }
+
+        /// <summary>Turns toward the target while one is valid, otherwise holds the current heading.</summary>
+        private Quaternion TurnTowardTarget(float deltaTime)
         {
             IActionTarget target = runner.Target;
-            Quaternion current = context.Transform.rotation;
+            Quaternion currentRotation = context.Transform.rotation;
 
             if (target == null || !target.IsValid)
             {
-                return current;
+                return currentRotation;
             }
 
             Vector3 toTarget = target.Position - context.Transform.position;
             toTarget.y = 0f;
-            if (toTarget.sqrMagnitude < 1e-4f)
+            bool isStandingOnTarget = toTarget.sqrMagnitude < NegligibleSqrDistance;
+            if (isStandingOnTarget)
             {
-                return current;
+                return currentRotation;
             }
 
-            float targetYaw = Mathf.Atan2(toTarget.x, toTarget.z) * Mathf.Rad2Deg;
-            float yaw = Mathf.SmoothDampAngle(
+            float yawToTarget = Mathf.Atan2(toTarget.x, toTarget.z) * Mathf.Rad2Deg;
+            float smoothedYaw = Mathf.SmoothDampAngle(
                 context.Transform.eulerAngles.y,
-                targetYaw,
+                yawToTarget,
                 ref context.TurnVelocity,
-                config.FaceTurnSmoothTime,
+                config.FaceTargetSmoothTime,
                 float.MaxValue,
                 deltaTime);
 
-            return Quaternion.Euler(0f, yaw, 0f);
+            return Quaternion.Euler(0f, smoothedYaw, 0f);
         }
     }
 

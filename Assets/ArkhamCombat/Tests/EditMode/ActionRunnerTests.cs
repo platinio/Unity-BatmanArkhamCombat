@@ -8,57 +8,63 @@ namespace ArkhamCombat.Tests
 {
     public class ActionRunnerTests
     {
+        // Both attacks last one second, so seconds played and normalized time are the same number.
+        private const float AttackSeconds = 1f;
+        private const float TickSeconds = 0.1f;
+        private const float ChainResetSeconds = 0.5f;
+        private const float PressLifetimeSeconds = 10f;
+        private const float StrikeDistance = 1f;
+        private const float MaxLunge = 4f;
+
+        private static readonly Window HitWindow = new Window(0.3f, 0.5f);
+        private static readonly Window ComboWindow = new Window(0.5f, 0.9f);
+        private static readonly Window WarpWindow = new Window(0f, 0.3f);
+        private static readonly Window JabEvadeWindow = new Window(0f, 0.6f);
+        private static readonly Window CrossEvadeWindow = new Window(0f, 0.3f);
+
         private AttackDefinition jab;
         private AttackDefinition cross;
         private Stance stance;
         private IntentBuffer intents;
         private CombatContext context;
         private NullPresentationDriver driver;
-        private RecordingSink sink;
-        private RecordingHits hits;
+        private RecordingWarpMover warpMover;
+        private RecordingHitWindowListener hitWindowListener;
         private RecordingEvents events;
 
         [SetUp]
         public void SetUp()
         {
-            jab = Attack("Jab", 1f, new Window(0.3f, 0.5f), new Window(0.5f, 0.9f), new Window(0f, 0.6f), new Window(0f, 0.3f), 1f, 4f);
-            cross = Attack("Cross", 1f, new Window(0.3f, 0.5f), new Window(0.5f, 0.9f), new Window(0f, 0.3f), new Window(0f, 0.3f), 1f, 4f);
+            jab = Attack("Jab", AttackSeconds, HitWindow, ComboWindow, JabEvadeWindow, WarpWindow, StrikeDistance, MaxLunge);
+            cross = Attack("Cross", AttackSeconds, HitWindow, ComboWindow, CrossEvadeWindow, WarpWindow, StrikeDistance, MaxLunge);
+
+            // The evade node reuses the cross: any action shows that the evade started.
             stance = Stance("Neutral",
                 new[]
                 {
-                    new ChainNode("Neutral", (AttackDefinition)null, new Edge(IntentKind.Strike, "S1")),
+                    NodeWithNothingToPlay("Neutral", new Edge(IntentKind.Strike, "S1")),
                     new ChainNode("S1", jab, new Edge(IntentKind.Strike, "S2")),
                     new ChainNode("S2", cross, new Edge(IntentKind.Strike, "S1")),
                     new ChainNode("Evade", cross)
                 },
                 new[] { new Edge(IntentKind.Evade, "Evade") },
-                chainResetSeconds: 0.5f);
+                ChainResetSeconds);
 
-            intents = Buffer(lifetime: 10f);
+            intents = IntentBufferKeepingPressesFor(PressLifetimeSeconds);
             context = new CombatContext();
             driver = new NullPresentationDriver();
-            sink = new RecordingSink();
-            hits = new RecordingHits();
+            warpMover = new RecordingWarpMover();
+            hitWindowListener = new RecordingHitWindowListener();
             events = new RecordingEvents();
         }
 
-        private ActionRunner Runner() => new ActionRunner(stance, intents, context, new AlwaysConditionEvaluator(), driver, sink, hits, events);
-
-        private static void Tick(ActionRunner runner, int ticks, float dt = 0.1f, bool canStart = true)
-        {
-            for (int i = 0; i < ticks; i++)
-            {
-                runner.Tick(dt, Vector3.zero, canStart);
-            }
-        }
-
         [Test]
-        public void AStrikeWhileIdle_StartsTheChainFromTheRoot()
+        public void AStrikeWhileIdle_StartsTheComboFromTheRoot()
         {
-            ActionRunner runner = Runner();
-            intents.Push(IntentKind.Strike, Vector2.zero);
+            ActionRunner runner = CreateRunner();
+            Press(IntentKind.Strike);
 
-            Tick(runner, 1);
+            Tick(runner);
 
             Assert.IsTrue(runner.IsPlaying);
             Assert.AreSame(jab, runner.CurrentAction);
@@ -67,216 +73,205 @@ namespace ArkhamCombat.Tests
         }
 
         [Test]
-        public void NothingStarts_WhenTheCharacterMayNotStartAChain()
+        public void NoActionStarts_WhileTheCharacterCannotStartFromIdle()
         {
-            ActionRunner runner = Runner();
-            intents.Push(IntentKind.Strike, Vector2.zero);
+            ActionRunner runner = CreateRunner();
+            Press(IntentKind.Strike);
 
-            Tick(runner, 3, canStart: false);
+            Tick(runner, 3, canStartFromIdle: false);
 
             Assert.IsFalse(runner.IsPlaying);
-            Assert.AreEqual(1, intents.Entries.Count, "the press is kept for when control returns");
+            Assert.AreEqual(1, intents.Queued.Count, "the press waits until the character can act again");
         }
 
         [Test]
-        public void TheActiveWindow_ArmsOnceAndDisarmsOnce()
+        public void TheHitWindow_OpensOnceAndClosesOnce()
         {
-            ActionRunner runner = Runner();
-            intents.Push(IntentKind.Strike, Vector2.zero);
+            ActionRunner runner = CreateRunner();
+            StartJab(runner);
 
-            Tick(runner, 1);
-            Tick(runner, 2);
-            Assert.AreEqual(0, hits.Armed, "t 0.2: not yet");
+            TickFor(runner, 0.2f);
+            Assert.AreEqual(0, hitWindowListener.OpenedCount, "at 0.2 the hit window has not opened yet");
 
-            Tick(runner, 1);
-            Assert.AreEqual(1, hits.Armed, "t 0.3: armed");
-            Assert.IsTrue(runner.HitArmed);
-            Assert.AreSame(jab, hits.LastAttack);
+            TickFor(runner, 0.1f);
+            Assert.AreEqual(1, hitWindowListener.OpenedCount, "at 0.3 the hit window opens");
+            Assert.IsTrue(runner.IsHitWindowOpen);
+            Assert.AreSame(jab, hitWindowListener.LastOpenedFor);
 
-            Tick(runner, 1);
-            Assert.AreEqual(0, hits.Disarmed, "t 0.4: still armed");
+            TickFor(runner, 0.1f);
+            Assert.AreEqual(0, hitWindowListener.ClosedCount, "at 0.4 the hit window is still open");
 
-            Tick(runner, 1);
-            Assert.AreEqual(1, hits.Disarmed, "t 0.5: disarmed");
+            TickFor(runner, 0.1f);
+            Assert.AreEqual(1, hitWindowListener.ClosedCount, "at 0.5 the hit window closes");
 
-            Tick(runner, 10);
-            Assert.AreEqual(1, hits.Armed);
-            Assert.AreEqual(1, hits.Disarmed);
+            TickFor(runner, AttackSeconds);
+            Assert.AreEqual(1, hitWindowListener.OpenedCount);
+            Assert.AreEqual(1, hitWindowListener.ClosedCount);
         }
 
         [Test]
-        public void AnInterrupt_DisarmsTheHitbox_AndStartsTheDestinationImmediately()
+        public void AnEvade_InterruptsTheAttack_ClosesItsHitWindow_AndStartsAtOnce()
         {
-            ActionRunner runner = Runner();
-            intents.Push(IntentKind.Strike, Vector2.zero);
-            Tick(runner, 1);
-            Tick(runner, 3);
-            Assert.IsTrue(hits.IsArmed, "t 0.3: armed before the interrupt");
+            ActionRunner runner = CreateRunner();
+            StartJab(runner);
+            TickFor(runner, HitWindow.Start);
+            Assert.IsTrue(hitWindowListener.IsOpen, "at 0.3 the hit window is open before the evade");
 
-            intents.Push(IntentKind.Evade, Vector2.zero);
-            Tick(runner, 1);
+            Press(IntentKind.Evade);
+            Tick(runner);
 
-            Assert.IsFalse(hits.IsArmed, "nothing stays armed behind the move that was cut");
-            Assert.IsFalse(runner.HitArmed);
+            Assert.IsFalse(hitWindowListener.IsOpen, "the hit window never stays open behind the interrupted attack");
+            Assert.IsFalse(runner.IsHitWindowOpen);
             Assert.AreSame(cross, runner.CurrentAction);
             Assert.AreEqual("Evade", runner.CurrentNode.Id);
-            Assert.AreEqual(0f, driver.NormalizedTime, 1e-5f, "the destination started from zero");
-            CollectionAssert.Contains(events.Log, "cut Jab");
-            CollectionAssert.Contains(events.Log, "interrupt Cross");
+            Assert.AreEqual(0f, driver.NormalizedTime, 1e-5f, "the evade starts from its beginning");
+            CollectionAssert.Contains(events.Log, "interrupted Jab");
+            CollectionAssert.Contains(events.Log, "interrupt with Cross");
         }
 
         [Test]
-        public void AnEvadeOutsideItsWindow_DoesNotInterrupt()
+        public void AnEvadeAfterTheEvadeWindow_DoesNotInterrupt()
         {
-            ActionRunner runner = Runner();
-            intents.Push(IntentKind.Strike, Vector2.zero);
-            Tick(runner, 1);
-            Tick(runner, 7);
-            intents.Push(IntentKind.Evade, Vector2.zero);
+            ActionRunner runner = CreateRunner();
+            StartJab(runner);
+            const float afterTheJabsEvadeWindow = 0.7f;
+            TickFor(runner, afterTheJabsEvadeWindow);
+            Press(IntentKind.Evade);
 
-            Tick(runner, 1);
+            Tick(runner);
 
             Assert.AreSame(jab, runner.CurrentAction);
         }
 
         [Test]
-        public void AFollowUp_IsTakenOnlyWhileTheCancelWindowIsOpen()
+        public void AFollowUp_IsTakenOnlyWhileTheComboWindowIsOpen()
         {
-            ActionRunner runner = Runner();
-            intents.Push(IntentKind.Strike, Vector2.zero);
-            Tick(runner, 1);
-            intents.Push(IntentKind.Strike, Vector2.zero);
+            ActionRunner runner = CreateRunner();
+            StartJab(runner);
+            Press(IntentKind.Strike);
 
-            Tick(runner, 4);
-            Assert.AreSame(jab, runner.CurrentAction, "t 0.4: cancel window closed, the press waits");
+            TickFor(runner, 0.4f);
+            Assert.AreSame(jab, runner.CurrentAction, "at 0.4 the combo window is not open yet, so the press waits");
 
-            Tick(runner, 1);
-            Assert.AreSame(cross, runner.CurrentAction, "t 0.5: the cancel window opened and the press was spent");
+            TickFor(runner, 0.1f);
+            Assert.AreSame(cross, runner.CurrentAction, "at 0.5 the combo window opens and the press is spent");
             Assert.AreEqual("S2", runner.CurrentNode.Id);
-            Assert.AreEqual(0, intents.Entries.Count);
+            Assert.AreEqual(0, intents.Queued.Count);
 
             CollectionAssert.Contains(events.Log, "end Jab");
-            CollectionAssert.DoesNotContain(events.Log, "cut Jab");
-            ActionTrace.Record jabRecord = runner.Trace.Records[runner.Trace.Records.Count - 2];
-            Assert.IsFalse(jabRecord.Interrupted, "a follow-up is a cancel the move allowed, not an interrupt");
+            CollectionAssert.DoesNotContain(events.Log, "interrupted Jab");
+            ActionTrace.Record jabRecord = RecordBeforeTheLatest(runner);
+            Assert.IsFalse(jabRecord.WasInterrupted, "the jab allowed the follow-up, so it was not interrupted");
             Assert.AreEqual(0.5f, jabRecord.EndedAt, 1e-5f);
         }
 
         [Test]
-        public void APressWhileTheCancelWindowIsAlreadyOpen_IsTakenOnTheNextTick()
+        public void APressWhileTheComboWindowIsAlreadyOpen_IsTakenOnTheNextTick()
         {
-            ActionRunner runner = Runner();
-            intents.Push(IntentKind.Strike, Vector2.zero);
-            Tick(runner, 1);
-            Tick(runner, 7);
-            Assert.IsTrue(runner.CancelWindowOpen, "t 0.7: inside the cancel window");
+            ActionRunner runner = CreateRunner();
+            StartJab(runner);
+            const float insideTheComboWindow = 0.7f;
+            TickFor(runner, insideTheComboWindow);
+            Assert.IsTrue(runner.IsComboWindowOpen, "at 0.7 the combo window is open");
 
-            intents.Push(IntentKind.Strike, Vector2.zero);
-            Tick(runner, 1);
+            Press(IntentKind.Strike);
+            Tick(runner);
 
-            Assert.AreSame(cross, runner.CurrentAction, "the resolver is asked every tick the window stays open");
+            Assert.AreSame(cross, runner.CurrentAction, "the resolver is asked on every tick while the window is open");
         }
 
         [Test]
         public void Interrupt_FromCode_ReplacesTheRunningAction()
         {
-            ActionRunner runner = Runner();
-            intents.Push(IntentKind.Strike, Vector2.zero);
-            Tick(runner, 4);
-            Assert.IsTrue(hits.IsArmed);
+            ActionRunner runner = CreateRunner();
+            StartJab(runner);
+            TickFor(runner, HitWindow.Start);
+            Assert.IsTrue(hitWindowListener.IsOpen);
             stance.TryGetNode("Evade", out ChainNode evade);
 
             runner.Interrupt(evade, Vector3.zero);
 
-            Assert.IsFalse(hits.IsArmed);
+            Assert.IsFalse(hitWindowListener.IsOpen);
             Assert.AreSame(cross, runner.CurrentAction);
             Assert.AreEqual("Evade", runner.CurrentNode.Id);
-            CollectionAssert.Contains(events.Log, "cut Jab");
-            CollectionAssert.Contains(events.Log, "interrupt Cross");
+            CollectionAssert.Contains(events.Log, "interrupted Jab");
+            CollectionAssert.Contains(events.Log, "interrupt with Cross");
         }
 
         [Test]
-        public void ClipEnd_WithNoFollowUp_HandsBackToIdle_AndKeepsTheNodeForTheResetTime()
+        public void AnAttackEndingWithoutAFollowUp_GoesIdle_AndKeepsItsPlaceInTheComboUntilTheResetTime()
         {
-            ActionRunner runner = Runner();
-            intents.Push(IntentKind.Strike, Vector2.zero);
-            Tick(runner, 1);
-            Tick(runner, 10);
+            ActionRunner runner = CreateRunner();
+            StartJab(runner);
+            TickFor(runner, AttackSeconds);
 
             Assert.IsFalse(runner.IsPlaying);
             Assert.AreEqual("end Jab", events.Log[events.Log.Count - 1]);
-            Assert.AreEqual("S1", runner.CurrentNode.Id, "within chainResetSeconds the position is kept");
+            Assert.AreEqual("S1", runner.CurrentNode.Id, "until the reset time passes, the combo keeps its place");
 
-            Tick(runner, 5, canStart: false);
-            Assert.AreEqual("Neutral", runner.CurrentNode.Id, "after chainResetSeconds the position collapsed to the root");
+            TickFor(runner, ChainResetSeconds, canStartFromIdle: false);
+            Assert.AreEqual("Neutral", runner.CurrentNode.Id, "after the reset time the combo starts over at the root");
         }
 
         [Test]
-        public void APressDuringRecovery_StartsTheNextChain_FromTheKeptNode()
+        public void AStrikeAfterTheComboWindow_ContinuesTheComboOnceTheAttackEnds()
         {
-            ActionRunner runner = Runner();
-            intents.Push(IntentKind.Strike, Vector2.zero);
-            Tick(runner, 1);
-            Tick(runner, 9);
-            intents.Push(IntentKind.Strike, Vector2.zero);
+            ActionRunner runner = CreateRunner();
+            StartJab(runner);
+            TickFor(runner, ComboWindow.End);
+            Press(IntentKind.Strike);
 
-            Tick(runner, 1);
-            Assert.IsFalse(runner.IsPlaying, "t 1.0: the jab ended; the press arrived after the cancel window");
+            Tick(runner);
+            Assert.IsFalse(runner.IsPlaying, "at 1.0 the jab has ended; the press came after the combo window closed");
 
-            Tick(runner, 1);
-            Assert.AreSame(cross, runner.CurrentAction, "idle at S1: the press continues the chain");
+            Tick(runner);
+            Assert.AreSame(cross, runner.CurrentAction, "idle at S1, the press continues the combo");
         }
 
         [Test]
-        public void WithAZeroResetTime_ClipEndReturnsToTheRoot()
+        public void WithAZeroResetTime_TheComboStartsOverAsSoonAsTheAttackEnds()
         {
             stance.Configure("Neutral", stance.Nodes, stance.GlobalEdges, chainResetSeconds: 0f);
-            ActionRunner runner = Runner();
-            intents.Push(IntentKind.Strike, Vector2.zero);
-            Tick(runner, 1);
-            Tick(runner, 10);
+            ActionRunner runner = CreateRunner();
+            StartJab(runner);
+            TickFor(runner, AttackSeconds);
 
-            Tick(runner, 1, canStart: false);
+            Tick(runner, canStartFromIdle: false);
+
             Assert.AreEqual("Neutral", runner.CurrentNode.Id);
         }
 
         [Test]
-        public void TheWarp_ArrivesAtStrikeDistance_WhenTheWindowCloses()
+        public void TheWarp_ArrivesAtStrikeDistance_WhenTheWarpWindowCloses()
         {
-            ActionRunner runner = Runner();
+            ActionRunner runner = CreateRunner();
             runner.Target = new PointTarget(new Vector3(0f, 0f, 3f));
-            intents.Push(IntentKind.Strike, Vector2.zero);
+            StartJab(runner);
 
-            Tick(runner, 1);
             Vector3 position = Vector3.zero;
-            for (int i = 0; i < 3; i++)
+            for (int i = 0; i < TicksIn(WarpWindow.End); i++)
             {
-                sink.Total = Vector3.zero;
-                runner.Tick(0.1f, position, true);
-                position += sink.Total;
+                position = TickAndFollowTheWarp(runner, position);
             }
 
-            Assert.AreEqual(2f, position.z, 1e-3f, "stopped strikeDistance short of the target");
-            Assert.IsFalse(runner.WarpOpen);
-            Assert.IsFalse(runner.WarpRefused);
+            Assert.AreEqual(2f, position.z, 1e-3f, "stopped one strike distance short of the target");
+            Assert.IsFalse(runner.IsWarpWindowOpen);
+            Assert.IsFalse(runner.WasWarpRefused);
         }
 
         [Test]
         public void TheWarp_ReAimsEveryTick_WhenTheTargetMoves()
         {
-            ActionRunner runner = Runner();
+            ActionRunner runner = CreateRunner();
             PointTarget target = new PointTarget(new Vector3(0f, 0f, 3f));
             runner.Target = target;
-            intents.Push(IntentKind.Strike, Vector2.zero);
+            StartJab(runner);
 
-            Tick(runner, 1);
             Vector3 position = Vector3.zero;
-            for (int i = 0; i < 3; i++)
+            for (int i = 0; i < TicksIn(WarpWindow.End); i++)
             {
                 target.Position = new Vector3(i * 0.5f, 0f, 3f);
-                sink.Total = Vector3.zero;
-                runner.Tick(0.1f, position, true);
-                position += sink.Total;
+                position = TickAndFollowTheWarp(runner, position);
             }
 
             Vector3 expected = jab.WarpDestination(position, target.Position);
@@ -285,104 +280,151 @@ namespace ArkhamCombat.Tests
         }
 
         [Test]
-        public void TheWarpRefusal_AndTheBeyondLungeRule_FlipAtTheSameDistance()
+        public void TheWarpIsRefused_ExactlyWhenTheTargetIsBeyondTheLungeLimit()
         {
-            Vector3 justInside = new Vector3(0f, 0f, jab.MaxLunge + jab.StrikeDistance - 0.01f);
-            Vector3 justBeyond = new Vector3(0f, 0f, jab.MaxLunge + jab.StrikeDistance + 0.01f);
+            float lungeLimit = jab.MaxLunge + jab.StrikeDistance;
+            Vector3 justInside = new Vector3(0f, 0f, lungeLimit - 0.01f);
+            Vector3 justBeyond = new Vector3(0f, 0f, lungeLimit + 0.01f);
             Assert.IsFalse(jab.IsBeyondLunge(Vector3.zero, justInside));
             Assert.IsTrue(jab.IsBeyondLunge(Vector3.zero, justBeyond));
 
-            ActionRunner inside = Runner();
-            inside.Target = new PointTarget(justInside);
-            intents.Push(IntentKind.Strike, Vector2.zero);
-            Tick(inside, 2);
-            Assert.IsFalse(inside.WarpRefused);
+            ActionRunner runnerWithTargetInside = CreateRunner();
+            runnerWithTargetInside.Target = new PointTarget(justInside);
+            StartJab(runnerWithTargetInside);
+            Tick(runnerWithTargetInside);
+            Assert.IsFalse(runnerWithTargetInside.WasWarpRefused);
 
-            ActionRunner beyond = Runner();
-            beyond.Target = new PointTarget(justBeyond);
-            intents.Push(IntentKind.Strike, Vector2.zero);
-            Tick(beyond, 2);
-            Assert.IsTrue(beyond.WarpRefused);
+            ActionRunner runnerWithTargetBeyond = CreateRunner();
+            runnerWithTargetBeyond.Target = new PointTarget(justBeyond);
+            StartJab(runnerWithTargetBeyond);
+            Tick(runnerWithTargetBeyond);
+            Assert.IsTrue(runnerWithTargetBeyond.WasWarpRefused);
         }
 
         [Test]
-        public void TheWarp_RefusesBeyondMaxLunge()
+        public void TheWarp_IsRefused_WhenTheTargetIsFarBeyondTheLungeLimit()
         {
-            ActionRunner runner = Runner();
+            ActionRunner runner = CreateRunner();
             runner.Target = new PointTarget(new Vector3(0f, 0f, 10f));
-            intents.Push(IntentKind.Strike, Vector2.zero);
+            StartJab(runner);
 
-            Tick(runner, 4);
+            TickFor(runner, WarpWindow.End);
 
-            Assert.IsTrue(runner.WarpRefused);
-            Assert.AreEqual(0, sink.Calls, "no displacement at all");
-            Assert.IsTrue(runner.Trace.Records[runner.Trace.Records.Count - 1].WarpRefused);
+            Assert.IsTrue(runner.WasWarpRefused);
+            Assert.AreEqual(0, warpMover.MoveCount, "the character does not move at all");
+            Assert.IsTrue(LatestRecord(runner).WasWarpRefused);
         }
 
         [Test]
         public void TheWarp_DoesNothingWithoutATarget()
         {
-            ActionRunner runner = Runner();
-            intents.Push(IntentKind.Strike, Vector2.zero);
+            ActionRunner runner = CreateRunner();
+            StartJab(runner);
 
-            Tick(runner, 4);
+            TickFor(runner, WarpWindow.End);
 
-            Assert.AreEqual(0, sink.Calls);
-            Assert.IsFalse(runner.WarpRefused);
+            Assert.AreEqual(0, warpMover.MoveCount);
+            Assert.IsFalse(runner.WasWarpRefused);
         }
 
         [Test]
-        public void Cancel_DisarmsAndGoesIdle()
+        public void Cancel_ClosesTheHitWindow_AndGoesIdle()
         {
-            ActionRunner runner = Runner();
-            intents.Push(IntentKind.Strike, Vector2.zero);
-            Tick(runner, 4);
-            Assert.IsTrue(hits.IsArmed);
+            ActionRunner runner = CreateRunner();
+            StartJab(runner);
+            TickFor(runner, HitWindow.Start);
+            Assert.IsTrue(hitWindowListener.IsOpen);
 
             runner.Cancel();
 
-            Assert.IsFalse(hits.IsArmed);
+            Assert.IsFalse(hitWindowListener.IsOpen);
             Assert.IsFalse(runner.IsPlaying);
-            Assert.AreEqual("cut Jab", events.Log[events.Log.Count - 1]);
+            Assert.AreEqual("interrupted Jab", events.Log[events.Log.Count - 1]);
         }
 
         [Test]
-        public void PlayAction_RunsAPlainActionOutsideTheChain()
+        public void PlayAction_RunsAPlainActionOutsideTheCombo()
         {
             ActionDefinition flinch = Action("Flinch", 0.5f);
-            ActionRunner runner = Runner();
+            ActionRunner runner = CreateRunner();
 
             runner.PlayAction(flinch, Vector3.zero);
-            Tick(runner, 3);
+            TickFor(runner, 0.3f);
             Assert.AreSame(flinch, runner.CurrentAction);
             Assert.IsNull(runner.CurrentAttack);
 
-            Tick(runner, 3);
+            TickFor(runner, 0.3f);
             Assert.IsFalse(runner.IsPlaying);
         }
 
         [Test]
-        public void TheTrace_KeepsTheLastEightRecords_WithTheirIntentMarks()
+        public void TheTrace_KeepsTheLastEightRecords_WithThePressesMarkedOnThem()
         {
-            ActionRunner runner = Runner();
+            ActionRunner runner = CreateRunner();
 
-            for (int i = 0; i < 6; i++)
+            const int moreAttacksThanTheTraceHolds = 6;
+            for (int i = 0; i < moreAttacksThanTheTraceHolds; i++)
             {
-                intents.Push(IntentKind.Strike, Vector2.zero);
-                Tick(runner, 11);
+                StrikeAndPlayTheAttackToItsEnd(runner);
             }
 
             Assert.AreEqual(8, runner.Trace.Records.Count);
             Assert.IsTrue(runner.Trace.Current.IsIdle);
 
-            ActionTrace.Record last = runner.Trace.Records[runner.Trace.Records.Count - 2];
-            Assert.IsTrue(last.Ended);
-            Assert.AreEqual(1f, last.EndedAt, 1e-5f);
+            ActionTrace.Record lastAttack = RecordBeforeTheLatest(runner);
+            Assert.IsTrue(lastAttack.HasEnded);
+            Assert.AreEqual(1f, lastAttack.EndedAt, 1e-5f);
 
-            ActionTrace.Record idleBefore = runner.Trace.Records[runner.Trace.Records.Count - 3];
-            Assert.IsTrue(idleBefore.IsIdle);
-            Assert.AreEqual(1, idleBefore.Marks.Count, "the press that started the action was marked on the idle stretch");
-            Assert.AreEqual(ActionTrace.MarkStatus.Consumed, idleBefore.Marks[0].Status);
+            ActionTrace.Record idleBeforeTheLastAttack = runner.Trace.Records[runner.Trace.Records.Count - 3];
+            Assert.IsTrue(idleBeforeTheLastAttack.IsIdle);
+            Assert.AreEqual(1, idleBeforeTheLastAttack.Marks.Count, "the press that started the attack is marked on the idle stretch before it");
+            Assert.AreEqual(ActionTrace.MarkStatus.Consumed, idleBeforeTheLastAttack.Marks[0].Status);
         }
+
+        private ActionRunner CreateRunner() =>
+            new ActionRunner(stance, intents, context, new AlwaysConditionEvaluator(), driver, warpMover, hitWindowListener, events);
+
+        private void Press(IntentKind kind) => intents.Push(kind, Vector2.zero);
+
+        /// <summary>For a runner at the root: the press is taken on the first tick, so the jab starts at time zero.</summary>
+        private void StartJab(ActionRunner runner)
+        {
+            Press(IntentKind.Strike);
+            Tick(runner);
+        }
+
+        private void StrikeAndPlayTheAttackToItsEnd(ActionRunner runner)
+        {
+            Press(IntentKind.Strike);
+            Tick(runner);
+            TickFor(runner, AttackSeconds);
+        }
+
+        private static void Tick(ActionRunner runner, int count = 1, bool canStartFromIdle = true)
+        {
+            for (int i = 0; i < count; i++)
+            {
+                runner.Tick(TickSeconds, Vector3.zero, canStartFromIdle);
+            }
+        }
+
+        private static void TickFor(ActionRunner runner, float seconds, bool canStartFromIdle = true)
+        {
+            Tick(runner, TicksIn(seconds), canStartFromIdle);
+        }
+
+        private static int TicksIn(float seconds) => Mathf.RoundToInt(seconds / TickSeconds);
+
+        /// <summary>The runner only asks for movement; the test applies it, as the motor would.</summary>
+        private Vector3 TickAndFollowTheWarp(ActionRunner runner, Vector3 position)
+        {
+            warpMover.TotalMovement = Vector3.zero;
+            runner.Tick(TickSeconds, position, true);
+            return position + warpMover.TotalMovement;
+        }
+
+        private static ActionTrace.Record LatestRecord(ActionRunner runner) => runner.Trace.Records[runner.Trace.Records.Count - 1];
+
+        private static ActionTrace.Record RecordBeforeTheLatest(ActionRunner runner) => runner.Trace.Records[runner.Trace.Records.Count - 2];
     }
 }

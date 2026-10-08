@@ -26,26 +26,30 @@ namespace ArkhamCombat.Combat
         public float Length => Mathf.Max(0f, end - start);
         public bool IsZeroLength => end <= start;
 
-        /// <summary>Half-open: a zero-length window contains nothing, so callers that need it use the crossing helpers.</summary>
-        public bool Contains(float t) => start <= t && t < end;
+        /// <summary>Half-open: a zero-length window contains nothing, so callers that need it use the crossing checks.</summary>
+        public bool Contains(float time) => start <= time && time < end;
 
-        public bool Opened(float previousT, float t) => Crossed(previousT, t, start);
+        public bool IsOpen(float previousTime, float currentTime) => IsCrossedBetween(previousTime, currentTime, start);
 
-        public bool Closed(float previousT, float t) => Crossed(previousT, t, end);
+        public bool IsClosed(float previousTime, float currentTime) => IsCrossedBetween(previousTime, currentTime, end);
 
         /// <summary>
-        /// Whether <paramref name="edge"/> lies in (previous, t]. Exclusive at the previous end so an
-        /// edge sitting exactly on the last tick's time does not fire twice. When t is behind
-        /// previous the action looped, and the pass runs previous→1 then 0→t.
+        /// Whether <paramref name="moment"/> lies in (previousTime, currentTime]. Exclusive at the
+        /// previous end so a moment sitting exactly on the last tick's time does not fire twice. When
+        /// the current time is behind the previous one the action looped, and the pass runs
+        /// previousTime to 1, then 0 to currentTime.
         /// </summary>
-        public static bool Crossed(float previousT, float t, float edge)
+        public static bool IsCrossedBetween(float previousTime, float currentTime, float moment)
         {
-            if (t >= previousT)
+            bool hasLooped = currentTime < previousTime;
+            if (!hasLooped)
             {
-                return previousT < edge && edge <= t;
+                return previousTime < moment && moment <= currentTime;
             }
 
-            return (previousT < edge && edge <= 1f) || (0f <= edge && edge <= t);
+            bool isCrossedBeforeLoop = previousTime < moment && moment <= 1f;
+            bool isCrossedAfterLoop = 0f <= moment && moment <= currentTime;
+            return isCrossedBeforeLoop || isCrossedAfterLoop;
         }
 
         public bool IsValid(out string error)

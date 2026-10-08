@@ -6,7 +6,7 @@ namespace ArkhamCombat.Tests
     public class WindowTests
     {
         [Test]
-        public void Contains_IsHalfOpen()
+        public void Contains_IncludesTheStart_ButNotTheEnd()
         {
             Window window = new Window(0.2f, 0.5f);
 
@@ -17,41 +17,41 @@ namespace ArkhamCombat.Tests
         }
 
         [Test]
-        public void Opened_FiresOnTheTickThatCrossesTheStart_AndOnlyThatOne()
+        public void IsOpen_FiresOnTheTickThatCrossesTheStart_AndOnlyThatOne()
         {
             Window window = new Window(0.2f, 0.5f);
 
-            Assert.IsFalse(window.Opened(0f, 0.1f));
-            Assert.IsTrue(window.Opened(0.1f, 0.25f));
-            Assert.IsFalse(window.Opened(0.25f, 0.4f), "already inside: no second open");
+            Assert.IsFalse(window.IsOpen(0f, 0.1f));
+            Assert.IsTrue(window.IsOpen(0.1f, 0.25f));
+            Assert.IsFalse(window.IsOpen(0.25f, 0.4f), "already inside: no second open");
         }
 
         [Test]
-        public void Opened_DoesNotRefire_WhenPreviousTickLandedExactlyOnTheStart()
+        public void IsOpen_DoesNotFireAgain_WhenThePreviousTickLandedExactlyOnTheStart()
         {
             Window window = new Window(0.2f, 0.5f);
 
-            Assert.IsTrue(window.Opened(0.1f, 0.2f), "landing exactly on the start opens");
-            Assert.IsFalse(window.Opened(0.2f, 0.3f), "the next tick must not open again");
+            Assert.IsTrue(window.IsOpen(0.1f, 0.2f), "landing exactly on the start opens");
+            Assert.IsFalse(window.IsOpen(0.2f, 0.3f), "the next tick must not open again");
         }
 
         [Test]
-        public void Closed_FiresOnTheTickThatReachesTheEnd()
+        public void IsClosed_FiresOnTheTickThatReachesTheEnd()
         {
             Window window = new Window(0.2f, 0.5f);
 
-            Assert.IsFalse(window.Closed(0.3f, 0.45f));
-            Assert.IsTrue(window.Closed(0.45f, 0.5f));
-            Assert.IsFalse(window.Closed(0.5f, 0.7f));
+            Assert.IsFalse(window.IsClosed(0.3f, 0.45f));
+            Assert.IsTrue(window.IsClosed(0.45f, 0.5f));
+            Assert.IsFalse(window.IsClosed(0.5f, 0.7f));
         }
 
         [Test]
-        public void ALargeStep_OpensAndClosesInTheSameTick()
+        public void ATickThatStepsOverTheWholeWindow_OpensAndClosesItInThatTick()
         {
             Window window = new Window(0.2f, 0.5f);
 
-            Assert.IsTrue(window.Opened(0.1f, 0.9f));
-            Assert.IsTrue(window.Closed(0.1f, 0.9f));
+            Assert.IsTrue(window.IsOpen(0.1f, 0.9f));
+            Assert.IsTrue(window.IsClosed(0.1f, 0.9f));
         }
 
         [Test]
@@ -61,30 +61,31 @@ namespace ArkhamCombat.Tests
 
             Assert.IsTrue(window.IsZeroLength);
             Assert.IsFalse(window.Contains(0.4f));
-            Assert.IsTrue(window.Opened(0.3f, 0.5f));
-            Assert.IsTrue(window.Closed(0.3f, 0.5f));
-            Assert.IsFalse(window.Opened(0.5f, 0.6f));
+            Assert.IsTrue(window.IsOpen(0.3f, 0.5f));
+            Assert.IsTrue(window.IsClosed(0.3f, 0.5f));
+            Assert.IsFalse(window.IsOpen(0.5f, 0.6f));
         }
 
         [Test]
-        public void WrapAround_OnLoop_CrossesEdgesOnBothSidesOfTheSeam()
+        public void WhenALoopingClockStartsOver_EdgesBeforeAndAfterTheLoopAreBothCrossed()
         {
             Window late = new Window(0.9f, 1f);
             Window early = new Window(0f, 0.1f);
+            const float beforeTheLoop = 0.85f;
+            const float afterTheLoop = 0.05f;
 
-            // previous 0.85 -> looped back to 0.05: passes through 0.9, 1.0 and 0.0.
-            Assert.IsTrue(late.Opened(0.85f, 0.05f), "start at 0.9 was passed before the seam");
-            Assert.IsTrue(late.Closed(0.85f, 0.05f), "end at 1.0 was passed at the seam");
-            Assert.IsTrue(early.Opened(0.85f, 0.05f), "start at 0 was passed after the seam");
-            Assert.IsFalse(early.Closed(0.85f, 0.05f), "end at 0.1 is still ahead");
+            Assert.IsTrue(late.IsOpen(beforeTheLoop, afterTheLoop), "the start at 0.9 was passed before the loop");
+            Assert.IsTrue(late.IsClosed(beforeTheLoop, afterTheLoop), "the end at 1.0 was reached as the clock looped");
+            Assert.IsTrue(early.IsOpen(beforeTheLoop, afterTheLoop), "the start at 0 was passed after the loop");
+            Assert.IsFalse(early.IsClosed(beforeTheLoop, afterTheLoop), "the end at 0.1 is still ahead");
         }
 
         [Test]
-        public void WrapAround_DoesNotRefireAnEdgeTheLastTickLandedOn()
+        public void WhenALoopingClockStartsOver_AnEdgeThePreviousTickLandedOnDoesNotFireAgain()
         {
             Window late = new Window(0.9f, 1f);
 
-            Assert.IsFalse(late.Closed(1f, 0.05f), "the previous tick already sat on 1.0");
+            Assert.IsFalse(late.IsClosed(1f, 0.05f), "the previous tick already landed on 1.0");
         }
 
         [Test]

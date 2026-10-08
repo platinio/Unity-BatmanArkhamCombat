@@ -11,13 +11,13 @@ namespace ArkhamCombat.Presentation
     {
         public void Play(ICueTarget target, PresentationCue cue)
         {
-            Quaternion rest = target.RestLocalRotation;
-            Quaternion tilted = rest * Quaternion.Euler(cue.Strength, 0f, 0f);
-            float half = cue.Duration * 0.5f;
+            Quaternion restRotation = target.RestLocalRotation;
+            Quaternion tiltedRotation = restRotation * Quaternion.Euler(cue.Strength, 0f, 0f);
+            float halfDuration = cue.Duration * 0.5f;
 
             DOTween.Sequence().SetId(target.TweenId)
-                .Append(target.Body.DOLocalRotateQuaternion(tilted, half).SetEase(cue.Ease))
-                .Append(target.Body.DOLocalRotateQuaternion(rest, half).SetEase(cue.Ease));
+                .Append(target.Body.DOLocalRotateQuaternion(tiltedRotation, halfDuration).SetEase(cue.Ease))
+                .Append(target.Body.DOLocalRotateQuaternion(restRotation, halfDuration).SetEase(cue.Ease));
         }
     }
 
@@ -25,16 +25,21 @@ namespace ArkhamCombat.Presentation
     [Serializable]
     public sealed class PunchCue : ICueKind
     {
+        // A quick extension and a slower pull back is what reads as a snap rather than a shove.
+        private const float ShareOfDurationExtending = 0.3f;
+
         public void Play(ICueTarget target, PresentationCue cue)
         {
             bool hasFist = target.Fist != null;
-            Transform part = hasFist ? target.Fist : target.Body;
-            Vector3 rest = hasFist ? target.FistRestLocalPosition : target.RestLocalPosition;
-            Vector3 extended = rest + Vector3.forward * cue.Strength;
+            Transform pushedPart = hasFist ? target.Fist : target.Body;
+            Vector3 restPosition = hasFist ? target.FistRestLocalPosition : target.RestLocalPosition;
+            Vector3 extendedPosition = restPosition + Vector3.forward * cue.Strength;
+            float extendDuration = cue.Duration * ShareOfDurationExtending;
+            float returnDuration = cue.Duration - extendDuration;
 
             DOTween.Sequence().SetId(target.TweenId)
-                .Append(part.DOLocalMove(extended, cue.Duration * 0.3f).SetEase(cue.Ease))
-                .Append(part.DOLocalMove(rest, cue.Duration * 0.7f).SetEase(cue.Ease));
+                .Append(pushedPart.DOLocalMove(extendedPosition, extendDuration).SetEase(cue.Ease))
+                .Append(pushedPart.DOLocalMove(restPosition, returnDuration).SetEase(cue.Ease));
         }
     }
 
@@ -42,52 +47,61 @@ namespace ArkhamCombat.Presentation
     [Serializable]
     public sealed class SquashCue : ICueKind
     {
+        // At 1 the body would flatten to nothing on one axis.
+        private const float MaxSquashFactor = 0.9f;
+
         public void Play(ICueTarget target, PresentationCue cue)
         {
-            Vector3 rest = target.RestLocalScale;
-            float s = Mathf.Clamp(cue.Strength, -0.9f, 0.9f);
-            Vector3 squashed = new Vector3(rest.x * (1f + s), rest.y * (1f - s), rest.z * (1f + s));
-            float half = cue.Duration * 0.5f;
+            Vector3 restScale = target.RestLocalScale;
+            float squashFactor = Mathf.Clamp(cue.Strength, -MaxSquashFactor, MaxSquashFactor);
+            Vector3 squashedScale = new Vector3(
+                restScale.x * (1f + squashFactor),
+                restScale.y * (1f - squashFactor),
+                restScale.z * (1f + squashFactor));
+            float halfDuration = cue.Duration * 0.5f;
 
             DOTween.Sequence().SetId(target.TweenId)
-                .Append(target.Body.DOScale(squashed, half).SetEase(cue.Ease))
-                .Append(target.Body.DOScale(rest, half).SetEase(cue.Ease));
+                .Append(target.Body.DOScale(squashedScale, halfDuration).SetEase(cue.Ease))
+                .Append(target.Body.DOScale(restScale, halfDuration).SetEase(cue.Ease));
         }
     }
 
-    /// <summary>Yaws the body a number of full turns over the cue, then snaps to rest. For the roundhouse.</summary>
+    /// <summary>Yaws the body a number of full turns over the cue, then snaps to rest. The strength's sign picks the direction.</summary>
     [Serializable]
     public sealed class SpinCue : ICueKind
     {
+        private const float DegreesPerTurn = 360f;
+
         [Tooltip("Full turns over the cue's duration.")]
         [SerializeField, Min(1)] private int turns = 1;
 
         public void Play(ICueTarget target, PresentationCue cue)
         {
             Transform body = target.Body;
-            Quaternion rest = target.RestLocalRotation;
-            Vector3 spun = rest.eulerAngles + new Vector3(0f, 360f * turns * Mathf.Sign(cue.Strength), 0f);
+            Quaternion restRotation = target.RestLocalRotation;
+            float spinDirection = Mathf.Sign(cue.Strength);
+            Vector3 spunEulerAngles = restRotation.eulerAngles + new Vector3(0f, DegreesPerTurn * turns * spinDirection, 0f);
 
-            body.DOLocalRotate(spun, cue.Duration, RotateMode.FastBeyond360)
+            body.DOLocalRotate(spunEulerAngles, cue.Duration, RotateMode.FastBeyond360)
                 .SetEase(cue.Ease)
                 .SetId(target.TweenId)
                 .OnKill(() =>
                 {
-                    // On kill as well as on completion: a cancelled spin must not leave the body yawed.
+                    // On kill as well as on completion: a spin stopped early must not leave the body yawed.
                     if (body != null)
                     {
-                        body.localRotation = rest;
+                        body.localRotation = restRotation;
                     }
                 });
         }
     }
 
-    /// <summary>Lerps the body's base colour toward the cue colour and back. Strength scales how far.</summary>
+    /// <summary>Lerps the body's colour toward the cue colour and back. Strength scales how far.</summary>
     [Serializable]
     public sealed class FlashCue : ICueKind
     {
-        private static readonly int BaseColor = Shader.PropertyToID("_BaseColor");
-        private static readonly int LegacyColor = Shader.PropertyToID("_Color");
+        private const float FullTint = 1f;
+        private const int TintThenUntint = 2;
 
         public void Play(ICueTarget target, PresentationCue cue)
         {
@@ -98,36 +112,37 @@ namespace ArkhamCombat.Presentation
                 return;
             }
 
-            int property = material.HasProperty(BaseColor) ? BaseColor : LegacyColor;
-            Color baseColour = material.GetColor(property);
-            MaterialPropertyBlock block = new MaterialPropertyBlock();
-            float amount = 0f;
+            int colourProperty = MaterialColourProperty.Of(material);
+            Color restColour = material.GetColor(colourProperty);
+            MaterialPropertyBlock propertyBlock = new MaterialPropertyBlock();
+            float halfDuration = cue.Duration * 0.5f;
+            float tint = 0f;
 
-            DOTween.To(
-                    () => amount,
-                    value =>
-                    {
-                        amount = value;
-                        if (renderer == null)
-                        {
-                            return;
-                        }
-
-                        block.SetColor(property, Color.Lerp(baseColour, cue.Colour, value * cue.Strength));
-                        renderer.SetPropertyBlock(block);
-                    },
-                    1f,
-                    cue.Duration * 0.5f)
-                .SetEase(cue.Ease)
-                .SetLoops(2, LoopType.Yoyo)
-                .SetId(target.TweenId)
-                .OnKill(() =>
+            void ApplyTint(float value)
+            {
+                tint = value;
+                if (renderer == null)
                 {
-                    if (renderer != null)
-                    {
-                        renderer.SetPropertyBlock(null);
-                    }
-                });
+                    return;
+                }
+
+                propertyBlock.SetColor(colourProperty, Color.Lerp(restColour, cue.Colour, tint * cue.Strength));
+                renderer.SetPropertyBlock(propertyBlock);
+            }
+
+            void ClearTint()
+            {
+                if (renderer != null)
+                {
+                    renderer.SetPropertyBlock(null);
+                }
+            }
+
+            DOTween.To(() => tint, ApplyTint, FullTint, halfDuration)
+                .SetEase(cue.Ease)
+                .SetLoops(TintThenUntint, LoopType.Yoyo)
+                .SetId(target.TweenId)
+                .OnKill(ClearTint);
         }
     }
 }

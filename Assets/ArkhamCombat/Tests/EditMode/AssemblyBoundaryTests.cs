@@ -15,27 +15,27 @@ namespace ArkhamCombat.Tests
     /// </summary>
     public class AssemblyBoundaryTests
     {
-        private static readonly Assembly Core = typeof(ActionRunner).Assembly;
-        private static readonly Assembly Presentation = typeof(ProceduralPresentationDriver).Assembly;
+        private static readonly Assembly CombatCore = typeof(ActionRunner).Assembly;
+        private static readonly Assembly PresentationAssembly = typeof(ProceduralPresentationDriver).Assembly;
 
         private static readonly string[] GameplayAssemblies =
         {
             "ArkhamCombat.Combat", "ArkhamCombat.Player", "ArkhamCombat.Enemies", "ArkhamCombat.Camera", "ArkhamCombat.Shell"
         };
 
-        private static bool References(Assembly assembly, string name) =>
-            assembly.GetReferencedAssemblies().Any(r => r.Name.Equals(name, StringComparison.OrdinalIgnoreCase));
+        private static bool HasReferenceTo(Assembly assembly, string referencedName) =>
+            assembly.GetReferencedAssemblies().Any(reference => reference.Name.Equals(referencedName, StringComparison.OrdinalIgnoreCase));
 
         [Test]
         public void TheCore_DoesNotReferenceDOTween()
         {
-            Assert.IsFalse(References(Core, "DOTween"));
+            Assert.IsFalse(HasReferenceTo(CombatCore, "DOTween"));
         }
 
         [Test]
         public void TheCore_DoesNotReferenceZenject()
         {
-            Assert.IsFalse(References(Core, "Zenject"));
+            Assert.IsFalse(HasReferenceTo(CombatCore, "Zenject"));
         }
 
         [Test]
@@ -44,20 +44,20 @@ namespace ArkhamCombat.Tests
             Type[] types;
             try
             {
-                types = Core.GetTypes();
+                types = CombatCore.GetTypes();
             }
-            catch (ReflectionTypeLoadException ex)
+            catch (ReflectionTypeLoadException exception)
             {
-                types = ex.Types.Where(t => t != null).ToArray();
+                types = exception.Types.Where(type => type != null).ToArray();
             }
 
-            const BindingFlags all = BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance | BindingFlags.Static | BindingFlags.DeclaredOnly;
+            const BindingFlags everyDeclaredMember = BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance | BindingFlags.Static | BindingFlags.DeclaredOnly;
             foreach (Type type in types)
             {
-                foreach (MemberInfo member in type.GetMembers(all))
+                foreach (MemberInfo member in type.GetMembers(everyDeclaredMember))
                 {
-                    bool injected = member.GetCustomAttributesData().Any(a => a.AttributeType.Name == "InjectAttribute");
-                    Assert.IsFalse(injected, $"{type.Name}.{member.Name} carries [Inject]; the core takes collaborators through constructors.");
+                    bool isInjected = member.GetCustomAttributesData().Any(attribute => attribute.AttributeType.Name == "InjectAttribute");
+                    Assert.IsFalse(isInjected, $"{type.Name}.{member.Name} carries [Inject]; the core takes collaborators through constructors.");
                 }
             }
         }
@@ -70,7 +70,7 @@ namespace ArkhamCombat.Tests
                 string name = assembly.GetName().Name;
                 if (GameplayAssemblies.Contains(name))
                 {
-                    Assert.IsFalse(References(assembly, "DOTween"), $"{name} references DOTween; only the presentation assembly may.");
+                    Assert.IsFalse(HasReferenceTo(assembly, "DOTween"), $"{name} references DOTween; only the presentation assembly may.");
                 }
             }
         }
@@ -78,7 +78,7 @@ namespace ArkhamCombat.Tests
         [Test]
         public void ThePresentationAssembly_IsTheOneThatReferencesDOTween()
         {
-            Assert.IsTrue(References(Presentation, "DOTween"), "sanity: the reference check would otherwise pass vacuously");
+            Assert.IsTrue(HasReferenceTo(PresentationAssembly, "DOTween"), "sanity: the reference check would otherwise pass vacuously");
         }
     }
 }

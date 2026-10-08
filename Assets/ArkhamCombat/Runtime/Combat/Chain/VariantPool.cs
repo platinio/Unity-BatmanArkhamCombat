@@ -21,6 +21,9 @@ namespace ArkhamCombat.Combat
             TargetSide = targetSide;
             Random = random;
         }
+
+        public bool IsTargetSideKnown => TargetSide != 0;
+        public bool IsTargetOnTheLeft => TargetSide < 0;
     }
 
     /// <summary>Picks one attack from a pool. Implementations are picked from a dropdown on the node.</summary>
@@ -43,10 +46,17 @@ namespace ArkhamCombat.Combat
             int index = context.Random.Next(attacks.Count);
             if (attacks[index] == context.LastPicked)
             {
-                index = (index + 1 + context.Random.Next(attacks.Count - 1)) % attacks.Count;
+                index = AnyOtherIndex(index, attacks.Count, context.Random);
             }
 
             return attacks[index];
+        }
+
+        /// <summary>Steps forward by 1 to count - 1 places, wrapping, so every other index is equally likely.</summary>
+        private static int AnyOtherIndex(int index, int count, System.Random random)
+        {
+            int steps = 1 + random.Next(count - 1);
+            return (index + steps) % count;
         }
     }
 
@@ -66,16 +76,20 @@ namespace ArkhamCombat.Combat
     [Serializable]
     public sealed class TargetSidePolicy : IVariantPolicy
     {
+        private const int LeftAttackIndex = 0;
+        private const int RightAttackIndex = 1;
+
         private static readonly NoRepeatPolicy Fallback = new NoRepeatPolicy();
 
         public AttackDefinition Pick(IReadOnlyList<AttackDefinition> attacks, in VariantPickContext context)
         {
-            if (context.TargetSide == 0 || attacks.Count < 2)
+            bool hasLeftAndRightAttack = attacks.Count >= 2;
+            if (!context.IsTargetSideKnown || !hasLeftAndRightAttack)
             {
                 return Fallback.Pick(attacks, context);
             }
 
-            return context.TargetSide < 0 ? attacks[0] : attacks[1];
+            return context.IsTargetOnTheLeft ? attacks[LeftAttackIndex] : attacks[RightAttackIndex];
         }
     }
 
@@ -106,7 +120,7 @@ namespace ArkhamCombat.Combat
         /// <summary>Null when the pool is empty. A null policy degrades to the first entry rather than failing.</summary>
         public AttackDefinition Pick(in VariantPickContext context)
         {
-            if (attacks.Count == 0)
+            if (IsEmpty)
             {
                 return null;
             }

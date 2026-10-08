@@ -9,10 +9,9 @@ using Zenject;
 namespace ArkhamCombat.Player
 {
     /// <summary>
-    /// The player's combat graph, bound scene-wide beside the character installer: the config, the
-    /// meter, the context and its publisher, the runner with its driver and sinks, and the stand-in
-    /// target picker. The events sink is picked on this asset, so swapping the logging stub for the
-    /// Hermes adapter is an inspector change.
+    /// The player's combat, bound scene-wide beside the character installer. Where combat events go
+    /// is picked on this asset, so swapping the logging stub for the Hermes adapter is an inspector
+    /// change.
     /// </summary>
     [AutoAssetGeneration("Installers/Static", "CombatStaticInstaller")]
     [StaticInstaller(StaticInstallerExecutionOrder.Normal)]
@@ -26,57 +25,90 @@ namespace ArkhamCombat.Player
 
         public override void InstallBindings()
         {
-            if (config == null)
-            {
-                Debug.LogError($"[{nameof(CombatStaticInstaller)}] No CombatConfig assigned on '{name}'.", this);
-            }
-            else
-            {
-                ReportAuthoringErrors(config);
-            }
+            ReportAuthoringErrors();
 
+            BindSettings();
+            BindComboState();
+            BindConditions();
+            BindRunner();
+            BindTargeting();
+        }
+
+        private void BindSettings()
+        {
             Container.Bind<CombatConfig>().FromInstance(config);
-            Container.Bind<Stance>().FromResolveGetter<CombatConfig>(c => c != null ? c.Stance : null);
+            Container.Bind<Stance>().FromResolveGetter<CombatConfig>(combatConfig => combatConfig != null ? combatConfig.Stance : null);
             Container.Bind<ICombatEvents>().FromInstance(events ?? new NullCombatEvents());
+        }
 
+        private void BindComboState()
+        {
             Container.Bind<CombatContext>().AsSingle();
             Container.Bind<ComboMeter>()
-                .FromMethod(c => new ComboMeter(
-                    c.Container.Resolve<CombatConfig>().Meter,
-                    c.Container.Resolve<ICombatEvents>()))
+                .FromMethod(injectContext => new ComboMeter(
+                    injectContext.Container.Resolve<CombatConfig>().Meter,
+                    injectContext.Container.Resolve<ICombatEvents>()))
                 .AsSingle();
-
             Container.Bind<IntentBuffer>().FromResolveGetter<ICharacterInput>(input => input.Intents).AsSingle();
+        }
 
+        private void BindConditions()
+        {
             Container.Bind<CombatContextPublisher>().AsSingle();
             Container.Bind<IConditionEvaluator>().To<FunctionConditionEvaluator>().AsSingle();
+        }
 
+        private void BindRunner()
+        {
             Container.Bind<IPresentationDriver>().To<ProceduralPresentationDriver>().FromComponentInHierarchy().AsSingle();
-            Container.Bind(typeof(MotorDisplacementSink), typeof(IDisplacementSink)).To<MotorDisplacementSink>().AsSingle();
-            Container.Bind<IHitWindowSink>().To<DemoHitWindowSink>().AsSingle();
-
-            Container.Bind<ITargetRoster>().To<SceneTargetRoster>().AsSingle();
-            Container.Bind<ITargetPicker>().To<StandInTargetPicker>().AsSingle();
+            Container.Bind(typeof(MotorWarpMover), typeof(IWarpMover)).To<MotorWarpMover>().AsSingle();
+            Container.Bind<IHitWindowListener>().To<DemoHitWindowListener>().AsSingle();
             Container.Bind<ActionRunner>().AsSingle();
         }
 
-        /// <summary>
-        /// Runs the stance and attack validation once at scene load, so a reversed window or an edge
-        /// to nowhere is an error in the console rather than a hitbox that never disarms.
-        /// </summary>
-        private static void ReportAuthoringErrors(CombatConfig config)
+        private void BindTargeting()
         {
-            if (config.Stance == null)
+            Container.Bind<ITargetRoster>().To<SceneTargetRoster>().AsSingle();
+            Container.Bind<ITargetPicker>().To<StandInTargetPicker>().AsSingle();
+        }
+
+        /// <summary>
+        /// Validates the stance and its attacks once at scene load, so a reversed window or an edge
+        /// to nowhere is an error in the console rather than a hit window that never closes.
+        /// </summary>
+        private void ReportAuthoringErrors()
+        {
+            if (config == null)
+            {
+                Debug.LogError($"[{nameof(CombatStaticInstaller)}] No CombatConfig assigned on '{name}'.", this);
+                return;
+            }
+
+            Stance stance = config.Stance;
+            if (stance == null)
             {
                 Debug.LogError($"[{nameof(CombatStaticInstaller)}] CombatConfig '{config.name}' has no stance.", config);
                 return;
             }
 
             List<string> errors = new List<string>();
-            config.Stance.Validate(errors);
+            stance.Validate(errors);
+            foreach (AttackDefinition attack in AttacksIn(stance))
+            {
+                attack.Validate(errors);
+            }
 
+            foreach (string error in errors)
+            {
+                Debug.LogError($"[{nameof(CombatStaticInstaller)}] {error}", stance);
+            }
+        }
+
+        /// <summary>Each attack once, whether a node plays it directly or picks it from a pool.</summary>
+        private static HashSet<AttackDefinition> AttacksIn(Stance stance)
+        {
             HashSet<AttackDefinition> attacks = new HashSet<AttackDefinition>();
-            foreach (ChainNode node in config.Stance.Nodes)
+            foreach (ChainNode node in stance.Nodes)
             {
                 if (node == null)
                 {
@@ -90,25 +122,17 @@ namespace ArkhamCombat.Player
 
                 if (node.Pool != null)
                 {
-                    foreach (AttackDefinition attack in node.Pool.Attacks)
+                    foreach (AttackDefinition pooledAttack in node.Pool.Attacks)
                     {
-                        if (attack != null)
+                        if (pooledAttack != null)
                         {
-                            attacks.Add(attack);
+                            attacks.Add(pooledAttack);
                         }
                     }
                 }
             }
 
-            foreach (AttackDefinition attack in attacks)
-            {
-                attack.Validate(errors);
-            }
-
-            foreach (string error in errors)
-            {
-                Debug.LogError($"[{nameof(CombatStaticInstaller)}] {error}", config.Stance);
-            }
+            return attacks;
         }
     }
 }

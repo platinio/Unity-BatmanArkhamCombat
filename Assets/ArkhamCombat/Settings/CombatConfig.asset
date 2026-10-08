@@ -14,10 +14,10 @@ MonoBehaviour:
   m_EditorClassIdentifier: ArkhamCombat.Player::ArkhamCombat.Player.CombatConfig
   stance: {fileID: 11400000, guid: 417965012c9051c4fa318b5cbb6e89c1, type: 2}
   meter:
-    tiers: 030000000500000008000000
+    tierThresholds: 030000000500000008000000
     meterTimeoutSeconds: 2.5
-  faceTurnSmoothTime: 0.05
-  idleMaxLunge: 4
-  targetMaxDistance: 8
-  targetMaxAngle: 110
+  faceTargetSmoothTime: 0.05
+  maxLungeWhileIdle: 4
+  maxTargetDistance: 8
+  maxTargetAngle: 110
   hitRangeMargin: 0.6

@@ -23,14 +23,16 @@ namespace ArkhamCombat.Combat
         [Tooltip("Idle seconds after the last consumed intent before the chain position collapses to the root. Tuned separately from the combo meter timeout.")]
         [SerializeField, Min(0f)] private float chainResetSeconds = 0.6f;
 
-        private readonly Dictionary<string, ChainNode> byId = new Dictionary<string, ChainNode>();
-        [NonSerialized] private List<Edge> sortedGlobalEdges;
-        private bool prepared;
+        private readonly Dictionary<string, ChainNode> nodesById = new Dictionary<string, ChainNode>();
+        [NonSerialized] private List<Edge> globalEdgesByPriority;
+        private bool isPrepared;
 
         public string RootId => root;
         public IReadOnlyList<ChainNode> Nodes => nodes;
+
         /// <summary>In priority order once prepared; the authored list is never reordered.</summary>
-        public IReadOnlyList<Edge> GlobalEdges => sortedGlobalEdges ?? globalEdges;
+        public IReadOnlyList<Edge> GlobalEdges => globalEdgesByPriority ?? globalEdges;
+
         public float ChainResetSeconds => chainResetSeconds;
 
         /// <summary>Null when the root id names no node; <see cref="Validate"/> reports that.</summary>
@@ -39,7 +41,7 @@ namespace ArkhamCombat.Combat
             get
             {
                 EnsurePrepared();
-                return byId.TryGetValue(root ?? string.Empty, out ChainNode node) ? node : null;
+                return nodesById.TryGetValue(root ?? string.Empty, out ChainNode node) ? node : null;
             }
         }
 
@@ -52,7 +54,7 @@ namespace ArkhamCombat.Combat
                 return false;
             }
 
-            return byId.TryGetValue(id, out node);
+            return nodesById.TryGetValue(id, out node);
         }
 
         /// <summary>Sets every field from code. For tests and the fixture builder.</summary>
@@ -65,37 +67,46 @@ namespace ArkhamCombat.Combat
             Prepare();
         }
 
-        /// <summary>Builds the id index and sorts every edge list. Idempotent; runs again after inspector edits.</summary>
+        /// <summary>Idempotent; runs again after inspector edits.</summary>
         public void Prepare()
         {
-            byId.Clear();
-            for (int i = 0; i < nodes.Count; i++)
-            {
-                ChainNode node = nodes[i];
-                if (node == null || string.IsNullOrEmpty(node.Id) || byId.ContainsKey(node.Id))
-                {
-                    continue;
-                }
-
-                byId.Add(node.Id, node);
-                node.SortEdges();
-            }
-
-            SortGlobalEdges();
-            prepared = true;
+            IndexNodesById();
+            SortEdgesByPriority();
+            isPrepared = true;
         }
 
         private void EnsurePrepared()
         {
-            if (!prepared)
+            if (!isPrepared)
             {
                 Prepare();
             }
         }
 
-        private void SortGlobalEdges()
+        /// <summary>The first node with an id wins; a duplicate is left out of the index and reported by <see cref="Validate"/>.</summary>
+        private void IndexNodesById()
         {
-            sortedGlobalEdges = EdgeOrder.Sorted(globalEdges, sortedGlobalEdges);
+            nodesById.Clear();
+            for (int i = 0; i < nodes.Count; i++)
+            {
+                ChainNode node = nodes[i];
+                if (node == null || string.IsNullOrEmpty(node.Id) || nodesById.ContainsKey(node.Id))
+                {
+                    continue;
+                }
+
+                nodesById.Add(node.Id, node);
+            }
+        }
+
+        private void SortEdgesByPriority()
+        {
+            foreach (ChainNode node in nodesById.Values)
+            {
+                node.SortEdgesByPriority();
+            }
+
+            globalEdgesByPriority = EdgeOrder.SortByPriority(globalEdges, globalEdgesByPriority);
         }
 
         private void OnEnable() => Prepare();
@@ -104,16 +115,32 @@ namespace ArkhamCombat.Combat
 
         /// <summary>
         /// Appends every structural problem to <paramref name="errors"/>: a missing root, duplicate
-        /// ids, a node with nothing to play, an empty pool, an edge to nowhere, and a node nothing
-        /// reaches. Reachability starts from the root and from every global edge, since interrupt
-        /// nodes are entered only that way.
+        /// ids, a node with nothing to play, an edge to nowhere, and a node nothing reaches.
+        /// Returns true when there were none.
         /// </summary>
         public bool Validate(List<string> errors)
         {
-            int before = errors.Count;
+            int errorCountBefore = errors.Count;
             Prepare();
 
-            HashSet<string> seen = new HashSet<string>();
+            ValidateNodes(errors);
+            ValidateEdges(globalEdges, "global edges", errors);
+
+            if (Root == null)
+            {
+                errors.Add($"'{name}': root '{root}' names no node.");
+            }
+            else
+            {
+                ReportUnreachableNodes(errors);
+            }
+
+            return errors.Count == errorCountBefore;
+        }
+
+        private void ValidateNodes(List<string> errors)
+        {
+            HashSet<string> seenIds = new HashSet<string>();
             for (int i = 0; i < nodes.Count; i++)
             {
                 ChainNode node = nodes[i];
@@ -123,7 +150,7 @@ namespace ArkhamCombat.Combat
                     continue;
                 }
 
-                if (!seen.Add(node.Id))
+                if (!seenIds.Add(node.Id))
                 {
                     errors.Add($"'{name}': node id '{node.Id}' is used more than once.");
                 }
@@ -135,19 +162,6 @@ namespace ArkhamCombat.Combat
 
                 ValidateEdges(node.Edges, $"node '{node.Id}'", errors);
             }
-
-            ValidateEdges(globalEdges, "global edges", errors);
-
-            if (Root == null)
-            {
-                errors.Add($"'{name}': root '{root}' names no node.");
-            }
-            else
-            {
-                ReportUnreachable(errors);
-            }
-
-            return errors.Count == before;
         }
 
         private void ValidateEdges(IReadOnlyList<Edge> edges, string owner, List<string> errors)
@@ -161,57 +175,65 @@ namespace ArkhamCombat.Combat
                     continue;
                 }
 
-                if (string.IsNullOrEmpty(edge.Destination))
+                if (string.IsNullOrEmpty(edge.DestinationId))
                 {
                     errors.Add($"'{name}': {owner} edge {i} ({edge.Intent}) has no destination.");
                 }
-                else if (!byId.TryGetValue(edge.Destination, out ChainNode target))
+                else if (!nodesById.TryGetValue(edge.DestinationId, out ChainNode destination))
                 {
-                    errors.Add($"'{name}': {owner} edge {i} ({edge.Intent}) points at unknown node '{edge.Destination}'.");
+                    errors.Add($"'{name}': {owner} edge {i} ({edge.Intent}) points at unknown node '{edge.DestinationId}'.");
                 }
-                else if (target.HasNothingToPlay)
+                else if (destination.HasNothingToPlay)
                 {
-                    errors.Add($"'{name}': {owner} edge {i} ({edge.Intent}) points at '{edge.Destination}', which has nothing to play.");
+                    errors.Add($"'{name}': {owner} edge {i} ({edge.Intent}) points at '{edge.DestinationId}', which has nothing to play.");
                 }
             }
         }
 
-        private void ReportUnreachable(List<string> errors)
+        /// <summary>The search starts from every global edge as well as the root, since interrupt nodes are entered only that way.</summary>
+        private void ReportUnreachableNodes(List<string> errors)
         {
-            HashSet<string> reached = new HashSet<string>();
-            Stack<ChainNode> pending = new Stack<ChainNode>();
-
-            void Visit(string id)
-            {
-                if (id != null && byId.TryGetValue(id, out ChainNode node) && reached.Add(id))
-                {
-                    pending.Push(node);
-                }
-            }
-
-            Visit(root);
-            for (int i = 0; i < globalEdges.Count; i++)
-            {
-                Visit(globalEdges[i]?.Destination);
-            }
-
-            while (pending.Count > 0)
-            {
-                ChainNode node = pending.Pop();
-                for (int i = 0; i < node.Edges.Count; i++)
-                {
-                    Visit(node.Edges[i]?.Destination);
-                }
-            }
+            HashSet<string> reachedIds = FindReachableNodeIds();
 
             for (int i = 0; i < nodes.Count; i++)
             {
                 ChainNode node = nodes[i];
-                if (node != null && !string.IsNullOrEmpty(node.Id) && !reached.Contains(node.Id))
+                if (node != null && !string.IsNullOrEmpty(node.Id) && !reachedIds.Contains(node.Id))
                 {
                     errors.Add($"'{name}': node '{node.Id}' is not reachable from the root or any global edge.");
                 }
             }
+        }
+
+        private HashSet<string> FindReachableNodeIds()
+        {
+            HashSet<string> reachedIds = new HashSet<string>();
+            Stack<ChainNode> nodesToVisit = new Stack<ChainNode>();
+
+            void Reach(string id)
+            {
+                if (id != null && nodesById.TryGetValue(id, out ChainNode node) && reachedIds.Add(id))
+                {
+                    nodesToVisit.Push(node);
+                }
+            }
+
+            Reach(root);
+            for (int i = 0; i < globalEdges.Count; i++)
+            {
+                Reach(globalEdges[i]?.DestinationId);
+            }
+
+            while (nodesToVisit.Count > 0)
+            {
+                ChainNode node = nodesToVisit.Pop();
+                for (int i = 0; i < node.Edges.Count; i++)
+                {
+                    Reach(node.Edges[i]?.DestinationId);
+                }
+            }
+
+            return reachedIds;
         }
     }
 }

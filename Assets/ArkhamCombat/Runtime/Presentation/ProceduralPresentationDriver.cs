@@ -5,10 +5,10 @@ using UnityEngine;
 namespace ArkhamCombat.Presentation
 {
     /// <summary>
-    /// The demo's only driver: the core's duration clock with DOTween cues on a body child. Cues fire
+    /// The demo's only driver: the core's action clock with DOTween cues on a body child. Cues fire
     /// from the clock, not from DOTween's own time, so hit-stop and interrupts stop them exactly
-    /// where gameplay stopped. Every tween a cue starts carries this component as its id, which is
-    /// how Stop kills them as a group and Speed pauses them.
+    /// where gameplay stopped. Every tween a cue starts carries this component as its id, so the
+    /// cue tweens can be killed or paused as a group.
     /// </summary>
     public sealed class ProceduralPresentationDriver : MonoBehaviour, IPresentationDriver, ICueTarget
     {
@@ -25,18 +25,18 @@ namespace ArkhamCombat.Presentation
         [SerializeField, Min(0f)] private float restBlendSeconds = 0.12f;
 
         private readonly ActionClock clock = new ActionClock();
-        private Vector3 restPosition;
-        private Quaternion restRotation;
-        private Vector3 restScale;
-        private Vector3 fistRestPosition;
+        private Vector3 restLocalPosition;
+        private Quaternion restLocalRotation;
+        private Vector3 restLocalScale;
+        private Vector3 fistRestLocalPosition;
 
         public Transform Body => body;
         public Transform Fist => fist;
         public Renderer BodyRenderer => bodyRenderer;
-        public Vector3 RestLocalPosition => restPosition;
-        public Quaternion RestLocalRotation => restRotation;
-        public Vector3 RestLocalScale => restScale;
-        public Vector3 FistRestLocalPosition => fistRestPosition;
+        public Vector3 RestLocalPosition => restLocalPosition;
+        public Quaternion RestLocalRotation => restLocalRotation;
+        public Vector3 RestLocalScale => restLocalScale;
+        public Vector3 FistRestLocalPosition => fistRestLocalPosition;
         public object TweenId => this;
 
         public bool IsPlaying => clock.IsPlaying;
@@ -48,7 +48,9 @@ namespace ArkhamCombat.Presentation
             set
             {
                 clock.Speed = value;
-                if (value <= 0f)
+
+                bool isFrozen = value <= 0f;
+                if (isFrozen)
                 {
                     DOTween.Pause(TweenId);
                 }
@@ -68,39 +70,44 @@ namespace ArkhamCombat.Presentation
                 return;
             }
 
-            restPosition = body.localPosition;
-            restRotation = body.localRotation;
-            restScale = body.localScale;
-            if (fist != null)
-            {
-                fistRestPosition = fist.localPosition;
-            }
-
-            clock.CueDue += OnCueDue;
+            RememberRestPose();
+            clock.CueDue += PlayCue;
         }
 
         private void OnDestroy()
         {
-            clock.CueDue -= OnCueDue;
-            DOTween.Kill(TweenId);
+            clock.CueDue -= PlayCue;
+            KillCueTweens();
         }
 
         public void Play(ActionDefinition action)
         {
-            DOTween.Kill(TweenId);
+            KillCueTweens();
             clock.Play(action);
         }
 
         public void Stop()
         {
             clock.Stop();
-            DOTween.Kill(TweenId);
-            BlendToRest();
+            KillCueTweens();
+            BlendToRestPose();
         }
 
         public void Tick(float deltaTime) => clock.Tick(deltaTime);
 
-        private void OnCueDue(PresentationCue cue)
+        private void RememberRestPose()
+        {
+            restLocalPosition = body.localPosition;
+            restLocalRotation = body.localRotation;
+            restLocalScale = body.localScale;
+
+            if (fist != null)
+            {
+                fistRestLocalPosition = fist.localPosition;
+            }
+        }
+
+        private void PlayCue(PresentationCue cue)
         {
             if (body != null && cue.Kind != null)
             {
@@ -108,20 +115,22 @@ namespace ArkhamCombat.Presentation
             }
         }
 
-        private void BlendToRest()
+        private void KillCueTweens() => DOTween.Kill(TweenId);
+
+        private void BlendToRestPose()
         {
             if (body == null)
             {
                 return;
             }
 
-            body.DOLocalMove(restPosition, restBlendSeconds).SetId(TweenId);
-            body.DOLocalRotateQuaternion(restRotation, restBlendSeconds).SetId(TweenId);
-            body.DOScale(restScale, restBlendSeconds).SetId(TweenId);
+            body.DOLocalMove(restLocalPosition, restBlendSeconds).SetId(TweenId);
+            body.DOLocalRotateQuaternion(restLocalRotation, restBlendSeconds).SetId(TweenId);
+            body.DOScale(restLocalScale, restBlendSeconds).SetId(TweenId);
 
             if (fist != null)
             {
-                fist.DOLocalMove(fistRestPosition, restBlendSeconds).SetId(TweenId);
+                fist.DOLocalMove(fistRestLocalPosition, restBlendSeconds).SetId(TweenId);
             }
 
             if (bodyRenderer != null)
