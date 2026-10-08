@@ -22,6 +22,7 @@ namespace ArkhamCombat.Tests
         private static readonly Window JabEvadeWindow = new Window(0f, 0.6f);
         private static readonly Window CrossEvadeWindow = new Window(0f, 0.3f);
 
+        private TestIntentKinds kinds;
         private AttackDefinition jab;
         private AttackDefinition cross;
         private Stance stance;
@@ -35,6 +36,7 @@ namespace ArkhamCombat.Tests
         [SetUp]
         public void SetUp()
         {
+            kinds = new TestIntentKinds(PressLifetimeSeconds);
             jab = Attack("Jab", AttackSeconds, HitWindow, ComboWindow, JabEvadeWindow, WarpWindow, StrikeDistance, MaxLunge);
             cross = Attack("Cross", AttackSeconds, HitWindow, ComboWindow, CrossEvadeWindow, WarpWindow, StrikeDistance, MaxLunge);
 
@@ -42,15 +44,15 @@ namespace ArkhamCombat.Tests
             stance = Stance("Neutral",
                 new[]
                 {
-                    NodeWithNothingToPlay("Neutral", new Edge(IntentKind.Strike, "S1")),
-                    new ChainNode("S1", jab, new Edge(IntentKind.Strike, "S2")),
-                    new ChainNode("S2", cross, new Edge(IntentKind.Strike, "S1")),
+                    NodeWithNothingToPlay("Neutral", new Edge(kinds.Strike, "S1")),
+                    new ChainNode("S1", jab, new Edge(kinds.Strike, "S2")),
+                    new ChainNode("S2", cross, new Edge(kinds.Strike, "S1")),
                     new ChainNode("Evade", cross)
                 },
-                new[] { new Edge(IntentKind.Evade, "Evade") },
+                new[] { new Edge(kinds.Evade, "Evade") },
                 ChainResetSeconds);
 
-            intents = IntentBufferKeepingPressesFor(PressLifetimeSeconds);
+            intents = new IntentBuffer();
             context = new CombatContext();
             driver = new NullPresentationDriver();
             warpMover = new RecordingWarpMover();
@@ -58,11 +60,14 @@ namespace ArkhamCombat.Tests
             events = new RecordingEvents();
         }
 
+        [TearDown]
+        public void TearDown() => kinds.Destroy();
+
         [Test]
         public void AStrikeWhileIdle_StartsTheComboFromTheRoot()
         {
             ActionRunner runner = CreateRunner();
-            Press(IntentKind.Strike);
+            Press(kinds.Strike);
 
             Tick(runner);
 
@@ -76,7 +81,7 @@ namespace ArkhamCombat.Tests
         public void NoActionStarts_WhileTheCharacterCannotStartFromIdle()
         {
             ActionRunner runner = CreateRunner();
-            Press(IntentKind.Strike);
+            Press(kinds.Strike);
 
             Tick(runner, 3, canStartFromIdle: false);
 
@@ -117,7 +122,7 @@ namespace ArkhamCombat.Tests
             TickFor(runner, HitWindow.Start);
             Assert.IsTrue(hitWindowListener.IsOpen, "at 0.3 the hit window is open before the evade");
 
-            Press(IntentKind.Evade);
+            Press(kinds.Evade);
             Tick(runner);
 
             Assert.IsFalse(hitWindowListener.IsOpen, "the hit window never stays open behind the interrupted attack");
@@ -136,7 +141,7 @@ namespace ArkhamCombat.Tests
             StartJab(runner);
             const float afterTheJabsEvadeWindow = 0.7f;
             TickFor(runner, afterTheJabsEvadeWindow);
-            Press(IntentKind.Evade);
+            Press(kinds.Evade);
 
             Tick(runner);
 
@@ -148,7 +153,7 @@ namespace ArkhamCombat.Tests
         {
             ActionRunner runner = CreateRunner();
             StartJab(runner);
-            Press(IntentKind.Strike);
+            Press(kinds.Strike);
 
             TickFor(runner, 0.4f);
             Assert.AreSame(jab, runner.CurrentAction, "at 0.4 the combo window is not open yet, so the press waits");
@@ -174,7 +179,7 @@ namespace ArkhamCombat.Tests
             TickFor(runner, insideTheComboWindow);
             Assert.IsTrue(runner.IsComboWindowOpen, "at 0.7 the combo window is open");
 
-            Press(IntentKind.Strike);
+            Press(kinds.Strike);
             Tick(runner);
 
             Assert.AreSame(cross, runner.CurrentAction, "the resolver is asked on every tick while the window is open");
@@ -219,7 +224,7 @@ namespace ArkhamCombat.Tests
             ActionRunner runner = CreateRunner();
             StartJab(runner);
             TickFor(runner, ComboWindow.End);
-            Press(IntentKind.Strike);
+            Press(kinds.Strike);
 
             Tick(runner);
             Assert.IsFalse(runner.IsPlaying, "at 1.0 the jab has ended; the press came after the combo window closed");
@@ -382,20 +387,20 @@ namespace ArkhamCombat.Tests
         }
 
         private ActionRunner CreateRunner() =>
-            new ActionRunner(stance, intents, context, new AlwaysConditionEvaluator(), driver, warpMover, hitWindowListener, events);
+            new ActionRunner(stance, intents, context, new AlwaysConditionEvaluator(), kinds.InterruptKinds, driver, warpMover, hitWindowListener, events);
 
         private void Press(IntentKind kind) => intents.Push(kind, Vector2.zero);
 
         /// <summary>For a runner at the root: the press is taken on the first tick, so the jab starts at time zero.</summary>
         private void StartJab(ActionRunner runner)
         {
-            Press(IntentKind.Strike);
+            Press(kinds.Strike);
             Tick(runner);
         }
 
         private void StrikeAndPlayTheAttackToItsEnd(ActionRunner runner)
         {
-            Press(IntentKind.Strike);
+            Press(kinds.Strike);
             Tick(runner);
             TickFor(runner, AttackSeconds);
         }

@@ -38,6 +38,7 @@ namespace ArkhamCombat.Combat
             IntentBuffer intents,
             CombatContext context,
             IConditionEvaluator conditions,
+            InterruptKinds interruptKinds,
             IPresentationDriver driver,
             IWarpMover warpMover,
             IHitWindowListener hitWindowListener,
@@ -53,7 +54,7 @@ namespace ArkhamCombat.Combat
             this.events = events ?? new NullCombatEvents();
             this.random = random ?? new System.Random();
 
-            resolver = new ComboResolver(conditions);
+            resolver = new ComboResolver(conditions, interruptKinds);
             Trace = new ActionTrace(intents);
 
             if (stance != null)

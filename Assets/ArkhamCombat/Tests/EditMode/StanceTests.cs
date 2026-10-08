@@ -9,19 +9,27 @@ namespace ArkhamCombat.Tests
 {
     public class StanceTests
     {
+        private TestIntentKinds kinds;
         private AttackDefinition jab;
 
         [SetUp]
-        public void SetUp() => jab = Attack("Jab");
+        public void SetUp()
+        {
+            kinds = new TestIntentKinds();
+            jab = Attack("Jab");
+        }
+
+        [TearDown]
+        public void TearDown() => kinds.Destroy();
 
         [Test]
         public void AComboThatLoopsBetweenTwoAttacks_Validates()
         {
             Stance stance = Stance("Neutral", new[]
             {
-                NodeWithNothingToPlay("Neutral", new Edge(IntentKind.Strike, "S1")),
-                new ChainNode("S1", jab, new Edge(IntentKind.Strike, "S2")),
-                new ChainNode("S2", jab, new Edge(IntentKind.Strike, "S1"))
+                NodeWithNothingToPlay("Neutral", new Edge(kinds.Strike, "S1")),
+                new ChainNode("S1", jab, new Edge(kinds.Strike, "S2")),
+                new ChainNode("S2", jab, new Edge(kinds.Strike, "S1"))
             });
 
             Assert.IsEmpty(ValidationErrors(stance));
@@ -32,7 +40,7 @@ namespace ArkhamCombat.Tests
         {
             Stance stance = Stance("Neutral", new[]
             {
-                NodeWithNothingToPlay("Neutral", new Edge(IntentKind.Strike, "Empty")),
+                NodeWithNothingToPlay("Neutral", new Edge(kinds.Strike, "Empty")),
                 new ChainNode("Empty", new VariantPool(new RandomPolicy()))
             });
 
@@ -47,8 +55,8 @@ namespace ArkhamCombat.Tests
         {
             Stance stance = Stance("Neutral", new[]
             {
-                NodeWithNothingToPlay("Neutral", new Edge(IntentKind.Strike, "S1")),
-                new ChainNode("S1", jab, new Edge(IntentKind.Strike, "Neutral"))
+                NodeWithNothingToPlay("Neutral", new Edge(kinds.Strike, "S1")),
+                new ChainNode("S1", jab, new Edge(kinds.Strike, "Neutral"))
             });
 
             List<string> errors = ValidationErrors(stance);
@@ -59,8 +67,8 @@ namespace ArkhamCombat.Tests
         [Test]
         public void Prepare_LeavesTheAuthoredEdgeOrderAlone()
         {
-            Edge runsFirst = new Edge(IntentKind.Strike, "A", priority: 1);
-            Edge runsSecond = new Edge(IntentKind.Strike, "B", priority: 2);
+            Edge runsFirst = new Edge(kinds.Strike, "A", priority: 1);
+            Edge runsSecond = new Edge(kinds.Strike, "B", priority: 2);
             ChainNode node = new ChainNode("N", jab, runsSecond, runsFirst);
             Stance stance = Stance("N", new[] { node, new ChainNode("A", jab), new ChainNode("B", jab) });
 
@@ -77,7 +85,7 @@ namespace ArkhamCombat.Tests
         {
             Stance stance = Stance("Neutral", new[]
             {
-                NodeWithNothingToPlay("Neutral", new Edge(IntentKind.Strike, "S1")),
+                NodeWithNothingToPlay("Neutral", new Edge(kinds.Strike, "S1")),
                 new ChainNode("S1", jab),
                 new ChainNode("Orphan", jab)
             });
@@ -95,7 +103,7 @@ namespace ArkhamCombat.Tests
                     NodeWithNothingToPlay("Neutral"),
                     new ChainNode("Evade", jab)
                 },
-                new[] { new Edge(IntentKind.Evade, "Evade") });
+                new[] { new Edge(kinds.Evade, "Evade") });
 
             Assert.IsEmpty(ValidationErrors(stance));
         }
@@ -105,13 +113,27 @@ namespace ArkhamCombat.Tests
         {
             Stance stance = Stance("Neutral", new[]
             {
-                NodeWithNothingToPlay("Neutral", new Edge(IntentKind.Strike, null), new Edge(IntentKind.Strike, "Nowhere"))
+                NodeWithNothingToPlay("Neutral", new Edge(kinds.Strike, null), new Edge(kinds.Strike, "Nowhere"))
             });
 
             List<string> errors = ValidationErrors(stance);
             Assert.AreEqual(2, errors.Count, string.Join("\n", errors));
             StringAssert.Contains("has no destination", errors[0]);
             StringAssert.Contains("unknown node 'Nowhere'", errors[1]);
+        }
+
+        [Test]
+        public void AnEdgeWithNoIntentKind_IsReported()
+        {
+            Stance stance = Stance("Neutral", new[]
+            {
+                NodeWithNothingToPlay("Neutral", new Edge(null, "S1")),
+                new ChainNode("S1", jab)
+            });
+
+            List<string> errors = ValidationErrors(stance);
+            Assert.AreEqual(1, errors.Count, string.Join("\n", errors));
+            StringAssert.Contains("has no intent kind", errors[0]);
         }
 
         [Test]
@@ -132,9 +154,9 @@ namespace ArkhamCombat.Tests
         public void Prepare_SortsEdgesByPriority_KeepingAuthoredOrderForTies()
         {
             ChainNode node = new ChainNode("N", jab,
-                new Edge(IntentKind.Strike, "C", priority: 2),
-                new Edge(IntentKind.Strike, "A", priority: 1),
-                new Edge(IntentKind.Strike, "B", priority: 1));
+                new Edge(kinds.Strike, "C", priority: 2),
+                new Edge(kinds.Strike, "A", priority: 1),
+                new Edge(kinds.Strike, "B", priority: 1));
             Stance stance = Stance("N", new[] { node, new ChainNode("A", jab), new ChainNode("B", jab), new ChainNode("C", jab) });
 
             Assert.AreEqual("A", node.Edges[0].DestinationId);

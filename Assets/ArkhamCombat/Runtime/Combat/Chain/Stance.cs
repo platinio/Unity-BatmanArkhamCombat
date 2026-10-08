@@ -175,17 +175,22 @@ namespace ArkhamCombat.Combat
                     continue;
                 }
 
+                if (!edge.HasIntentKind)
+                {
+                    errors.Add($"'{name}': {owner} edge {i} has no intent kind.");
+                }
+
                 if (string.IsNullOrEmpty(edge.DestinationId))
                 {
-                    errors.Add($"'{name}': {owner} edge {i} ({edge.Intent}) has no destination.");
+                    errors.Add($"'{name}': {owner} edge {i} ({edge.IntentKindName}) has no destination.");
                 }
                 else if (!nodesById.TryGetValue(edge.DestinationId, out ChainNode destination))
                 {
-                    errors.Add($"'{name}': {owner} edge {i} ({edge.Intent}) points at unknown node '{edge.DestinationId}'.");
+                    errors.Add($"'{name}': {owner} edge {i} ({edge.IntentKindName}) points at unknown node '{edge.DestinationId}'.");
                 }
                 else if (destination.HasNothingToPlay)
                 {
-                    errors.Add($"'{name}': {owner} edge {i} ({edge.Intent}) points at '{edge.DestinationId}', which has nothing to play.");
+                    errors.Add($"'{name}': {owner} edge {i} ({edge.IntentKindName}) points at '{edge.DestinationId}', which has nothing to play.");
                 }
             }
         }

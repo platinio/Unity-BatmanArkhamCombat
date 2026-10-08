@@ -13,6 +13,8 @@ MonoBehaviour:
   m_Name: CombatConfig
   m_EditorClassIdentifier: ArkhamCombat.Player::ArkhamCombat.Player.CombatConfig
   stance: {fileID: 11400000, guid: 417965012c9051c4fa318b5cbb6e89c1, type: 2}
+  evadeKind: {fileID: 11400000, guid: fd7d3c32ea399d546bb3da590da64df3, type: 2}
+  counterKind: {fileID: 11400000, guid: b4c3884cf89a4ae4f99f251cbdd386b5, type: 2}
   meter:
     tierThresholds: 030000000500000008000000
     meterTimeoutSeconds: 2.5

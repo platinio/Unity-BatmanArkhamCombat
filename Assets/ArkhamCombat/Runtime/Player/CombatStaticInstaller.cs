@@ -38,6 +38,7 @@ namespace ArkhamCombat.Player
         {
             Container.Bind<CombatConfig>().FromInstance(config);
             Container.Bind<Stance>().FromResolveGetter<CombatConfig>(combatConfig => combatConfig != null ? combatConfig.Stance : null);
+            Container.Bind<InterruptKinds>().FromResolveGetter<CombatConfig>(InterruptKindsOf).AsSingle();
             Container.Bind<ICombatEvents>().FromInstance(events ?? new NullCombatEvents());
         }
 
@@ -72,6 +73,11 @@ namespace ArkhamCombat.Player
             Container.Bind<ITargetPicker>().To<StandInTargetPicker>().AsSingle();
         }
 
+        private static InterruptKinds InterruptKindsOf(CombatConfig combatConfig) =>
+            combatConfig != null
+                ? new InterruptKinds(combatConfig.EvadeKind, combatConfig.CounterKind)
+                : new InterruptKinds(evade: null, counter: null);
+
         /// <summary>
         /// Validates the stance and its attacks once at scene load, so a reversed window or an edge
         /// to nowhere is an error in the console rather than a hit window that never closes.
@@ -83,6 +89,8 @@ namespace ArkhamCombat.Player
                 Debug.LogError($"[{nameof(CombatStaticInstaller)}] No CombatConfig assigned on '{name}'.", this);
                 return;
             }
+
+            ReportMissingInterruptKinds();
 
             Stance stance = config.Stance;
             if (stance == null)
@@ -101,6 +109,19 @@ namespace ArkhamCombat.Player
             foreach (string error in errors)
             {
                 Debug.LogError($"[{nameof(CombatStaticInstaller)}] {error}", stance);
+            }
+        }
+
+        private void ReportMissingInterruptKinds()
+        {
+            if (config.EvadeKind == null)
+            {
+                Debug.LogError($"[{nameof(CombatStaticInstaller)}] CombatConfig '{config.name}' has no evade kind.", config);
+            }
+
+            if (config.CounterKind == null)
+            {
+                Debug.LogError($"[{nameof(CombatStaticInstaller)}] CombatConfig '{config.name}' has no counter kind.", config);
             }
         }
 

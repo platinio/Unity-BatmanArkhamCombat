@@ -21,7 +21,7 @@ MonoBehaviour:
       policy:
         rid: 3135146534942277824
     edges:
-    - intent: 0
+    - intentKind: {fileID: 11400000, guid: ba9cd6679aa44c144bb87a8e99f640be, type: 2}
       condition:
         function: {fileID: 0}
         arguments: []
@@ -36,7 +36,7 @@ MonoBehaviour:
       policy:
         rid: 3135146534942277825
     edges:
-    - intent: 0
+    - intentKind: {fileID: 11400000, guid: ba9cd6679aa44c144bb87a8e99f640be, type: 2}
       condition:
         function: {fileID: 0}
         arguments: []
@@ -49,7 +49,7 @@ MonoBehaviour:
       policy:
         rid: 3135146534942277826
     edges:
-    - intent: 0
+    - intentKind: {fileID: 11400000, guid: ba9cd6679aa44c144bb87a8e99f640be, type: 2}
       condition:
         function: {fileID: 0}
         arguments: []
@@ -62,7 +62,7 @@ MonoBehaviour:
       policy:
         rid: 3135146534942277827
     edges:
-    - intent: 0
+    - intentKind: {fileID: 11400000, guid: ba9cd6679aa44c144bb87a8e99f640be, type: 2}
       condition:
         function: {fileID: 0}
         arguments: []

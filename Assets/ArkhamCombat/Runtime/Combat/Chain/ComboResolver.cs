@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using ArcaneOnyx.TPCharacterController.Inputs;
 
@@ -65,10 +66,12 @@ namespace ArkhamCombat.Combat
     public sealed class ComboResolver
     {
         private readonly IConditionEvaluator conditions;
+        private readonly InterruptKinds interruptKinds;
 
-        public ComboResolver(IConditionEvaluator conditions)
+        public ComboResolver(IConditionEvaluator conditions, InterruptKinds interruptKinds)
         {
             this.conditions = conditions ?? new AlwaysConditionEvaluator();
+            this.interruptKinds = interruptKinds ?? throw new ArgumentNullException(nameof(interruptKinds));
         }
 
         /// <summary>Interrupts are tried first so an evade or a counter wins over the next attack of the combo.</summary>
@@ -95,19 +98,21 @@ namespace ArkhamCombat.Combat
         /// <summary>
         /// The gate a global edge passes before its condition is even asked. Evade needs the current
         /// attack's evade window, or an idle character; a plain action playing cannot be evaded out of.
-        /// Counter needs a counterable attack incoming. Stun and a global Strike have no gate of their own.
+        /// Counter needs a counterable attack incoming. Any other kind has no gate of its own.
         /// </summary>
-        public static bool IsInterruptAllowed(Edge edge, in ComboSituation situation, CombatContext context)
+        public bool IsInterruptAllowed(Edge edge, in ComboSituation situation, CombatContext context)
         {
-            switch (edge.Intent)
+            if (edge.IntentKind == interruptKinds.Evade)
             {
-                case IntentKind.Evade:
-                    return !situation.IsPlaying || situation.IsInEvadeWindow;
-                case IntentKind.Counter:
-                    return context != null && context.IsIncomingAttackCounterable;
-                default:
-                    return true;
+                return !situation.IsPlaying || situation.IsInEvadeWindow;
             }
+
+            if (edge.IntentKind == interruptKinds.Counter)
+            {
+                return context != null && context.IsIncomingAttackCounterable;
+            }
+
+            return true;
         }
 
         private bool TryTakeInterruptEdge(Stance stance, in ComboSituation situation, IntentBuffer intents, CombatContext context, out Resolution resolution)
@@ -157,7 +162,12 @@ namespace ArkhamCombat.Combat
         {
             resolution = Resolution.None;
 
-            Intent intent = intents.FindNewest(edge.Intent);
+            if (!edge.HasIntentKind)
+            {
+                return false;
+            }
+
+            Intent intent = intents.FindNewest(edge.IntentKind);
             if (intent == null)
             {
                 return false;
