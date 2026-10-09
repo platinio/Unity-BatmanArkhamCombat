@@ -1,5 +1,6 @@
 using System;
 using ArcaneOnyx.BehaviorTree;
+using ArcaneOnyx.TPCharacterController;
 using ArcaneOnyx.TPCharacterController.Movement;
 using ArkhamCombat.Combat;
 using UnityEngine;
@@ -10,8 +11,9 @@ namespace ArkhamCombat.Player
     /// <summary>
     /// Measures this character's <see cref="CombatFacts"/> each tick and mirrors them onto its agent
     /// variables through the BH3 writer, so Functions read the same facts the resolver does and the
-    /// keys show in Variable Watch. Target side and stick angle are character-relative. A character
-    /// without a combo meter reports a combo of zero.
+    /// keys show in Variable Watch. The target facts describe the target the next press would get,
+    /// picked with the stick as it is now. Target side and stick angle are character-relative. A
+    /// character without a combo meter reports a combo of zero.
     /// </summary>
     public sealed class CombatFactsUpdater : CombatComponent
     {
@@ -26,9 +28,11 @@ namespace ArkhamCombat.Player
         private const float DeadAheadSine = 0.1f;
 
         private ActionRunner runner;
+        private IActionTargetPicker targetPicker;
         private ComboMeter meter;
         private CombatConfig config;
         private IMovementFrame frame;
+        private CharacterBrain characterBrain;
         private Vector3 toTarget;
         private int lastWrittenComboCount = -1;
         private int lastWrittenComboTier = -1;
@@ -45,18 +49,26 @@ namespace ArkhamCombat.Player
             ActionRunner runner,
             CombatConfig config,
             IMovementFrame frame,
+            [InjectOptional] IActionTargetPicker targetPicker,
             [InjectOptional] ComboMeter meter)
         {
             this.runner = runner;
             this.config = config;
             this.frame = frame;
+            this.targetPicker = targetPicker ?? new NullActionTargetPicker();
             this.meter = meter;
+        }
+
+        private void Awake()
+        {
+            // The brain on this object, not whichever one the container found in the scene.
+            characterBrain = GetComponent<CharacterBrain>();
         }
 
         public override void Tick(float deltaTime)
         {
             MeasureCombo();
-            MeasureTarget(runner.Target, runner.CurrentAttack);
+            MeasureTarget(TargetOfTheNextPress(), runner.CurrentAttack);
             MeasureIncomingAttack();
             WriteChangedFactsToAgent();
         }
@@ -91,6 +103,8 @@ namespace ArkhamCombat.Player
 
             return rightwardAmount < -deadAheadLimit ? TargetOnTheLeft : TargetDeadAhead;
         }
+
+        private IActionTarget TargetOfTheNextPress() => targetPicker.PickTarget(characterBrain.Context.Input.Move);
 
         private void MeasureCombo()
         {
@@ -127,7 +141,7 @@ namespace ArkhamCombat.Player
             Facts.TargetSide = SideOf(forward, toTarget);
             Facts.TargetState = target is ICombatTarget combatant ? combatant.State : string.Empty;
 
-            // The same rule the warp refuses by, so the fact and the overlay's warp-refused flag agree.
+            // The same lunge rule the warp refuses by; the fact describes the next press's target, the warp the current action's.
             Facts.IsTargetBeyondLunge = currentAttack != null
                 ? currentAttack.IsBeyondLunge(transform.position, target.Position)
                 : Facts.TargetDistance > config.MaxLungeWhileIdle;

@@ -25,9 +25,9 @@ Input System callback          PlayerInputReader pushes Intent{Kind, PressedAt, 
                                into IntentBuffer (controller submodule)
         │
 CombatBrain.Update  (runs before CharacterBrain)
-        │  ITargetPicker.Pick(position, stick or facing)  ──► ActionRunner.Target
         │  each CombatComponent in the brain's list, top to bottom:
-        │       CombatFactsUpdater.Tick  ──► CombatFacts + agent variables
+        │       CombatFactsUpdater.Tick  ──► CombatFacts + agent variables, measured against
+        │                                    IActionTargetPicker.PickTarget(the stick now): the next press's target
         │  ComboMeter.Tick                 ──► timeout reset
         │  ActionRunner.Tick(deltaTime, position, CanStartActionFromIdle())
         │       playing: IPresentationDriver.Tick  ──► ActionClock advances, cues fire
@@ -36,6 +36,9 @@ CombatBrain.Update  (runs before CharacterBrain)
         │                clock reached 1             ──► the action ends, back to idle
         │       idle:    idle seconds ──► the combo goes back to the root after chainResetSeconds
         │                ComboResolver.Resolve from the kept node ──► the next action starts
+        │       an action starts: IActionTargetPicker.PickTarget(the press's MoveAtPress, zero from code)
+        │                ──► CombatTargeting ──► ITargetScorer.BestTarget(position, world direction)
+        │                ──► ActionRunner.CurrentActionTarget, kept until that action ends
         │  runner started from idle  ──► CharacterStateMachine.Change<AttackingState>()
         │
 CharacterBrain.Update
@@ -124,12 +127,13 @@ The intent buffer lives in the character controller submodule (`ArcaneOnyx.TPCha
 
 | Type | Responsibility |
 |---|---|
-| `ActionRunner` | Plays the actions. Owns the current node and action. Each tick advances the driver, opens and closes the windows (the hit window, the combo window, the warp), asks the resolver, starts follow-ups and interrupts, ends the action at its end, and keeps the combo's place for `chainResetSeconds` of idle time before going back to the root. A follow-up ends the current attack normally; only a global edge interrupts it. `Interrupt`, `PlayAction` and `Cancel` are the paths code uses: reactions and enemies. The warp moves the share of the remaining distance that matches the share of the warp window's remaining time the tick covers, re-aimed each tick, and is refused beyond `MaxLunge` (`WasWarpRefused`) |
+| `ActionRunner` | Plays the actions. Owns the current node, action and `CurrentActionTarget`. Each action asks the `IActionTargetPicker` once as it starts, with the stick at the press (zero for `Interrupt` and `PlayAction`), and keeps that target until it ends, so every attack of a combo picks again but none switches target halfway. Without a picker an action has no target and plays in place. Each tick advances the driver, opens and closes the windows (the hit window, the combo window, the warp), asks the resolver, starts follow-ups and interrupts, ends the action at its end, and keeps the combo's place for `chainResetSeconds` of idle time before going back to the root. A follow-up ends the current attack normally; only a global edge interrupts it. `Interrupt`, `PlayAction` and `Cancel` are the paths code uses: reactions and enemies. The warp moves the share of the remaining distance that matches the share of the warp window's remaining time the tick covers, re-aimed each tick, and is refused beyond `MaxLunge` (`WasWarpRefused`) |
 | `ActionTrace` | What the overlay draws: the last eight actions and idle stretches with every press that arrived and whether it was consumed, expired or is still live |
 | `IActionTarget` | Position and validity. All the runner needs to warp and to hit |
 | `ICombatTarget` | A target that can also be read (`State`) and hit (`Receive`). Dummies now, enemy status components later |
 | `ITargetRoster` | Who is in the fight. A scene scan now, the encounter director later |
-| `ITargetPicker` | Picks the frame's target from the roster given the position and the preferred direction. A stand-in now, spec 04's scored pick later |
+| `IActionTargetPicker` | `PickTarget(direction)`: hands a target to whoever asks. The direction is in the character's movement frame (the stick, or wherever an agent aims); zero means straight ahead. Knows nothing about combos, presses or callers. `NullActionTargetPicker` never finds one |
+| `ITargetScorer` | `BestTarget(position, direction)` in world space: the best target in the roster for a character there, facing that way. A stand-in now, spec 04's scoring later |
 | `IWarpMover` | Moves the character during the warp. The runner never touches a transform |
 | `IHitWindowListener` | The hit code, told when the hit window opens, with the attack and target, and when it closes, at its end or on any interrupt, so a hit window never stays open behind an interrupted attack |
 
@@ -145,14 +149,15 @@ The intent buffer lives in the character controller submodule (`ArcaneOnyx.TPCha
 | Type | Responsibility |
 |---|---|
 | `CombatConfig` | The asset: the stance, which kinds are the evade and the counter (`evadeKind`, `counterKind`), the meter settings, the facing turn time, and the tunables the stand-ins use |
-| `CombatStaticInstaller` | Binds the combat graph scene-wide: config, stance, combat events (picked on the asset), the facts updater (found in the hierarchy, optional), combat facts (the updater's, or an empty set when the scene has no updater, so the counter rule sees false and the target-side pool falls back), meter, intent buffer (from the input reader), condition evaluator, driver (found in the hierarchy), warp mover and hit window listener, roster, picker, runner. Binds the `InterruptKinds` from the config. Validates the config's evade and counter kinds, the stance and every attack at scene load and logs each problem |
-| `CombatBrain` | The per-frame orchestration described above, running before the character brain: picks the target, ticks its combat components in the order of its list, ticks the meter and the runner, and switches the state machine into `Attacking` when the runner starts. Adding it lists the combat components already on the object. An empty entry is skipped; an empty entry or a component on another object is reported once at start |
+| `CombatStaticInstaller` | Binds the combat graph scene-wide: config, stance, combat events (picked on the asset), the facts updater (found in the hierarchy, optional), combat facts (the updater's, or an empty set when the scene has no updater, so the counter rule sees false and the target-side pool falls back), meter, intent buffer (from the input reader), condition evaluator, driver (found in the hierarchy), warp mover and hit window listener, roster, target scorer, the `CombatTargeting` on the character as the target picker (found in the hierarchy, optional: without it the runner and the facts have no target), runner. Binds the `InterruptKinds` from the config. Validates the config's evade and counter kinds, the stance and every attack at scene load and logs each problem |
+| `CombatBrain` | The per-frame orchestration described above, running before the character brain: ticks its combat components in the order of its list, ticks the meter and the runner, and switches the state machine into `Attacking` when the runner starts. Adding it lists the combat components already on the object. An empty entry is skipped; an empty entry or a component on another object is reported once at start |
 | `CombatComponent` | One per-frame combat job on a character: a `MonoBehaviour` with `Tick(deltaTime)`. The brain ticks the ones in its list, in that order, so a character has exactly the jobs it was given |
-| `AttackingState` | The character while an action plays: the warp mover's pending movement becomes the frame's planar velocity, the character turns toward the target, gravity is held during the warp. Hands back to Locomotion when the runner goes idle. A follow-up is not a state change |
+| `AttackingState` | The character while an action plays: the warp mover's pending movement becomes the frame's planar velocity, the character turns toward the runner's `CurrentActionTarget`, gravity is held during the warp. Hands back to Locomotion when the runner goes idle. A follow-up is not a state change |
 | `MotorWarpMover` | Collects the warp movement for the frame; the attacking state takes it once |
-| `CombatFactsUpdater` | A combat component on the character that owns its `CombatFacts` (`Facts`). Each tick measures the combo (zero without a meter), the target, its side and state, beyond-lunge and incoming counterable, and mirrors them onto the agent's variables through BH3's writer, writing only what changed, so Functions and Variable Watch see the same facts. Updates the per-press stick angle right before a condition runs. A character that needs no facts leaves it off |
+| `CombatFactsUpdater` | A combat component on the character that owns its `CombatFacts` (`Facts`). Each tick measures the combo (zero without a meter), the target the next press would get (asks the target picker with the stick as it is now), its side and state, beyond-lunge and incoming counterable, and mirrors them onto the agent's variables through BH3's writer, writing only what changed, so Functions and Variable Watch see the same facts. Updates the per-press stick angle right before a condition runs. A character that needs no facts leaves it off |
 | `FunctionConditionEvaluator` | Runs an edge's Function against the player's agent. Empty condition is true; a Function that cannot run is reported once and treated as false. Checks every authored condition returns a bool at load. Without a facts updater the stick angle is not measured |
-| `StandInTargetPicker` | Nearest roster target roughly along the stick, or the facing when idle. Replaced by spec 04 |
+| `CombatTargeting` | The character's `IActionTargetPicker`, a plain component (not a combat component: it stores nothing and has nothing to tick). Turns the direction into world space with the character's movement frame, falls back to the facing when the direction is barely pushed, and asks the `ITargetScorer` |
+| `StandInTargetScorer` | The `ITargetScorer` stand-in: the nearest roster target roughly along the direction, distance alone with no direction. Replaced by spec 04 |
 | `SceneTargetRoster` | Every `ICombatTarget` component in the scene, read on first use. Replaced by the encounter director |
 | `CombatDummy` | A thing to hit: a state string, a hit counter, a flash. Replaced by enemy status components |
 | `DemoHitWindowListener` | A range check at the hit window's start: in range lands and feeds the meter, otherwise a whiff. Replaced by spec 05's hit pipeline |
@@ -182,8 +187,8 @@ The intent buffer lives in the character controller submodule (`ArcaneOnyx.TPCha
   locomotion and camera configs with the game's `ArkhamInputConfig`. Its state list must include
   `AttackingStateBinding`.
 - **A prefab**: a `ProceduralPresentationDriver` with the body child, an optional fist and the body
-  renderer, plus `CombatBrain` next to `CharacterBrain` and a `CombatFactsUpdater` in the brain's list
-  of combat components. Dummies are any object with `CombatDummy`.
+  renderer, plus `CombatBrain` and `CombatTargeting` next to `CharacterBrain` and a `CombatFactsUpdater`
+  in the brain's list of combat components. Dummies are any object with `CombatDummy`.
 
 ## Extending
 
@@ -191,7 +196,7 @@ The intent buffer lives in the character controller submodule (`ArcaneOnyx.TPCha
 |---|---|
 | A new cue kind | One `[Serializable]` class implementing `ICueKind` in Presentation; it appears in the dropdown |
 | A new pool policy | One class implementing `IVariantPolicy`; same dropdown rule |
-| Real target selection | Implement `ITargetPicker`, bind it in the installer |
+| Real target selection | Implement `ITargetScorer`, bind it in the installer; `CombatTargeting` keeps turning the stick into a world direction. A character that aims another way (an enemy agent) gets its own `IActionTargetPicker` |
 | The encounter roster | Implement `ITargetRoster`, bind it |
 | Enemies as targets | Their status component implements `ICombatTarget` |
 | The hit pipeline | Implement `IHitWindowListener`, bind it |

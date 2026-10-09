@@ -68,7 +68,7 @@ namespace ArkhamCombat.Player
         /// <summary>Turns toward the target while one is valid, otherwise holds the current heading.</summary>
         private Quaternion TurnTowardTarget(float deltaTime)
         {
-            IActionTarget target = runner.Target;
+            IActionTarget target = runner.CurrentActionTarget;
             Quaternion currentRotation = context.Transform.rotation;
 
             if (target == null || !target.IsValid)

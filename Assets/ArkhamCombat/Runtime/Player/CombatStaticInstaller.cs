@@ -70,7 +70,10 @@ namespace ArkhamCombat.Player
         private void BindTargeting()
         {
             Container.Bind<ITargetRoster>().To<SceneTargetRoster>().AsSingle();
-            Container.Bind<ITargetPicker>().To<StandInTargetPicker>().AsSingle();
+            Container.Bind<ITargetScorer>().To<StandInTargetScorer>().AsSingle();
+
+            // Asked for optionally: a scene without CombatTargeting gives the runner and the facts no target.
+            Container.Bind<IActionTargetPicker>().To<CombatTargeting>().FromComponentInHierarchy().AsSingle();
         }
 
         // A scene without a facts updater still gets facts, left empty: the counter rule then never

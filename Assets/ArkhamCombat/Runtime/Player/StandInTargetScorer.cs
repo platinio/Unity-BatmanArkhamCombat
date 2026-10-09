@@ -5,29 +5,29 @@ using UnityEngine;
 namespace ArkhamCombat.Player
 {
     /// <summary>
-    /// Nearest roster target roughly along the preferred direction. A stand-in for spec 04's scored
-    /// pick, behind <see cref="ITargetPicker"/> so swapping it is an installer change, and reading
-    /// an <see cref="ITargetRoster"/> so it never finds targets on its own.
+    /// Nearest roster target roughly along the direction. A stand-in for spec 04's scoring, behind
+    /// <see cref="ITargetScorer"/> so swapping it is an installer change, and reading an
+    /// <see cref="ITargetRoster"/> so it never finds targets on its own.
     /// </summary>
-    public sealed class StandInTargetPicker : ITargetPicker
+    public sealed class StandInTargetScorer : ITargetScorer
     {
         private const float NegligibleSqrMagnitude = 1e-4f;
 
-        // A target this many degrees off the preferred direction scores as if it were twice as far.
+        // A target this many degrees off the direction scores as if it were twice as far.
         private const float AngleThatDoublesTheScore = 90f;
 
         private readonly CombatConfig config;
         private readonly ITargetRoster roster;
 
-        public StandInTargetPicker(CombatConfig config, ITargetRoster roster)
+        public StandInTargetScorer(CombatConfig config, ITargetRoster roster)
         {
             this.config = config;
             this.roster = roster;
         }
 
-        public IActionTarget Pick(Vector3 origin, Vector3 preferredDirection)
+        public IActionTarget BestTarget(Vector3 position, Vector3 direction)
         {
-            preferredDirection.y = 0f;
+            direction.y = 0f;
 
             ICombatTarget bestTarget = null;
             float lowestScore = float.MaxValue;
@@ -36,7 +36,7 @@ namespace ArkhamCombat.Player
             for (int i = 0; i < targets.Count; i++)
             {
                 ICombatTarget candidate = targets[i];
-                if (TryScore(candidate, origin, preferredDirection, out float score) && score < lowestScore)
+                if (TryScore(candidate, position, direction, out float score) && score < lowestScore)
                 {
                     bestTarget = candidate;
                     lowestScore = score;
@@ -46,8 +46,8 @@ namespace ArkhamCombat.Player
             return bestTarget;
         }
 
-        /// <summary>Lower is better. False when the candidate is gone, too far, or too far off the preferred direction.</summary>
-        private bool TryScore(ICombatTarget candidate, Vector3 origin, Vector3 preferredDirection, out float score)
+        /// <summary>Lower is better. False when the candidate is gone, too far, or too far off the direction.</summary>
+        private bool TryScore(ICombatTarget candidate, Vector3 position, Vector3 direction, out float score)
         {
             score = float.MaxValue;
             if (candidate == null || !candidate.IsValid)
@@ -55,7 +55,7 @@ namespace ArkhamCombat.Player
                 return false;
             }
 
-            Vector3 toCandidate = candidate.Position - origin;
+            Vector3 toCandidate = candidate.Position - position;
             toCandidate.y = 0f;
 
             float distance = toCandidate.magnitude;
@@ -64,8 +64,8 @@ namespace ArkhamCombat.Player
                 return false;
             }
 
-            bool hasPreferredDirection = preferredDirection.sqrMagnitude > NegligibleSqrMagnitude;
-            float angle = hasPreferredDirection ? Vector3.Angle(preferredDirection, toCandidate) : 0f;
+            bool hasDirection = direction.sqrMagnitude > NegligibleSqrMagnitude;
+            float angle = hasDirection ? Vector3.Angle(direction, toCandidate) : 0f;
             if (angle > config.MaxTargetAngle)
             {
                 return false;

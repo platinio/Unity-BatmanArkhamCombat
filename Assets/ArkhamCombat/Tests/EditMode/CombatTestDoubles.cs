@@ -128,12 +128,14 @@ namespace ArkhamCombat.Tests
             public int ClosedCount;
             public bool IsOpen;
             public AttackDefinition LastOpenedFor;
+            public IActionTarget LastOpenedAgainst;
 
             public void HitWindowOpened(AttackDefinition attack, IActionTarget target)
             {
                 OpenedCount++;
                 IsOpen = true;
                 LastOpenedFor = attack;
+                LastOpenedAgainst = target;
             }
 
             public void HitWindowClosed()
@@ -152,6 +154,19 @@ namespace ArkhamCombat.Tests
             {
                 TotalMovement += planarOffset;
                 MoveCount++;
+            }
+        }
+
+        /// <summary>Gives whichever target it was last told to, and records each direction it is asked with.</summary>
+        public sealed class RecordingActionTargetPicker : IActionTargetPicker
+        {
+            public readonly List<Vector2> AskedDirections = new List<Vector2>();
+            public IActionTarget TargetToGive;
+
+            public IActionTarget PickTarget(Vector2 direction)
+            {
+                AskedDirections.Add(direction);
+                return TargetToGive;
             }
         }
 

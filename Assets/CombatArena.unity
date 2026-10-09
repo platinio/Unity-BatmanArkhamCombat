@@ -1270,6 +1270,7 @@ GameObject:
   - component: {fileID: 1426181063}
   - component: {fileID: 1426181064}
   - component: {fileID: 1426181065}
+  - component: {fileID: 1426181066}
   m_Layer: 0
   m_Name: Player
   m_TagString: Player
@@ -1386,6 +1387,18 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 69ac9f1703871144e834da64a8af73ba, type: 3}
   m_Name: 
   m_EditorClassIdentifier: ArkhamCombat.Player::ArkhamCombat.Player.CombatFactsUpdater
+--- !u!114 &1426181066
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1426181058}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 338d7203ddc2b034c9ed365b93e602d0, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: ArkhamCombat.Player::ArkhamCombat.Player.CombatTargeting
 --- !u!1 &1454199925
 GameObject:
   m_ObjectHideFlags: 0
