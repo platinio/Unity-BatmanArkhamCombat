@@ -1,3 +1,4 @@
+using System.Collections.Generic;
 using ArcaneOnyx.TPCharacterController;
 using ArcaneOnyx.TPCharacterController.Motor;
 using ArcaneOnyx.TPCharacterController.States;
@@ -20,10 +21,13 @@ namespace ArkhamCombat.Player
     {
         private const float StickPushedSqrMagnitude = 0.01f;
 
+        [Tooltip("The per-frame combat jobs on this character, ticked top to bottom right after the " +
+                 "target is picked. A job sees what the jobs above it wrote this frame.")]
+        [SerializeField] private List<CombatComponent> combatComponents = new List<CombatComponent>();
+
         private CharacterBrain characterBrain;
         private CharacterMotor motor;
         private ActionRunner runner;
-        private CombatFactsUpdater factsUpdater;
         private ITargetPicker targetPicker;
         private ComboMeter meter;
 
@@ -35,13 +39,11 @@ namespace ArkhamCombat.Player
         private void Construct(
             CharacterMotor motor,
             ActionRunner runner,
-            CombatFactsUpdater factsUpdater,
             ITargetPicker targetPicker,
             ComboMeter meter)
         {
             this.motor = motor;
             this.runner = runner;
-            this.factsUpdater = factsUpdater;
             this.targetPicker = targetPicker;
             this.meter = meter;
         }
@@ -57,7 +59,11 @@ namespace ArkhamCombat.Player
                     $"[{nameof(CombatBrain)}] Nothing was injected. The scene needs a SceneContext and the combat installer.", this);
                 enabled = false;
             }
+
+            ReportCombatComponentErrors();
         }
+
+        private void Reset() => combatComponents = new List<CombatComponent>(GetComponents<CombatComponent>());
 
         private void Update()
         {
@@ -69,10 +75,22 @@ namespace ArkhamCombat.Player
             float deltaTime = Time.deltaTime;
 
             PickTarget();
-            factsUpdater.UpdateFacts(runner.Target, runner.CurrentAttack);
+            TickCombatComponents(deltaTime);
             meter.Tick(deltaTime);
             runner.Tick(deltaTime, transform.position, CanStartActionFromIdle());
             EnterAttackingStateWhileAnActionPlays();
+        }
+
+        internal void TickCombatComponents(float deltaTime)
+        {
+            for (int i = 0; i < combatComponents.Count; i++)
+            {
+                CombatComponent combatComponent = combatComponents[i];
+                if (combatComponent != null)
+                {
+                    combatComponent.Tick(deltaTime);
+                }
+            }
         }
 
         private void PickTarget() => runner.Target = targetPicker.Pick(transform.position, PreferredDirection());
@@ -100,6 +118,25 @@ namespace ArkhamCombat.Player
             if (runner.IsPlaying && !IsInState<AttackingState>())
             {
                 characterBrain.StateMachine.Change<AttackingState>();
+            }
+        }
+
+        private void ReportCombatComponentErrors()
+        {
+            for (int i = 0; i < combatComponents.Count; i++)
+            {
+                CombatComponent combatComponent = combatComponents[i];
+                if (combatComponent == null)
+                {
+                    Debug.LogError(
+                        $"[{nameof(CombatBrain)}] Entry {i} of the combat components on '{name}' is empty and will be skipped.", this);
+                }
+                else if (combatComponent.gameObject != gameObject)
+                {
+                    Debug.LogError(
+                        $"[{nameof(CombatBrain)}] The {combatComponent.GetType().Name} in the combat components on '{name}' " +
+                        $"is on '{combatComponent.name}'. A combat component belongs on the character it serves.", this);
+                }
             }
         }
 

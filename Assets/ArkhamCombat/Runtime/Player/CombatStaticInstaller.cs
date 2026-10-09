@@ -44,7 +44,8 @@ namespace ArkhamCombat.Player
 
         private void BindComboState()
         {
-            Container.Bind<CombatFacts>().AsSingle();
+            Container.Bind<CombatFactsUpdater>().FromComponentInHierarchy().AsSingle();
+            Container.Bind<CombatFacts>().FromMethod(FactsFromTheSceneUpdater).AsSingle();
             Container.Bind<ComboMeter>()
                 .FromMethod(injectContext => new ComboMeter(
                     injectContext.Container.Resolve<CombatConfig>().Meter,
@@ -55,7 +56,6 @@ namespace ArkhamCombat.Player
 
         private void BindConditions()
         {
-            Container.Bind<CombatFactsUpdater>().AsSingle();
             Container.Bind<IConditionEvaluator>().To<FunctionConditionEvaluator>().AsSingle();
         }
 
@@ -71,6 +71,14 @@ namespace ArkhamCombat.Player
         {
             Container.Bind<ITargetRoster>().To<SceneTargetRoster>().AsSingle();
             Container.Bind<ITargetPicker>().To<StandInTargetPicker>().AsSingle();
+        }
+
+        // A scene without a facts updater still gets facts, left empty: the counter rule then never
+        // allows a counter and the target-side pool falls back to its no-side pick.
+        private static CombatFacts FactsFromTheSceneUpdater(InjectContext injectContext)
+        {
+            CombatFactsUpdater factsUpdater = injectContext.Container.TryResolve<CombatFactsUpdater>();
+            return factsUpdater != null ? factsUpdater.Facts : new CombatFacts();
         }
 
         private static InterruptKinds InterruptKindsOf(CombatConfig combatConfig) =>
