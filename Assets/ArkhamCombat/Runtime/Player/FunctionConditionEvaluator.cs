@@ -4,12 +4,14 @@ using ArcaneOnyx.TPCharacterController.Motor;
 using ArcaneOnyx.VisualScriptingExtension;
 using ArkhamCombat.Combat;
 using UnityEngine;
+using Zenject;
 
 namespace ArkhamCombat.Player
 {
     /// <summary>
     /// Answers edge conditions by running their Functions against the player's agent variables. A
     /// Function that cannot run is reported once and treated as false, so a broken graph fails closed.
+    /// Without a facts updater in the scene the stick angle is never measured.
     /// </summary>
     public sealed class FunctionConditionEvaluator : IConditionEvaluator
     {
@@ -17,7 +19,7 @@ namespace ArkhamCombat.Player
         private readonly CombatFactsUpdater factsUpdater;
         private readonly HashSet<Edge> edgesAlreadyReported = new HashSet<Edge>();
 
-        public FunctionConditionEvaluator(CharacterMotor motor, CombatFactsUpdater factsUpdater, Stance stance)
+        public FunctionConditionEvaluator(CharacterMotor motor, [InjectOptional] CombatFactsUpdater factsUpdater, Stance stance)
         {
             agent = motor.gameObject;
             this.factsUpdater = factsUpdater;
@@ -35,10 +37,18 @@ namespace ArkhamCombat.Player
                 return true;
             }
 
-            // Updated here rather than each frame: the stick angle belongs to the press being resolved.
-            factsUpdater.UpdateStickAngle(intent.MoveAtPress);
+            UpdateStickAngle(intent);
 
             return RunCondition(edge);
+        }
+
+        // Updated here rather than each frame: the stick angle belongs to the press being resolved.
+        private void UpdateStickAngle(Intent intent)
+        {
+            if (factsUpdater != null)
+            {
+                factsUpdater.UpdateStickAngle(intent.MoveAtPress);
+            }
         }
 
         private bool RunCondition(Edge edge)

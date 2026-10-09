@@ -26,7 +26,8 @@ Input System callback          PlayerInputReader pushes Intent{Kind, PressedAt, 
         │
 CombatBrain.Update  (runs before CharacterBrain)
         │  ITargetPicker.Pick(position, stick or facing)  ──► ActionRunner.Target
-        │  CombatFactsUpdater.UpdateFacts  ──► CombatFacts + agent variables
+        │  each CombatComponent in the brain's list, top to bottom:
+        │       CombatFactsUpdater.Tick  ──► CombatFacts + agent variables
         │  ComboMeter.Tick                 ──► timeout reset
         │  ActionRunner.Tick(deltaTime, position, CanStartActionFromIdle())
         │       playing: IPresentationDriver.Tick  ──► ActionClock advances, cues fire
@@ -61,7 +62,7 @@ Attacking after an action ended (recovery), never from Airborne or a reaction.
 |---|---|---|---|
 | `ArkhamCombat.Combat` | `Runtime/Combat` | The core: actions and windows, the chain, the resolver, the meter, the runner, the clock, the interfaces the runner talks through | The character controller (intent types), VisualScriptingExtension (`FunctionCall<bool>` on edges). Never DOTween, never Zenject; a test asserts both |
 | `ArkhamCombat.Presentation` | `Runtime/Presentation` | The DOTween driver and the cue kinds | Combat, DOTween |
-| `ArkhamCombat.Player` | `Runtime/Player` | The installer, the combat brain, the `Attacking` state, the fact factsUpdater, the Function evaluator, and the stand-ins behind the core's interfaces | Combat, Presentation, BH3 (fact writer), Zenject |
+| `ArkhamCombat.Player` | `Runtime/Player` | The installer, the combat brain and its combat components, the `Attacking` state, the facts updater, the Function evaluator, and the stand-ins behind the core's interfaces | Combat, Presentation, BH3 (fact writer), Zenject |
 | `ArkhamCombat.Shell` | `Runtime/Shell` | The frame-data overlay and the camera demo | Combat, Camera |
 | `ArkhamCombat.Camera` | `Runtime/Camera` | Group framing math and the combat framing source | Character controller |
 | `ArkhamCombat.Editor` | `Editor` | The node id dropdown and the fixture builder | |
@@ -144,12 +145,13 @@ The intent buffer lives in the character controller submodule (`ArcaneOnyx.TPCha
 | Type | Responsibility |
 |---|---|
 | `CombatConfig` | The asset: the stance, which kinds are the evade and the counter (`evadeKind`, `counterKind`), the meter settings, the facing turn time, and the tunables the stand-ins use |
-| `CombatStaticInstaller` | Binds the combat graph scene-wide: config, stance, combat events (picked on the asset), combat facts, meter, intent buffer (from the input reader), facts updater, condition evaluator, driver (found in the hierarchy), warp mover and hit window listener, roster, picker, runner. Binds the `InterruptKinds` from the config. Validates the config's evade and counter kinds, the stance and every attack at scene load and logs each problem |
-| `CombatBrain` | The per-frame orchestration described above, running before the character brain. Switches the state machine into `Attacking` when the runner starts |
+| `CombatStaticInstaller` | Binds the combat graph scene-wide: config, stance, combat events (picked on the asset), the facts updater (found in the hierarchy, optional), combat facts (the updater's, or an empty set when the scene has no updater, so the counter rule sees false and the target-side pool falls back), meter, intent buffer (from the input reader), condition evaluator, driver (found in the hierarchy), warp mover and hit window listener, roster, picker, runner. Binds the `InterruptKinds` from the config. Validates the config's evade and counter kinds, the stance and every attack at scene load and logs each problem |
+| `CombatBrain` | The per-frame orchestration described above, running before the character brain: picks the target, ticks its combat components in the order of its list, ticks the meter and the runner, and switches the state machine into `Attacking` when the runner starts. Adding it lists the combat components already on the object. An empty entry is skipped; an empty entry or a component on another object is reported once at start |
+| `CombatComponent` | One per-frame combat job on a character: a `MonoBehaviour` with `Tick(deltaTime)`. The brain ticks the ones in its list, in that order, so a character has exactly the jobs it was given |
 | `AttackingState` | The character while an action plays: the warp mover's pending movement becomes the frame's planar velocity, the character turns toward the target, gravity is held during the warp. Hands back to Locomotion when the runner goes idle. A follow-up is not a state change |
 | `MotorWarpMover` | Collects the warp movement for the frame; the attacking state takes it once |
-| `CombatFactsUpdater` | Fills `CombatFacts` each frame and mirrors it onto the agent's variables through BH3's writer, writing only what changed, so Functions and Variable Watch see the same facts. Updates the per-press stick angle right before a condition runs |
-| `FunctionConditionEvaluator` | Runs an edge's Function against the player's agent. Empty condition is true; a Function that cannot run is reported once and treated as false. Checks every authored condition returns a bool at load |
+| `CombatFactsUpdater` | A combat component on the character that owns its `CombatFacts` (`Facts`). Each tick measures the combo (zero without a meter), the target, its side and state, beyond-lunge and incoming counterable, and mirrors them onto the agent's variables through BH3's writer, writing only what changed, so Functions and Variable Watch see the same facts. Updates the per-press stick angle right before a condition runs. A character that needs no facts leaves it off |
+| `FunctionConditionEvaluator` | Runs an edge's Function against the player's agent. Empty condition is true; a Function that cannot run is reported once and treated as false. Checks every authored condition returns a bool at load. Without a facts updater the stick angle is not measured |
 | `StandInTargetPicker` | Nearest roster target roughly along the stick, or the facing when idle. Replaced by spec 04 |
 | `SceneTargetRoster` | Every `ICombatTarget` component in the scene, read on first use. Replaced by the encounter director |
 | `CombatDummy` | A thing to hit: a state string, a hit counter, a flash. Replaced by enemy status components |
@@ -180,7 +182,8 @@ The intent buffer lives in the character controller submodule (`ArcaneOnyx.TPCha
   locomotion and camera configs with the game's `ArkhamInputConfig`. Its state list must include
   `AttackingStateBinding`.
 - **A prefab**: a `ProceduralPresentationDriver` with the body child, an optional fist and the body
-  renderer, plus `CombatBrain` next to `CharacterBrain`. Dummies are any object with `CombatDummy`.
+  renderer, plus `CombatBrain` next to `CharacterBrain` and a `CombatFactsUpdater` in the brain's list
+  of combat components. Dummies are any object with `CombatDummy`.
 
 ## Extending
 
@@ -194,6 +197,7 @@ The intent buffer lives in the character controller submodule (`ArcaneOnyx.TPCha
 | The hit pipeline | Implement `IHitWindowListener`, bind it |
 | Real animation | A second `IPresentationDriver` that sets clip time from the clock; see spec 10 |
 | A new combat state | A state class and a three-line `ICharacterStateBinding`, picked in the player installer |
+| A new per-frame combat job | A `CombatComponent` on the character, added to the `CombatBrain`'s list where it should tick |
 
 ## Running it
 
@@ -207,5 +211,5 @@ Background is on.
 
 `ArkhamCombat.Tests` runs in EditMode and needs no scene: windows, actions, stance validation, pool
 policies, the meter, the resolver, the clock, the runner with the null driver and recording test
-doubles, the stand-in picker on test targets, and the assembly boundary (no DOTween or Zenject in the core). The
+doubles, the stand-in picker on test targets, the combat brain's component list, and the assembly boundary (no DOTween or Zenject in the core). The
 intent buffer's tests live in the controller submodule.
