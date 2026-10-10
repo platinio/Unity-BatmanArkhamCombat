@@ -15,7 +15,7 @@ namespace ArkhamCombat.Player
     /// combat exists.
     /// </summary>
     [RequireComponent(typeof(CharacterBrain))]
-    public sealed class AttackingStateSwitch : CombatComponent, IActionStartGate
+    public sealed class AttackingStateSwitch : CharacterComponent, IActionStartGate
     {
         private ActionRunner runner;
         private CharacterBrain characterBrain;
