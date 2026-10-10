@@ -24,8 +24,6 @@ namespace ArkhamCombat.Combat
         public IReadOnlyList<PresentationCue> Cues => cues;
         public IReadOnlyList<string> Tags => tags;
 
-        public bool HasTag(string tag) => tags.Contains(tag);
-
         public void Configure(float duration, IEnumerable<PresentationCue> cues = null, IEnumerable<string> tags = null)
         {
             this.duration = duration;

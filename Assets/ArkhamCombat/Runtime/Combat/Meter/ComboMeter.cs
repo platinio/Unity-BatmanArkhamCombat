@@ -36,8 +36,6 @@ namespace ArkhamCombat.Combat
         /// <summary>The number of tier thresholds the count has reached.</summary>
         public int Tier { get; private set; }
 
-        public float SecondsSinceIncrement => secondsSinceIncrement;
-
         private bool IsEmpty => Count == 0;
 
         private bool HasTimedOut => secondsSinceIncrement >= settings.MeterTimeoutSeconds;

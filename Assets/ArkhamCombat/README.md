@@ -73,7 +73,7 @@ combat is bound for that character alone and two characters never share a runner
 | Bound | Where | What |
 |---|---|---|
 | Per character | `CombatCharacterInstaller`, on the character | Its stance, its presses (`IntentBuffer`), its `ActionRunner`, its `CombatFacts`, condition evaluator, presentation driver, warp mover, hit window listener, target picker, start gate and `CharacterMotor` |
-| Shared | `CombatStaticInstaller`, scene-wide | `CombatConfig`, `IComboMeterSettings`, `ITargetingSettings`, `InterruptKinds`, `ITargetRoster`, `ITargetScorer` |
+| Shared | `CombatStaticInstaller`, scene-wide | `IComboMeterSettings`, `ITargetingSettings`, `IFacingSettings`, `ICombatFactsSettings`, `IHitRangeSettings`, `InterruptKinds`, `ITargetRoster`, `ITargetScorer`; the `CombatConfig` asset itself stays on the installer |
 | Shared for now | `PlayerStaticInstaller`, scene-wide | The character controller: profile, input reader, context, state machine and states; the player's `CharacterBrain`, `CharacterMotor` and `CombatActions`, found in the hierarchy |
 
 The character's context sees everything the scene binds; the scene sees nothing the character binds.
@@ -251,7 +251,7 @@ both generated assemblies reference it.
   `Settings/ArkhamInputConfig.asset` that references the action and the kind.
 - **Wiring**: `CombatConfig` names the evade and counter kinds; the `CombatStaticInstaller` asset in
   `Assets/Installers/Static` points at the config. The stance is set on the
-  character's `CombatCharacterInstaller` and the combo meter is tuned on its `ComboTracker`. The player
+  character's `CombatCharacterInstaller` and the combo meter in `CombatConfig`. The player
   installer points at `Settings/ArkhamCharacterProfile.asset`, the game's own profile: the controller's
   motor, locomotion and camera configs with the game's `ArkhamInputConfig`. Its state list must include
   `AttackingStateBinding`.
@@ -294,7 +294,7 @@ Background is on.
 ## Tests
 
 `ArkhamCombat.Tests` runs in EditMode and needs no scene: windows, actions, stance validation, pool
-policies, the group framing math on plain vectors, the stand-in hit check against a target with and without a pending warp, the targeting component's stick threshold and frame, the trace marking presses until it stops listening, the meter, the combo tracker on a dispatcher built by the test, the resolver, the clock, the runner with the null driver and recording test
+policies, the group framing math on plain vectors, the stand-in hit check against a target with and without a pending warp, the targeting component's stick threshold and frame, the trace marking presses until it stops listening, one test that fails loudly when the Hermes events are not generated, the meter, the combo tracker on a dispatcher built by the test, the resolver, the clock, the runner with the null driver and recording test
 doubles, its started and ended events, the stand-in picker on test targets, the character brain listing the character components already on a character, the combat actions with a start gate that
 allows and refuses and their announcements on a dispatcher built by the test, the attacking state switch's rule, the character installer on containers built by the test (which
 condition evaluator a stance gets, the optional pieces and their do-nothing versions, a runner for a character with

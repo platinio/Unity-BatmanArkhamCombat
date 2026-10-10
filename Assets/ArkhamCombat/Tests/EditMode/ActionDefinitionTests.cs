@@ -47,15 +47,5 @@ namespace ArkhamCombat.Tests
             Assert.IsFalse(attack.Validate(errors));
             StringAssert.Contains("maxLunge", errors[0]);
         }
-
-        [Test]
-        public void Tags_AreLookedUpByExactName()
-        {
-            ActionDefinition action = Action("Tagged");
-            action.Configure(1f, tags: new[] { "heavy" });
-
-            Assert.IsTrue(action.HasTag("heavy"));
-            Assert.IsFalse(action.HasTag("Heavy"));
-        }
     }
 }

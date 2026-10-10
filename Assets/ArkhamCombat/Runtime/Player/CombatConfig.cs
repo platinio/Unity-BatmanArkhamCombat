@@ -30,6 +30,7 @@ namespace ArkhamCombat.Player
         [Tooltip("SmoothDamp time for turning toward the target while an action plays. Small: the warp needs the character squared up.")]
         [SerializeField, Min(0f)] private float faceTargetSmoothTime = 0.05f;
 
+        [Header("Facts")]
         [Tooltip("Lunge limit the targetBeyondLunge fact is measured against while no attack plays.")]
         [SerializeField, Min(0f)] private float maxLungeWhileIdle = 4f;
 

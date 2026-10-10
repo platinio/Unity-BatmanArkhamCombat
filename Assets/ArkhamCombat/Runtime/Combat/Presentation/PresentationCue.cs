@@ -77,11 +77,5 @@ namespace ArkhamCombat.Combat
         public float Strength => strength;
         public AnimationCurve Ease => ease;
         public Color Colour => colour;
-
-        public PresentationCue WithColour(Color value)
-        {
-            colour = value;
-            return this;
-        }
     }
 }
