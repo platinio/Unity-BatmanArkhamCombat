@@ -10,7 +10,7 @@ namespace ArkhamCombat.Player
     /// stance is set on each character's CombatCharacterInstaller.
     /// </summary>
     [CreateAssetMenu(menuName = "ArkhamCombat/Combat Config", fileName = "CombatConfig")]
-    public sealed class CombatConfig : ScriptableObject, IComboMeterSettings, ITargetingSettings, IFacingSettings
+    public sealed class CombatConfig : ScriptableObject, IComboMeterSettings, ITargetingSettings, IFacingSettings, ICombatFactsSettings
     {
         [Header("Interrupts")]
         [Tooltip("The kind of press that evades. Its global edges are taken only inside the current attack's evade window, or while idle.")]
@@ -55,8 +55,6 @@ namespace ArkhamCombat.Player
 
         public IntentKind EvadeKind => evadeKind;
         public IntentKind CounterKind => counterKind;
-        public float MaxLungeWhileIdle => maxLungeWhileIdle;
-        public float DeadAheadAngle => deadAheadAngle;
         public float HitRangeMargin => hitRangeMargin;
 
         IReadOnlyList<int> IComboMeterSettings.TierThresholds => comboTierThresholds;
@@ -68,5 +66,8 @@ namespace ArkhamCombat.Player
         float ITargetingSettings.StickPushedMagnitude => stickPushedMagnitude;
 
         float IFacingSettings.FaceTargetSmoothTime => faceTargetSmoothTime;
+
+        float ICombatFactsSettings.DeadAheadAngle => deadAheadAngle;
+        float ICombatFactsSettings.MaxLungeWhileIdle => maxLungeWhileIdle;
     }
 }
