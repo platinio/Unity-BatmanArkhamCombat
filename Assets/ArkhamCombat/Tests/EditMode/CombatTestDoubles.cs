@@ -24,6 +24,8 @@ namespace ArkhamCombat.Tests
             Window? warpWindow = null,
             float strikeDistance = 1f,
             float maxLunge = 4f,
+            float damage = 10f,
+            HitReaction reaction = HitReaction.Flinch,
             params PresentationCue[] cues)
         {
             AttackDefinition attack = ScriptableObject.CreateInstance<AttackDefinition>();
@@ -35,8 +37,18 @@ namespace ArkhamCombat.Tests
                 evadeWindow ?? new Window(0f, 0.3f),
                 warpWindow ?? new Window(0f, 0.3f),
                 strikeDistance,
-                maxLunge);
+                maxLunge,
+                damage,
+                reaction);
             return attack;
+        }
+
+        public static HitReceiverProfile ReceiverProfile(float maxHealth = 100f, bool isArmored = false, bool canBeKnockedDown = true)
+        {
+            HitReceiverProfile profile = ScriptableObject.CreateInstance<HitReceiverProfile>();
+            profile.name = "TestReceiverProfile";
+            profile.Configure(maxHealth, isArmored, canBeKnockedDown);
+            return profile;
         }
 
         public static ActionDefinition Action(string name, float duration = 1f, params PresentationCue[] cues)
@@ -217,6 +229,12 @@ namespace ArkhamCombat.Tests
 
             public IReadOnlyList<int> TierThresholds { get; }
             public float MeterTimeoutSeconds { get; }
+        }
+
+        public sealed class HitCheckSettings : IHitCheckSettings
+        {
+            public float HitRangeMargin { get; set; } = 0.5f;
+            public float HitAngle { get; set; } = 60f;
         }
 
         public sealed class PointTarget : IActionTarget
