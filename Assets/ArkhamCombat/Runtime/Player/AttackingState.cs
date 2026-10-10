@@ -20,13 +20,13 @@ namespace ArkhamCombat.Player
         private const float NegligibleSqrDistance = 1e-4f;
 
         private readonly CharacterContext context;
-        private readonly CombatConfig config;
+        private readonly IFacingSettings settings;
         private CombatActions combatActions;
 
-        public AttackingState(CharacterContext context, CombatConfig config)
+        public AttackingState(CharacterContext context, IFacingSettings settings)
         {
             this.context = context;
-            this.config = config;
+            this.settings = settings;
         }
 
         // Found on the character at first use, not handed to the constructor: the scene builds this
@@ -98,7 +98,7 @@ namespace ArkhamCombat.Player
                 context.Transform.eulerAngles.y,
                 yawToTarget,
                 ref context.TurnVelocity,
-                config.FaceTargetSmoothTime,
+                settings.FaceTargetSmoothTime,
                 float.MaxValue,
                 deltaTime);
 
