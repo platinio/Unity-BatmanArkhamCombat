@@ -77,7 +77,7 @@ namespace ArkhamCombat.Player
         {
             if (IsThisCharacter(strike.Attacker))
             {
-                meter.Increment(ComboIncrementReason.StrikeLanded);
+                meter.Increment();
             }
         }
 
