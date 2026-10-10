@@ -31,7 +31,7 @@ namespace ArkhamCombat.Tests
         private NullPresentationDriver driver;
         private RecordingWarpMover warpMover;
         private RecordingHitWindowListener hitWindowListener;
-        private RecordingEvents events;
+        private RecordingActionListener actionListener;
         private RecordingActionTargetPicker targetPicker;
 
         [SetUp]
@@ -58,7 +58,7 @@ namespace ArkhamCombat.Tests
             driver = new NullPresentationDriver();
             warpMover = new RecordingWarpMover();
             hitWindowListener = new RecordingHitWindowListener();
-            events = new RecordingEvents();
+            actionListener = new RecordingActionListener();
             targetPicker = new RecordingActionTargetPicker();
         }
 
@@ -76,7 +76,7 @@ namespace ArkhamCombat.Tests
             Assert.IsTrue(runner.IsPlaying);
             Assert.AreSame(jab, runner.CurrentAction);
             Assert.AreEqual("S1", runner.CurrentNode.Id);
-            Assert.AreEqual("start Jab", events.Log[0]);
+            Assert.AreEqual("start Jab", actionListener.Log[0]);
         }
 
         [Test]
@@ -132,8 +132,8 @@ namespace ArkhamCombat.Tests
             Assert.AreSame(cross, runner.CurrentAction);
             Assert.AreEqual("Evade", runner.CurrentNode.Id);
             Assert.AreEqual(0f, driver.NormalizedTime, 1e-5f, "the evade starts from its beginning");
-            CollectionAssert.Contains(events.Log, "interrupted Jab");
-            CollectionAssert.Contains(events.Log, "interrupt with Cross");
+            CollectionAssert.Contains(actionListener.Log, "interrupted Jab");
+            CollectionAssert.Contains(actionListener.Log, "interrupt with Cross");
         }
 
         [Test]
@@ -165,8 +165,9 @@ namespace ArkhamCombat.Tests
             Assert.AreEqual("S2", runner.CurrentNode.Id);
             Assert.AreEqual(0, intents.Queued.Count);
 
-            CollectionAssert.Contains(events.Log, "end Jab");
-            CollectionAssert.DoesNotContain(events.Log, "interrupted Jab");
+            CollectionAssert.Contains(actionListener.Log, "end Jab");
+            CollectionAssert.DoesNotContain(actionListener.Log, "interrupted Jab");
+            CollectionAssert.AreEqual(new[] { "start Jab", "end Jab", "start Cross" }, actionListener.Log, "the jab ends before the cross starts");
             ActionTrace.Record jabRecord = RecordBeforeTheLatest(runner);
             Assert.IsFalse(jabRecord.WasInterrupted, "the jab allowed the follow-up, so it was not interrupted");
             Assert.AreEqual(0.5f, jabRecord.EndedAt, 1e-5f);
@@ -201,8 +202,8 @@ namespace ArkhamCombat.Tests
             Assert.IsFalse(hitWindowListener.IsOpen);
             Assert.AreSame(cross, runner.CurrentAction);
             Assert.AreEqual("Evade", runner.CurrentNode.Id);
-            CollectionAssert.Contains(events.Log, "interrupted Jab");
-            CollectionAssert.Contains(events.Log, "interrupt with Cross");
+            CollectionAssert.Contains(actionListener.Log, "interrupted Jab");
+            CollectionAssert.Contains(actionListener.Log, "interrupt with Cross");
         }
 
         [Test]
@@ -213,7 +214,7 @@ namespace ArkhamCombat.Tests
             TickFor(runner, AttackSeconds);
 
             Assert.IsFalse(runner.IsPlaying);
-            Assert.AreEqual("end Jab", events.Log[events.Log.Count - 1]);
+            Assert.AreEqual("end Jab", actionListener.Log[actionListener.Log.Count - 1]);
             Assert.AreEqual("S1", runner.CurrentNode.Id, "until the reset time passes, the combo keeps its place");
 
             TickFor(runner, ChainResetSeconds, canStartFromIdle: false);
@@ -412,6 +413,17 @@ namespace ArkhamCombat.Tests
         }
 
         [Test]
+        public void ARunnerNobodyListensTo_StillPlaysItsActions()
+        {
+            ActionRunner runner = CreateRunnerNobodyListensTo();
+
+            Assert.DoesNotThrow(() => StrikeAndPlayTheAttackToItsEnd(runner));
+
+            Assert.IsFalse(runner.IsPlaying);
+            Assert.IsEmpty(actionListener.Log);
+        }
+
+        [Test]
         public void Cancel_ClosesTheHitWindow_AndGoesIdle()
         {
             ActionRunner runner = CreateRunner();
@@ -423,7 +435,7 @@ namespace ArkhamCombat.Tests
 
             Assert.IsFalse(hitWindowListener.IsOpen);
             Assert.IsFalse(runner.IsPlaying);
-            Assert.AreEqual("interrupted Jab", events.Log[events.Log.Count - 1]);
+            Assert.AreEqual("interrupted Jab", actionListener.Log[actionListener.Log.Count - 1]);
         }
 
         [Test]
@@ -465,11 +477,18 @@ namespace ArkhamCombat.Tests
             Assert.AreEqual(ActionTrace.MarkStatus.Consumed, idleBeforeTheLastAttack.Marks[0].Status);
         }
 
-        private ActionRunner CreateRunner() =>
-            new ActionRunner(stance, intents, facts, new AlwaysConditionEvaluator(), kinds.InterruptKinds, driver, warpMover, hitWindowListener, events, targetPicker);
+        private ActionRunner CreateRunner()
+        {
+            ActionRunner runner = CreateRunnerNobodyListensTo();
+            actionListener.ListenTo(runner);
+            return runner;
+        }
+
+        private ActionRunner CreateRunnerNobodyListensTo() =>
+            new ActionRunner(stance, intents, facts, new AlwaysConditionEvaluator(), kinds.InterruptKinds, driver, warpMover, hitWindowListener, targetPicker);
 
         private ActionRunner CreateRunnerWithoutTargetPicker() =>
-            new ActionRunner(stance, intents, facts, new AlwaysConditionEvaluator(), kinds.InterruptKinds, driver, warpMover, hitWindowListener, events);
+            new ActionRunner(stance, intents, facts, new AlwaysConditionEvaluator(), kinds.InterruptKinds, driver, warpMover, hitWindowListener);
 
         private void Press(IntentKind kind) => intents.Push(kind, Vector2.zero);
 

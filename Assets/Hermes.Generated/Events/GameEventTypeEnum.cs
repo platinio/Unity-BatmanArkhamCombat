@@ -8,6 +8,8 @@ StrikeLanded,
 StrikeWhiffed,
 ComboChanged,
 ComboReset,
+ActionStarted,
+ActionEnded,
 
     }
 }

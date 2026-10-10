@@ -11,7 +11,7 @@ namespace ArkhamCombat.Player
     /// <summary>
     /// One character's combat, bound in the GameObjectContext on that character: its stance, its
     /// runner and everything the runner talks to. What every character shares (the config, the
-    /// interrupt kinds, the combat events, the roster, the target scorer) comes from the scene's
+    /// interrupt kinds, the roster, the target scorer) comes from the scene's
     /// <see cref="CombatStaticInstaller"/>. An optional piece is bound when its component is on the
     /// character and replaced by one that does nothing when it is not, so a character has exactly
     /// the combat it was given.

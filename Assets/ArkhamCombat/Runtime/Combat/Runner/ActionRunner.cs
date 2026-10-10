@@ -12,7 +12,8 @@ namespace ArkhamCombat.Combat
     /// is open or nothing plays, an evade or a counter at any time. When the character stays idle for
     /// the stance's reset time, the combo starts over. Each action asks the target picker once, when
     /// it starts, and keeps that target until it ends. A character without a stance, like an enemy,
-    /// drives it through <see cref="PlayAction"/>.
+    /// drives it through <see cref="PlayAction"/>. It tells its owner about every action that starts
+    /// and ends through plain events.
     /// </summary>
     public sealed class ActionRunner
     {
@@ -23,7 +24,6 @@ namespace ArkhamCombat.Combat
         private readonly IPresentationDriver driver;
         private readonly IWarpMover warpMover;
         private readonly IHitWindowListener hitWindowListener;
-        private readonly ICombatEvents events;
         private readonly IActionTargetPicker targetPicker;
         private readonly System.Random random;
         private readonly Dictionary<ChainNode, AttackDefinition> lastAttackPickedAtNode = new Dictionary<ChainNode, AttackDefinition>();
@@ -47,7 +47,6 @@ namespace ArkhamCombat.Combat
             IPresentationDriver driver,
             IWarpMover warpMover,
             IHitWindowListener hitWindowListener,
-            ICombatEvents events,
             IActionTargetPicker targetPicker = null,
             System.Random random = null)
         {
@@ -57,7 +56,6 @@ namespace ArkhamCombat.Combat
             this.driver = driver ?? throw new ArgumentNullException(nameof(driver));
             this.warpMover = warpMover ?? new NullWarpMover();
             this.hitWindowListener = hitWindowListener ?? new NullHitWindowListener();
-            this.events = events ?? new NullCombatEvents();
             this.targetPicker = targetPicker ?? new NullActionTargetPicker();
             this.random = random ?? new System.Random();
 
@@ -70,6 +68,12 @@ namespace ArkhamCombat.Combat
                 CurrentNode = stance.Root;
             }
         }
+
+        /// <summary>The action that started, and whether an interrupt started it rather than the combo.</summary>
+        public event Action<ActionDefinition, bool> ActionStarted;
+
+        /// <summary>The action that ended, and whether it was interrupted before its end.</summary>
+        public event Action<ActionDefinition, bool> ActionEnded;
 
         public ActionTrace Trace { get; }
 
@@ -264,7 +268,7 @@ namespace ArkhamCombat.Combat
 
             driver.Play(action);
             Trace.BeginAction(node, action);
-            events.ActionStarted(action, isInterrupt);
+            ActionStarted?.Invoke(action, isInterrupt);
 
             if (action is AttackDefinition attack)
             {
@@ -289,7 +293,7 @@ namespace ArkhamCombat.Combat
             idleSeconds = 0f;
 
             Trace.EndAction(endedAtTime, wasInterrupted);
-            events.ActionEnded(endedAction, wasInterrupted);
+            ActionEnded?.Invoke(endedAction, wasInterrupted);
         }
 
         private void EndCurrentActionAndGoIdle(bool wasInterrupted)
