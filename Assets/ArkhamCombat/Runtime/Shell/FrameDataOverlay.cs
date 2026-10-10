@@ -1,5 +1,4 @@
 using System.Collections.Generic;
-using ArcaneOnyx.TPCharacterController;
 using ArkhamCombat.Combat;
 using ArkhamCombat.Player;
 using UnityEngine;
@@ -51,7 +50,7 @@ namespace ArkhamCombat.Shell
         [Tooltip("Top-left corner of the strip.")]
         [SerializeField] private Vector2 origin = new Vector2(12f, 80f);
 
-        private CharacterBrain player;
+        private CombatActions combatActions;
         private ActionRunner runner;
         private ComboTracker comboTracker;
 
@@ -60,25 +59,20 @@ namespace ArkhamCombat.Shell
         private int ComboTier => comboTracker != null ? comboTracker.Tier : 0;
 
         [Inject]
-        private void Construct(CharacterBrain player) => this.player = player;
+        private void Construct(CombatActions combatActions) => this.combatActions = combatActions;
 
-        // The runner and the tracker live in the player's own context, which the scene container cannot
-        // see into, so they are taken from the player once that context has built them.
+        // Read in Start, not in Construct: the character's own context builds the runner in its Awake.
         private void Start()
         {
-            if (player == null)
+            if (combatActions == null)
             {
                 Debug.LogError(
-                    $"[{nameof(FrameDataOverlay)}] No player was injected. The scene needs a SceneContext and the player installer.", this);
+                    $"[{nameof(FrameDataOverlay)}] No CombatActions was injected. The scene needs a SceneContext and the player installer.", this);
                 return;
             }
 
-            if (player.TryGetComponent(out CombatActions combatActions))
-            {
-                runner = combatActions.Runner;
-            }
-
-            player.TryGetComponent(out comboTracker);
+            runner = combatActions.Runner;
+            combatActions.TryGetComponent(out comboTracker);
         }
 
         private void OnGUI()
