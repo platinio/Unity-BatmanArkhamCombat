@@ -53,7 +53,6 @@ namespace ArkhamCombat.Tests
             anotherCharacter = HiddenObject("Another character");
 
             sceneContainer = new DiContainer();
-            sceneContainer.Bind<CombatConfig>().FromInstance(config);
             sceneContainer.Bind<ICombatFactsSettings>().FromInstance(config);
             sceneContainer.Bind<IHitRangeSettings>().FromInstance(config);
             sceneContainer.Bind<InterruptKinds>().FromInstance(kinds.InterruptKinds);

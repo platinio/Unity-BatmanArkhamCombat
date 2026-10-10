@@ -25,8 +25,8 @@ namespace ArkhamCombat.Presentation
     [Serializable]
     public sealed class PunchCue : ICueKind
     {
-        // A quick extension and a slower pull back is what reads as a snap rather than a shove.
-        private const float ShareOfDurationExtending = 0.3f;
+        [Tooltip("Share of the cue spent extending; the rest pulls back. Quick out and slow back reads as a snap rather than a shove.")]
+        [SerializeField, Range(0f, 1f)] private float shareOfDurationExtending = 0.3f;
 
         public void Play(ICueTarget target, PresentationCue cue)
         {
@@ -34,7 +34,7 @@ namespace ArkhamCombat.Presentation
             Transform pushedPart = hasFist ? target.Fist : target.Body;
             Vector3 restPosition = hasFist ? target.FistRestLocalPosition : target.RestLocalPosition;
             Vector3 extendedPosition = restPosition + Vector3.forward * cue.Strength;
-            float extendDuration = cue.Duration * ShareOfDurationExtending;
+            float extendDuration = cue.Duration * shareOfDurationExtending;
             float returnDuration = cue.Duration - extendDuration;
 
             DOTween.Sequence().SetId(target.TweenId)

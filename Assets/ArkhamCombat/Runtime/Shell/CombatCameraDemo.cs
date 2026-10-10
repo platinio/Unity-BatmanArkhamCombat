@@ -21,9 +21,11 @@ namespace ArkhamCombat.Shell
         [Tooltip("Top-left corner of the readout.")]
         [SerializeField] private Vector2 origin = new Vector2(12f, 12f);
 
-        [Inject] private PlayerCameraRig rig;
-
+        private PlayerCameraRig rig;
         private GroupFramingSource groupSource;
+
+        [Inject]
+        private void Construct(PlayerCameraRig rig) => this.rig = rig;
 
         private void Start()
         {
@@ -34,7 +36,6 @@ namespace ArkhamCombat.Shell
                 return;
             }
 
-            // The rig runs its Start first (DefaultExecutionOrder -100), so its config is resolved.
             if (rig.Config == null)
             {
                 Debug.LogError($"[{nameof(CombatCameraDemo)}] The rig has no config; did it fail to start?", this);
@@ -48,6 +49,11 @@ namespace ArkhamCombat.Shell
 
         private void OnGUI()
         {
+            if (Event.current.type != EventType.Repaint)
+            {
+                return;
+            }
+
             CameraFraming framing = rig.CurrentFraming;
             GroupFraming.Result group = groupSource.LastResult;
             string bearing = group.HasYawTarget ? $"{group.CentroidYaw:0}" : "held";

@@ -49,8 +49,6 @@ namespace ArkhamCombat.Combat
         /// <summary>In priority order once the owning stance has been prepared; authored order before.</summary>
         public IReadOnlyList<Edge> Edges => edgesByPriority ?? edges;
 
-        public bool IsUsingPool => attack == null;
-
         public bool HasNothingToPlay => attack == null && (pool == null || pool.IsEmpty);
 
         public AttackDefinition PickAttack(in VariantPickContext context) =>

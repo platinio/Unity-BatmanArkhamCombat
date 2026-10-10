@@ -98,8 +98,6 @@ namespace ArkhamCombat.Combat
         /// <summary>True when the current attack did not warp because the target was beyond its lunge limit.</summary>
         public bool WasWarpRefused { get; private set; }
 
-        public float IdleSeconds => idleSeconds;
-
         private bool HasValidTarget => CurrentActionTarget != null && CurrentActionTarget.IsValid;
 
         /// <summary>

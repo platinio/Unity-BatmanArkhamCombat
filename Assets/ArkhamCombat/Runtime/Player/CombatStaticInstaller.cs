@@ -26,13 +26,12 @@ namespace ArkhamCombat.Player
 
         private void BindSettings()
         {
-            Container.Bind<CombatConfig>().FromInstance(config);
             Container.Bind<IComboMeterSettings>().FromInstance(config);
             Container.Bind<ITargetingSettings>().FromInstance(config);
             Container.Bind<IFacingSettings>().FromInstance(config);
             Container.Bind<ICombatFactsSettings>().FromInstance(config);
             Container.Bind<IHitRangeSettings>().FromInstance(config);
-            Container.Bind<InterruptKinds>().FromResolveGetter<CombatConfig>(InterruptKindsOf).AsSingle();
+            Container.Bind<InterruptKinds>().FromMethod(_ => InterruptKindsOf(config)).AsSingle();
         }
 
         private void BindTargeting()

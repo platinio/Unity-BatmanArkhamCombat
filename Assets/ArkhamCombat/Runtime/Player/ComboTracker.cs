@@ -29,7 +29,6 @@ namespace ArkhamCombat.Player
 
         private void Awake() => CreateMeter();
 
-        // Not OnEnable: the dispatcher builds its events in its own Awake, which may run after this one.
         private void Start() => StartListeningToStrikes();
 
         private void OnDestroy() => StopListeningToStrikes();

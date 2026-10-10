@@ -23,7 +23,6 @@ namespace ArkhamCombat.Combat
         [NonSerialized] private List<Edge> globalEdgesByPriority;
         private bool isPrepared;
 
-        public string RootId => root;
         public IReadOnlyList<ChainNode> Nodes => nodes;
 
         /// <summary>In priority order once prepared; the authored list is never reordered.</summary>
