@@ -1,7 +1,9 @@
 using System.Collections.Generic;
+using ArcaneOnyx.TPCharacterController;
 using ArkhamCombat.Combat;
 using ArkhamCombat.Player;
 using UnityEngine;
+using Zenject;
 
 namespace ArkhamCombat.Shell
 {
@@ -9,8 +11,8 @@ namespace ArkhamCombat.Shell
     /// The frame-data overlay from spec 01: one bar per recent action with its four windows as
     /// coloured bands, cue marks, a playhead, and a tick for every press with what became of it.
     /// Screen-space IMGUI on purpose; it is a tuning tool, not HUD. Everything it shows is read from
-    /// the trace of the runner on the scene's <see cref="CombatActions"/>, so it never influences
-    /// what it measures. A scene without one shows nothing.
+    /// the trace of the runner on the player's <see cref="CombatActions"/>, so it never influences
+    /// what it measures. A player without one shows nothing.
     /// </summary>
     public sealed class FrameDataOverlay : MonoBehaviour
     {
@@ -51,6 +53,7 @@ namespace ArkhamCombat.Shell
         [Tooltip("Top-left corner of the strip.")]
         [SerializeField] private Vector2 origin = new Vector2(12f, 80f);
 
+        private CharacterBrain player;
         private ActionRunner runner;
         private ComboTracker comboTracker;
 
@@ -58,11 +61,26 @@ namespace ArkhamCombat.Shell
 
         private int ComboTier => comboTracker != null ? comboTracker.Tier : 0;
 
+        [Inject]
+        private void Construct(CharacterBrain player) => this.player = player;
+
+        // The runner and the tracker live in the player's own context, which the scene container cannot
+        // see into, so they are taken from the player once that context has built them.
         private void Start()
         {
-            CombatActions combatActions = FindAnyObjectByType<CombatActions>();
-            runner = combatActions != null ? combatActions.Runner : null;
-            comboTracker = FindAnyObjectByType<ComboTracker>();
+            if (player == null)
+            {
+                Debug.LogError(
+                    $"[{nameof(FrameDataOverlay)}] No player was injected. The scene needs a SceneContext and the player installer.", this);
+                return;
+            }
+
+            if (player.TryGetComponent(out CombatActions combatActions))
+            {
+                runner = combatActions.Runner;
+            }
+
+            player.TryGetComponent(out comboTracker);
         }
 
         private void OnGUI()

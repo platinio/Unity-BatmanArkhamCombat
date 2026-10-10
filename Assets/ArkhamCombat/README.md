@@ -76,8 +76,9 @@ combat is bound for that character alone and two characters never share a runner
 The character's context sees everything the scene binds; the scene sees nothing the character binds.
 So code built by the scene reaches a character's pieces **through that character's components**, never
 by asking the container: `AttackingState` finds the `CombatActions` on its own character for the runner
-and the warp movement, and the overlay finds the scene's `CombatActions` the way it finds the
-`ComboTracker`. Every component on the character and under it is injected by the character's context,
+and the warp movement, and the overlay has the player injected (the scene container knows who the
+player is) and takes the `CombatActions` and the `ComboTracker` from it. Nothing searches the scene
+for a character's pieces. Every component on the character and under it is injected by the character's context,
 before any `Awake`.
 
 ## Assemblies
