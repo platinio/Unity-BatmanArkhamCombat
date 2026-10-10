@@ -10,7 +10,7 @@ namespace ArkhamCombat.Player
     /// stance is set on each character's CombatCharacterInstaller.
     /// </summary>
     [CreateAssetMenu(menuName = "ArkhamCombat/Combat Config", fileName = "CombatConfig")]
-    public sealed class CombatConfig : ScriptableObject, IComboMeterSettings
+    public sealed class CombatConfig : ScriptableObject, IComboMeterSettings, ITargetingSettings
     {
         [Header("Interrupts")]
         [Tooltip("The kind of press that evades. Its global edges are taken only inside the current attack's evade window, or while idle.")]
@@ -46,6 +46,9 @@ namespace ArkhamCombat.Player
         [Tooltip("A dummy this many degrees off the stick scores as if it were twice as far. Lower favours aim over distance.")]
         [SerializeField, Min(1f)] private float angleCountingAsDoubleDistance = 90f;
 
+        [Tooltip("A stick pushed less than this (0 to 1) is at rest; the target is then picked along the facing instead of the stick.")]
+        [SerializeField, Range(0f, 1f)] private float stickPushedMagnitude = 0.1f;
+
         [Header("Stand-in hit check (spec 05 replaces this)")]
         [Tooltip("A strike lands when the target is within strikeDistance plus this at the hit window's start.")]
         [SerializeField, Min(0f)] private float hitRangeMargin = 0.6f;
@@ -55,12 +58,14 @@ namespace ArkhamCombat.Player
         public float FaceTargetSmoothTime => faceTargetSmoothTime;
         public float MaxLungeWhileIdle => maxLungeWhileIdle;
         public float DeadAheadAngle => deadAheadAngle;
-        public float MaxTargetDistance => maxTargetDistance;
-        public float MaxTargetAngle => maxTargetAngle;
-        public float AngleCountingAsDoubleDistance => angleCountingAsDoubleDistance;
         public float HitRangeMargin => hitRangeMargin;
 
         IReadOnlyList<int> IComboMeterSettings.TierThresholds => comboTierThresholds;
         float IComboMeterSettings.MeterTimeoutSeconds => comboTimeoutSeconds;
+
+        float ITargetingSettings.MaxTargetDistance => maxTargetDistance;
+        float ITargetingSettings.MaxTargetAngle => maxTargetAngle;
+        float ITargetingSettings.AngleCountingAsDoubleDistance => angleCountingAsDoubleDistance;
+        float ITargetingSettings.StickPushedMagnitude => stickPushedMagnitude;
     }
 }

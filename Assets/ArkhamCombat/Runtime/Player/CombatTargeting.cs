@@ -9,14 +9,16 @@ namespace ArkhamCombat.Player
     [RequireComponent(typeof(CharacterBrain))]
     public sealed class CombatTargeting : MonoBehaviour, IActionTargetPicker
     {
-        // Below this the direction is a stick at rest rather than a choice.
-        private const float DirectionPushedSqrMagnitude = 0.01f;
-
         private ITargetScorer scorer;
+        private ITargetingSettings settings;
         private CharacterBrain characterBrain;
 
         [Inject]
-        private void Construct(ITargetScorer scorer) => this.scorer = scorer;
+        private void Construct(ITargetScorer scorer, ITargetingSettings settings)
+        {
+            this.scorer = scorer;
+            this.settings = settings;
+        }
 
         private void Awake()
         {
@@ -28,8 +30,8 @@ namespace ArkhamCombat.Player
 
         private Vector3 WorldDirection(Vector2 direction)
         {
-            bool isDirectionPushed = direction.sqrMagnitude > DirectionPushedSqrMagnitude;
-            if (isDirectionPushed)
+            bool isStickPushed = direction.magnitude > settings.StickPushedMagnitude;
+            if (isStickPushed)
             {
                 return characterBrain.Context.MovementFrame.Frame * new Vector3(direction.x, 0f, direction.y);
             }
