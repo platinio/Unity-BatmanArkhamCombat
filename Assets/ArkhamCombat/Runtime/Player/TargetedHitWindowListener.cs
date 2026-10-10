@@ -6,24 +6,23 @@ using UnityEngine;
 namespace ArkhamCombat.Player
 {
     /// <summary>
-    /// A range check at the hit window's start, standing in for spec 05's targeted land check:
-    /// within strike distance plus a margin the strike lands, anything else is a whiff. Closing has
-    /// nothing to do because the check is instantaneous.
+    /// Lands the attack on the one target its action picked. The check is made once, as the hit
+    /// window opens, so closing has nothing to do.
     /// </summary>
-    public sealed class DemoHitWindowListener : IHitWindowListener
+    public sealed class TargetedHitWindowListener : IHitWindowListener
     {
-        private readonly IHitRangeSettings settings;
+        private readonly HitResolver hitResolver;
         private readonly Transform character;
         private readonly MotorWarpMover warpMover;
         private readonly ISceneGameEvents sceneGameEvents;
 
-        public DemoHitWindowListener(
-            IHitRangeSettings settings,
+        public TargetedHitWindowListener(
+            IHitCheckSettings settings,
             CharacterMotor motor,
             MotorWarpMover warpMover,
             ISceneGameEvents sceneGameEvents)
         {
-            this.settings = settings;
+            hitResolver = new HitResolver(settings);
             this.warpMover = warpMover;
             this.sceneGameEvents = sceneGameEvents;
             character = motor.transform;
@@ -31,9 +30,8 @@ namespace ArkhamCombat.Player
 
         public void HitWindowOpened(AttackDefinition attack, IActionTarget target)
         {
-            if (target is ICombatTarget victim && victim.IsValid && IsWithinStrikeRange(attack, victim.Position))
+            if (target is ICombatTarget victim && TryLandOn(victim, attack))
             {
-                victim.Receive(attack);
                 AnnounceStrikeLanded(attack, victim);
             }
             else
@@ -44,15 +42,25 @@ namespace ArkhamCombat.Player
 
         public void HitWindowClosed() { }
 
-        // The hit window opens on the tick the warp closes, and that tick's warp share has not
-        // reached the transform yet, so the check measures from where the character lands.
-        private bool IsWithinStrikeRange(AttackDefinition attack, Vector3 targetPosition)
+        private bool TryLandOn(ICombatTarget victim, AttackDefinition attack)
         {
-            Vector3 whereTheWarpLands = character.position + warpMover.PendingMovement;
-            Vector3 toTarget = targetPosition - whereTheWarpLands;
-            toTarget.y = 0f;
-            return toTarget.magnitude <= attack.StrikeDistance + settings.HitRangeMargin;
+            if (!victim.IsValid)
+            {
+                return false;
+            }
+
+            if (!hitResolver.TryLand(attack, WhereTheStrikeComesFrom(), victim.Position, out HitInfo hit))
+            {
+                return false;
+            }
+
+            return victim.Receive(hit).HasLanded;
         }
+
+        // The hit window opens on the tick the warp closes, and that tick's warp share has not
+        // reached the transform yet, so the strike is measured from where the character lands.
+        private StrikeOrigin WhereTheStrikeComesFrom() =>
+            new StrikeOrigin(character.position + warpMover.PendingMovement, character.forward);
 
         private void AnnounceStrikeLanded(AttackDefinition attack, ICombatTarget victim)
         {
