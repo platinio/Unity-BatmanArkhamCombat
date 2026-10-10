@@ -233,7 +233,8 @@ namespace ArkhamCombat.Shell
 
         private static string PressLabel(ActionTrace.Mark press)
         {
-            string kind = press.Intent.Kind.ToString().Substring(0, PressLabelKindLetters);
+            string kindName = press.Intent.Kind.name;
+            string kind = kindName.Substring(0, Mathf.Min(PressLabelKindLetters, kindName.Length));
             switch (press.Status)
             {
                 case ActionTrace.MarkStatus.Consumed: return kind + "+";

@@ -52,8 +52,40 @@ namespace ArkhamCombat.Tests
         /// <summary>A node like the root, which plays nothing and only leads somewhere.</summary>
         public static ChainNode NodeWithNothingToPlay(string id, params Edge[] edges) => new ChainNode(id, (AttackDefinition)null, edges);
 
-        public static IntentBuffer IntentBufferKeepingPressesFor(float seconds = 0.25f) =>
-            new IntentBuffer(IntentLifetimes.SameForEveryKind(seconds));
+        /// <summary>The game's four kinds of press as throwaway assets. Call <see cref="Destroy"/> in TearDown.</summary>
+        public sealed class TestIntentKinds
+        {
+            public readonly IntentKind Strike;
+            public readonly IntentKind Counter;
+            public readonly IntentKind Evade;
+            public readonly IntentKind Stun;
+
+            public TestIntentKinds(float secondsQueued = 0.25f)
+            {
+                Strike = Kind("Strike", secondsQueued);
+                Counter = Kind("Counter", secondsQueued);
+                Evade = Kind("Evade", secondsQueued);
+                Stun = Kind("Stun", secondsQueued);
+            }
+
+            public InterruptKinds InterruptKinds => new InterruptKinds(Evade, Counter);
+
+            public void Destroy()
+            {
+                UnityEngine.Object.DestroyImmediate(Strike);
+                UnityEngine.Object.DestroyImmediate(Counter);
+                UnityEngine.Object.DestroyImmediate(Evade);
+                UnityEngine.Object.DestroyImmediate(Stun);
+            }
+
+            private static IntentKind Kind(string name, float secondsQueued)
+            {
+                IntentKind kind = ScriptableObject.CreateInstance<IntentKind>();
+                kind.name = name;
+                kind.Configure(secondsQueued);
+                return kind;
+            }
+        }
 
         /// <summary>Passes every edge except those whose destination was denied, and records each edge it is asked about.</summary>
         public sealed class RecordingConditions : IConditionEvaluator
@@ -67,7 +99,7 @@ namespace ArkhamCombat.Tests
                 return this;
             }
 
-            public bool IsConditionMet(Edge edge, CombatContext context, Intent intent)
+            public bool IsConditionMet(Edge edge, CombatFacts facts, Intent intent)
             {
                 AskedEdges.Add(edge);
                 return !deniedDestinations.Contains(edge.DestinationId);
@@ -96,12 +128,14 @@ namespace ArkhamCombat.Tests
             public int ClosedCount;
             public bool IsOpen;
             public AttackDefinition LastOpenedFor;
+            public IActionTarget LastOpenedAgainst;
 
             public void HitWindowOpened(AttackDefinition attack, IActionTarget target)
             {
                 OpenedCount++;
                 IsOpen = true;
                 LastOpenedFor = attack;
+                LastOpenedAgainst = target;
             }
 
             public void HitWindowClosed()
@@ -120,6 +154,19 @@ namespace ArkhamCombat.Tests
             {
                 TotalMovement += planarOffset;
                 MoveCount++;
+            }
+        }
+
+        /// <summary>Gives whichever target it was last told to, and records each direction it is asked with.</summary>
+        public sealed class RecordingActionTargetPicker : IActionTargetPicker
+        {
+            public readonly List<Vector2> AskedDirections = new List<Vector2>();
+            public IActionTarget TargetToGive;
+
+            public IActionTarget PickTarget(Vector2 direction)
+            {
+                AskedDirections.Add(direction);
+                return TargetToGive;
             }
         }
 

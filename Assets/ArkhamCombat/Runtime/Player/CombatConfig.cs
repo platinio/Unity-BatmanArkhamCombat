@@ -1,3 +1,4 @@
+using ArcaneOnyx.TPCharacterController.Inputs;
 using ArkhamCombat.Combat;
 using UnityEngine;
 
@@ -14,6 +15,13 @@ namespace ArkhamCombat.Player
         [Header("Chain")]
         [Tooltip("The chain the player fights with.")]
         [SerializeField] private Stance stance;
+
+        [Header("Interrupts")]
+        [Tooltip("The kind of press that evades. Its global edges are taken only inside the current attack's evade window, or while idle.")]
+        [SerializeField] private IntentKind evadeKind;
+
+        [Tooltip("The kind of press that counters. Its global edges are taken only while a counterable attack is incoming.")]
+        [SerializeField] private IntentKind counterKind;
 
         [Header("Meter")]
         [SerializeField] private ComboMeterSettings meter = new ComboMeterSettings();
@@ -37,6 +45,8 @@ namespace ArkhamCombat.Player
         [SerializeField, Min(0f)] private float hitRangeMargin = 0.6f;
 
         public Stance Stance => stance;
+        public IntentKind EvadeKind => evadeKind;
+        public IntentKind CounterKind => counterKind;
         public ComboMeterSettings Meter => meter;
         public float FaceTargetSmoothTime => faceTargetSmoothTime;
         public float MaxLungeWhileIdle => maxLungeWhileIdle;

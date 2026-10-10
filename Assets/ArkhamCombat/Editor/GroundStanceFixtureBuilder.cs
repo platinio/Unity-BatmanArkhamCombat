@@ -10,47 +10,59 @@ using UnityEngine;
 namespace ArkhamCombat.Editor
 {
     /// <summary>
-    /// Builds the Ground stance fixture from spec 01 as assets: four attacks with windows and cues,
-    /// the stance, and a combat config pointing at it. Rebuilding updates the existing assets in
+    /// Builds the Ground stance fixture from spec 01 as assets: the four kinds of press, four attacks
+    /// with windows and cues, the stance, and a combat config pointing at it. Rebuilding updates the existing assets in
     /// place so references and GUIDs survive. The GlideKick and Takedown edges wait for the
     /// Functions of T9 and are not authored here.
     /// </summary>
     public static class GroundStanceFixtureBuilder
     {
+        private const string IntentsFolder = "Assets/ArkhamCombat/Intents";
         private const string ActionsFolder = "Assets/ArkhamCombat/Actions";
         private const string StancesFolder = "Assets/ArkhamCombat/Stances";
         private const string SettingsFolder = "Assets/ArkhamCombat/Settings";
         private const string StancePath = StancesFolder + "/Ground.asset";
         private const string CombatConfigPath = SettingsFolder + "/CombatConfig.asset";
         private const string CombatConfigStanceField = "stance";
+        private const string CombatConfigEvadeKindField = "evadeKind";
+        private const string CombatConfigCounterKindField = "counterKind";
         private const string LogPrefix = "[Fixture]";
 
         [MenuItem("ArkhamCombat/Build Ground Stance Fixture")]
         public static void Build()
         {
+            EnsureFolder(IntentsFolder);
             EnsureFolder(ActionsFolder);
             EnsureFolder(StancesFolder);
             EnsureFolder(SettingsFolder);
 
-            Stance stance = BuildStance();
+            IntentKind strike = LoadOrCreateIntentKind("Strike");
+            IntentKind counter = LoadOrCreateIntentKind("Counter");
+            IntentKind evade = LoadOrCreateIntentKind("Evade");
+            LoadOrCreateIntentKind("Stun");
+
+            Stance stance = BuildStance(strike);
             ReportStanceProblems(stance);
-            PointCombatConfigAt(stance);
+            PointCombatConfigAt(stance, evade, counter);
 
             AssetDatabase.SaveAssets();
-            Debug.Log($"{LogPrefix} Ground stance fixture built: {ActionsFolder}, {StancePath}, {CombatConfigPath}");
+            Debug.Log($"{LogPrefix} Ground stance fixture built: {IntentsFolder}, {ActionsFolder}, {StancePath}, {CombatConfigPath}");
         }
 
-        private static Stance BuildStance()
+        /// <summary>An existing kind keeps its tuned seconds queued; only a missing one is created.</summary>
+        private static IntentKind LoadOrCreateIntentKind(string name) => LoadOrCreate<IntentKind>($"{IntentsFolder}/{name}.asset");
+
+        private static Stance BuildStance(IntentKind strike)
         {
             Stance stance = LoadOrCreate<Stance>(StancePath);
             stance.Configure(
                 root: "Neutral",
                 nodes: new[]
                 {
-                    new ChainNode("Neutral", attack: null, new Edge(IntentKind.Strike, "S1", priority: 2)),
-                    new ChainNode("S1", new VariantPool(new TargetSidePolicy(), Jab("Jab_L"), Jab("Jab_R")), new Edge(IntentKind.Strike, "S2")),
-                    new ChainNode("S2", Cross(), new Edge(IntentKind.Strike, "S3")),
-                    new ChainNode("S3", RoundhouseKick(), new Edge(IntentKind.Strike, "S1"))
+                    new ChainNode("Neutral", attack: null, new Edge(strike, "S1", priority: 2)),
+                    new ChainNode("S1", new VariantPool(new TargetSidePolicy(), Jab("Jab_L"), Jab("Jab_R")), new Edge(strike, "S2")),
+                    new ChainNode("S2", Cross(), new Edge(strike, "S3")),
+                    new ChainNode("S3", RoundhouseKick(), new Edge(strike, "S1"))
                 },
                 chainResetSeconds: 0.6f);
             EditorUtility.SetDirty(stance);
@@ -140,11 +152,13 @@ namespace ArkhamCombat.Editor
             }
         }
 
-        private static void PointCombatConfigAt(Stance stance)
+        private static void PointCombatConfigAt(Stance stance, IntentKind evade, IntentKind counter)
         {
             CombatConfig config = LoadOrCreate<CombatConfig>(CombatConfigPath);
             SerializedObject serializedConfig = new SerializedObject(config);
             serializedConfig.FindProperty(CombatConfigStanceField).objectReferenceValue = stance;
+            serializedConfig.FindProperty(CombatConfigEvadeKindField).objectReferenceValue = evade;
+            serializedConfig.FindProperty(CombatConfigCounterKindField).objectReferenceValue = counter;
             serializedConfig.ApplyModifiedPropertiesWithoutUndo();
             EditorUtility.SetDirty(config);
         }

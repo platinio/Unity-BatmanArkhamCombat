@@ -6,7 +6,7 @@ using UnityEngine;
 
 namespace ArkhamCombat.Tests
 {
-    public class StandInTargetPickerTests
+    public class StandInTargetScorerTests
     {
         private sealed class PointCombatTarget : ICombatTarget
         {
@@ -29,14 +29,14 @@ namespace ArkhamCombat.Tests
 
         private CombatConfig config;
         private ListRoster roster;
-        private ITargetPicker picker;
+        private ITargetScorer scorer;
 
         [SetUp]
         public void SetUp()
         {
             config = ScriptableObject.CreateInstance<CombatConfig>();
             roster = new ListRoster();
-            picker = new StandInTargetPicker(config, roster);
+            scorer = new StandInTargetScorer(config, roster);
         }
 
         [TearDown]
@@ -50,12 +50,12 @@ namespace ArkhamCombat.Tests
         }
 
         [Test]
-        public void PicksTheNearestTargetAlongThePreferredDirection()
+        public void TheBestTarget_IsTheNearestAlongTheDirection()
         {
             PointCombatTarget near = AddTargetAt(new Vector3(0f, 0f, 2f));
             AddTargetAt(new Vector3(0f, 0f, 5f));
 
-            Assert.AreSame(near, picker.Pick(Vector3.zero, Vector3.forward));
+            Assert.AreSame(near, scorer.BestTarget(Vector3.zero, Vector3.forward));
         }
 
         [Test]
@@ -64,7 +64,7 @@ namespace ArkhamCombat.Tests
             AddTargetAt(new Vector3(0f, 0f, -1.5f));
             PointCombatTarget ahead = AddTargetAt(new Vector3(0f, 0f, 3f));
 
-            Assert.AreSame(ahead, picker.Pick(Vector3.zero, Vector3.forward), "the one behind is outside the angle limit");
+            Assert.AreSame(ahead, scorer.BestTarget(Vector3.zero, Vector3.forward), "the one behind is outside the angle limit");
         }
 
         [Test]
@@ -72,7 +72,7 @@ namespace ArkhamCombat.Tests
         {
             AddTargetAt(new Vector3(0f, 0f, 50f));
 
-            Assert.IsNull(picker.Pick(Vector3.zero, Vector3.forward));
+            Assert.IsNull(scorer.BestTarget(Vector3.zero, Vector3.forward));
         }
 
         [Test]
@@ -82,16 +82,16 @@ namespace ArkhamCombat.Tests
             gone.IsValid = false;
             PointCombatTarget alive = AddTargetAt(new Vector3(0f, 0f, 3f));
 
-            Assert.AreSame(alive, picker.Pick(Vector3.zero, Vector3.forward));
+            Assert.AreSame(alive, scorer.BestTarget(Vector3.zero, Vector3.forward));
         }
 
         [Test]
-        public void WithNoPreferredDirection_DistanceAloneDecides()
+        public void WithNoDirection_DistanceAloneDecides()
         {
             AddTargetAt(new Vector3(0f, 0f, 3f));
             PointCombatTarget behindButNear = AddTargetAt(new Vector3(0f, 0f, -1f));
 
-            Assert.AreSame(behindButNear, picker.Pick(Vector3.zero, Vector3.zero));
+            Assert.AreSame(behindButNear, scorer.BestTarget(Vector3.zero, Vector3.zero));
         }
     }
 

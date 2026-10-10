@@ -38,12 +38,14 @@ namespace ArkhamCombat.Player
         {
             Container.Bind<CombatConfig>().FromInstance(config);
             Container.Bind<Stance>().FromResolveGetter<CombatConfig>(combatConfig => combatConfig != null ? combatConfig.Stance : null);
+            Container.Bind<InterruptKinds>().FromResolveGetter<CombatConfig>(InterruptKindsOf).AsSingle();
             Container.Bind<ICombatEvents>().FromInstance(events ?? new NullCombatEvents());
         }
 
         private void BindComboState()
         {
-            Container.Bind<CombatContext>().AsSingle();
+            Container.Bind<CombatFactsUpdater>().FromComponentInHierarchy().AsSingle();
+            Container.Bind<CombatFacts>().FromMethod(FactsFromTheSceneUpdater).AsSingle();
             Container.Bind<ComboMeter>()
                 .FromMethod(injectContext => new ComboMeter(
                     injectContext.Container.Resolve<CombatConfig>().Meter,
@@ -54,7 +56,6 @@ namespace ArkhamCombat.Player
 
         private void BindConditions()
         {
-            Container.Bind<CombatContextPublisher>().AsSingle();
             Container.Bind<IConditionEvaluator>().To<FunctionConditionEvaluator>().AsSingle();
         }
 
@@ -69,8 +70,24 @@ namespace ArkhamCombat.Player
         private void BindTargeting()
         {
             Container.Bind<ITargetRoster>().To<SceneTargetRoster>().AsSingle();
-            Container.Bind<ITargetPicker>().To<StandInTargetPicker>().AsSingle();
+            Container.Bind<ITargetScorer>().To<StandInTargetScorer>().AsSingle();
+
+            // Asked for optionally: a scene without CombatTargeting gives the runner and the facts no target.
+            Container.Bind<IActionTargetPicker>().To<CombatTargeting>().FromComponentInHierarchy().AsSingle();
         }
+
+        // A scene without a facts updater still gets facts, left empty: the counter rule then never
+        // allows a counter and the target-side pool falls back to its no-side pick.
+        private static CombatFacts FactsFromTheSceneUpdater(InjectContext injectContext)
+        {
+            CombatFactsUpdater factsUpdater = injectContext.Container.TryResolve<CombatFactsUpdater>();
+            return factsUpdater != null ? factsUpdater.Facts : new CombatFacts();
+        }
+
+        private static InterruptKinds InterruptKindsOf(CombatConfig combatConfig) =>
+            combatConfig != null
+                ? new InterruptKinds(combatConfig.EvadeKind, combatConfig.CounterKind)
+                : new InterruptKinds(evade: null, counter: null);
 
         /// <summary>
         /// Validates the stance and its attacks once at scene load, so a reversed window or an edge
@@ -83,6 +100,8 @@ namespace ArkhamCombat.Player
                 Debug.LogError($"[{nameof(CombatStaticInstaller)}] No CombatConfig assigned on '{name}'.", this);
                 return;
             }
+
+            ReportMissingInterruptKinds();
 
             Stance stance = config.Stance;
             if (stance == null)
@@ -101,6 +120,19 @@ namespace ArkhamCombat.Player
             foreach (string error in errors)
             {
                 Debug.LogError($"[{nameof(CombatStaticInstaller)}] {error}", stance);
+            }
+        }
+
+        private void ReportMissingInterruptKinds()
+        {
+            if (config.EvadeKind == null)
+            {
+                Debug.LogError($"[{nameof(CombatStaticInstaller)}] CombatConfig '{config.name}' has no evade kind.", config);
+            }
+
+            if (config.CounterKind == null)
+            {
+                Debug.LogError($"[{nameof(CombatStaticInstaller)}] CombatConfig '{config.name}' has no counter kind.", config);
             }
         }
 

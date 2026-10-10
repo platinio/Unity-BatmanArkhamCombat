@@ -4,23 +4,25 @@ using ArcaneOnyx.TPCharacterController.Motor;
 using ArcaneOnyx.VisualScriptingExtension;
 using ArkhamCombat.Combat;
 using UnityEngine;
+using Zenject;
 
 namespace ArkhamCombat.Player
 {
     /// <summary>
     /// Answers edge conditions by running their Functions against the player's agent variables. A
     /// Function that cannot run is reported once and treated as false, so a broken graph fails closed.
+    /// Without a facts updater in the scene the stick angle is never measured.
     /// </summary>
     public sealed class FunctionConditionEvaluator : IConditionEvaluator
     {
         private readonly GameObject agent;
-        private readonly CombatContextPublisher publisher;
+        private readonly CombatFactsUpdater factsUpdater;
         private readonly HashSet<Edge> edgesAlreadyReported = new HashSet<Edge>();
 
-        public FunctionConditionEvaluator(CharacterMotor motor, CombatContextPublisher publisher, Stance stance)
+        public FunctionConditionEvaluator(CharacterMotor motor, [InjectOptional] CombatFactsUpdater factsUpdater, Stance stance)
         {
             agent = motor.gameObject;
-            this.publisher = publisher;
+            this.factsUpdater = factsUpdater;
 
             if (stance != null)
             {
@@ -28,17 +30,25 @@ namespace ArkhamCombat.Player
             }
         }
 
-        public bool IsConditionMet(Edge edge, CombatContext context, Intent intent)
+        public bool IsConditionMet(Edge edge, CombatFacts facts, Intent intent)
         {
             if (!edge.HasCondition)
             {
                 return true;
             }
 
-            // Published here rather than each frame: the stick angle belongs to the press being resolved.
-            publisher.PublishStickAngle(intent.MoveAtPress);
+            UpdateStickAngle(intent);
 
             return RunCondition(edge);
+        }
+
+        // Updated here rather than each frame: the stick angle belongs to the press being resolved.
+        private void UpdateStickAngle(Intent intent)
+        {
+            if (factsUpdater != null)
+            {
+                factsUpdater.UpdateStickAngle(intent.MoveAtPress);
+            }
         }
 
         private bool RunCondition(Edge edge)

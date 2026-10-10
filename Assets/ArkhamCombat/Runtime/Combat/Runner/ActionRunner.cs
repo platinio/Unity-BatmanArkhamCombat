@@ -10,19 +10,21 @@ namespace ArkhamCombat.Combat
     /// clock forward, opens and closes the action's windows (warp, hit, combo), and checks whether a
     /// queued press should start the next action: the next attack of the combo while the combo window
     /// is open or nothing plays, an evade or a counter at any time. When the character stays idle for
-    /// the stance's reset time, the combo starts over. A character without a stance, like an enemy,
+    /// the stance's reset time, the combo starts over. Each action asks the target picker once, when
+    /// it starts, and keeps that target until it ends. A character without a stance, like an enemy,
     /// drives it through <see cref="PlayAction"/>.
     /// </summary>
     public sealed class ActionRunner
     {
         private readonly Stance stance;
         private readonly IntentBuffer intents;
-        private readonly CombatContext context;
+        private readonly CombatFacts facts;
         private readonly ComboResolver resolver;
         private readonly IPresentationDriver driver;
         private readonly IWarpMover warpMover;
         private readonly IHitWindowListener hitWindowListener;
         private readonly ICombatEvents events;
+        private readonly IActionTargetPicker targetPicker;
         private readonly System.Random random;
         private readonly Dictionary<ChainNode, AttackDefinition> lastAttackPickedAtNode = new Dictionary<ChainNode, AttackDefinition>();
 
@@ -33,27 +35,33 @@ namespace ArkhamCombat.Combat
         private bool isWarping;
         private float idleSeconds;
 
+        // Code that starts an action has no press, so its target is picked straight ahead.
+        private static readonly Vector2 StraightAhead = Vector2.zero;
+
         public ActionRunner(
             Stance stance,
             IntentBuffer intents,
-            CombatContext context,
+            CombatFacts facts,
             IConditionEvaluator conditions,
+            InterruptKinds interruptKinds,
             IPresentationDriver driver,
             IWarpMover warpMover,
             IHitWindowListener hitWindowListener,
             ICombatEvents events,
+            IActionTargetPicker targetPicker = null,
             System.Random random = null)
         {
             this.stance = stance;
             this.intents = intents;
-            this.context = context ?? new CombatContext();
+            this.facts = facts ?? new CombatFacts();
             this.driver = driver ?? throw new ArgumentNullException(nameof(driver));
             this.warpMover = warpMover ?? new NullWarpMover();
             this.hitWindowListener = hitWindowListener ?? new NullHitWindowListener();
             this.events = events ?? new NullCombatEvents();
+            this.targetPicker = targetPicker ?? new NullActionTargetPicker();
             this.random = random ?? new System.Random();
 
-            resolver = new ComboResolver(conditions);
+            resolver = new ComboResolver(conditions, interruptKinds);
             Trace = new ActionTrace(intents);
 
             if (stance != null)
@@ -65,9 +73,6 @@ namespace ArkhamCombat.Combat
 
         public ActionTrace Trace { get; }
 
-        /// <summary>Set by target selection before each tick. May be null or invalid; the warp then does nothing.</summary>
-        public IActionTarget Target { get; set; }
-
         public ChainNode CurrentNode { get; private set; }
 
         /// <summary>Null while idle.</summary>
@@ -75,6 +80,13 @@ namespace ArkhamCombat.Combat
 
         /// <summary>Null while idle or while a plain action plays.</summary>
         public AttackDefinition CurrentAttack => CurrentAction as AttackDefinition;
+
+        /// <summary>
+        /// Who the current action is aimed at, picked when it started and kept until it ends, so the
+        /// warp and the hit go to the same target. Null while idle; may be null or invalid while
+        /// playing, and the warp then does nothing.
+        /// </summary>
+        public IActionTarget CurrentActionTarget { get; private set; }
 
         public bool IsPlaying => isPlaying;
         public float NormalizedTime => isPlaying ? driver.NormalizedTime : 0f;
@@ -88,7 +100,7 @@ namespace ArkhamCombat.Combat
         /// <summary>Seconds since the last action ended. Once they reach the stance's reset time the combo starts over.</summary>
         public float IdleSeconds => idleSeconds;
 
-        private bool HasValidTarget => Target != null && Target.IsValid;
+        private bool HasValidTarget => CurrentActionTarget != null && CurrentActionTarget.IsValid;
 
         /// <summary>
         /// <paramref name="canStartFromIdle"/> is false while the character is airborne or in a hit
@@ -127,11 +139,12 @@ namespace ArkhamCombat.Combat
                 return;
             }
 
-            StartAction(node, PickAttack(node), position, isInterrupt: true);
+            StartAction(node, PickAttack(node), position, isInterrupt: true, StraightAhead);
         }
 
         /// <summary>Plays an action outside the combo: reactions, and every enemy action.</summary>
-        public void PlayAction(ActionDefinition action, Vector3 position) => StartAction(null, action, position, isInterrupt: isPlaying);
+        public void PlayAction(ActionDefinition action, Vector3 position) =>
+            StartAction(null, action, position, isInterrupt: isPlaying, StraightAhead);
 
         /// <summary>For an external interrupt that has nothing to play yet.</summary>
         public void Cancel()
@@ -186,14 +199,15 @@ namespace ArkhamCombat.Combat
                 return false;
             }
 
-            Resolution resolution = resolver.Resolve(stance, DescribeCurrentSituation(), intents, context);
+            Resolution resolution = resolver.Resolve(stance, DescribeCurrentSituation(), intents, facts);
             if (!resolution.HasMatch)
             {
                 return false;
             }
 
             ChainNode nextNode = resolution.Destination;
-            StartAction(nextNode, PickAttack(nextNode), position, resolution.IsInterrupt);
+            Vector2 directionAtPress = resolution.ConsumedIntent.MoveAtPress;
+            StartAction(nextNode, PickAttack(nextNode), position, resolution.IsInterrupt, directionAtPress);
             return true;
         }
 
@@ -211,7 +225,7 @@ namespace ArkhamCombat.Combat
         private AttackDefinition PickAttack(ChainNode node)
         {
             lastAttackPickedAtNode.TryGetValue(node, out AttackDefinition lastPick);
-            AttackDefinition pick = node.PickAttack(new VariantPickContext(lastPick, context.TargetSide, random));
+            AttackDefinition pick = node.PickAttack(new VariantPickContext(lastPick, facts.TargetSide, random));
             if (pick != null)
             {
                 lastAttackPickedAtNode[node] = pick;
@@ -225,7 +239,7 @@ namespace ArkhamCombat.Combat
         /// hit window never stays open behind it. That action counts as interrupted only when an
         /// interrupt replaced it; the next attack of the combo is something the action allowed.
         /// </summary>
-        private void StartAction(ChainNode node, ActionDefinition action, Vector3 position, bool isInterrupt)
+        private void StartAction(ChainNode node, ActionDefinition action, Vector3 position, bool isInterrupt, Vector2 targetDirection)
         {
             if (action == null)
             {
@@ -243,6 +257,7 @@ namespace ArkhamCombat.Combat
             }
 
             CurrentAction = action;
+            CurrentActionTarget = targetPicker.PickTarget(targetDirection);
             isPlaying = true;
             idleSeconds = 0f;
             WasWarpRefused = false;
@@ -270,6 +285,7 @@ namespace ArkhamCombat.Combat
             CloseAllWindows();
             isPlaying = false;
             CurrentAction = null;
+            CurrentActionTarget = null;
             idleSeconds = 0f;
 
             Trace.EndAction(endedAtTime, wasInterrupted);
@@ -331,7 +347,7 @@ namespace ArkhamCombat.Combat
             if (attack.HitWindow.IsOpen(previousTime, currentTime))
             {
                 isHitWindowOpen = true;
-                hitWindowListener.HitWindowOpened(attack, Target);
+                hitWindowListener.HitWindowOpened(attack, CurrentActionTarget);
             }
 
             if (attack.HitWindow.IsClosed(previousTime, currentTime))
@@ -365,7 +381,7 @@ namespace ArkhamCombat.Combat
                 return;
             }
 
-            if (attack.IsBeyondLunge(position, Target.Position))
+            if (attack.IsBeyondLunge(position, CurrentActionTarget.Position))
             {
                 WasWarpRefused = true;
                 Trace.MarkWarpRefused();
@@ -400,7 +416,7 @@ namespace ArkhamCombat.Combat
             float timeLeftInWindow = warpWindow.End - frameStart;
             float shareOfDistance = timeLeftInWindow <= 1e-5f ? 1f : Mathf.Clamp01((frameEnd - frameStart) / timeLeftInWindow);
 
-            Vector3 distanceLeft = attack.WarpDestination(position, Target.Position) - position;
+            Vector3 distanceLeft = attack.WarpDestination(position, CurrentActionTarget.Position) - position;
             distanceLeft.y = 0f;
             warpMover.MoveBy(distanceLeft * shareOfDistance);
         }
