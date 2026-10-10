@@ -20,28 +20,6 @@ namespace ArkhamCombat.Combat
         Timeout
     }
 
-    /// <summary>Tunables for the meter, serialized by whoever owns one.</summary>
-    [Serializable]
-    public sealed class ComboMeterSettings
-    {
-        [Tooltip("Counts at which the tier rises. The tier is the number of thresholds reached.")]
-        [SerializeField] private List<int> tierThresholds = new List<int> { 3, 5, 8 };
-
-        [Tooltip("Seconds without an increment before the meter resets. Tuned separately from the chain reset.")]
-        [SerializeField, Min(0f)] private float meterTimeoutSeconds = 2.5f;
-
-        public ComboMeterSettings() { }
-
-        public ComboMeterSettings(float meterTimeoutSeconds, params int[] tierThresholds)
-        {
-            this.meterTimeoutSeconds = meterTimeoutSeconds;
-            this.tierThresholds = new List<int>(tierThresholds);
-        }
-
-        public IReadOnlyList<int> TierThresholds => tierThresholds;
-        public float MeterTimeoutSeconds => meterTimeoutSeconds;
-    }
-
     /// <summary>
     /// The combo count beside the chain, with its own increment and reset rules and its own timeout.
     /// Not the chain: a chain can continue after a whiff and the meter will not, and the meter keeps
@@ -50,10 +28,10 @@ namespace ArkhamCombat.Combat
     /// </summary>
     public sealed class ComboMeter
     {
-        private readonly ComboMeterSettings settings;
+        private readonly IComboMeterSettings settings;
         private float secondsSinceIncrement;
 
-        public ComboMeter(ComboMeterSettings settings)
+        public ComboMeter(IComboMeterSettings settings)
         {
             this.settings = settings ?? throw new ArgumentNullException(nameof(settings));
         }

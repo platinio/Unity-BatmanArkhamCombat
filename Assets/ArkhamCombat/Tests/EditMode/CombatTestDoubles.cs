@@ -205,6 +205,18 @@ namespace ArkhamCombat.Tests
         }
 #endif
 
+        public sealed class FixedComboMeterSettings : IComboMeterSettings
+        {
+            public FixedComboMeterSettings(float meterTimeoutSeconds, params int[] tierThresholds)
+            {
+                MeterTimeoutSeconds = meterTimeoutSeconds;
+                TierThresholds = tierThresholds;
+            }
+
+            public IReadOnlyList<int> TierThresholds { get; }
+            public float MeterTimeoutSeconds { get; }
+        }
+
         public sealed class PointTarget : IActionTarget
         {
             public bool IsValid { get; set; } = true;

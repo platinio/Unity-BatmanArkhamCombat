@@ -1464,9 +1464,6 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 69401e5dffde2bd4c96ef7a20bcbfc92, type: 3}
   m_Name: 
   m_EditorClassIdentifier: ArkhamCombat.Player::ArkhamCombat.Player.ComboTracker
-  meterSettings:
-    tierThresholds: 030000000500000008000000
-    meterTimeoutSeconds: 2.5
 --- !u!114 &1426181068
 MonoBehaviour:
   m_ObjectHideFlags: 0

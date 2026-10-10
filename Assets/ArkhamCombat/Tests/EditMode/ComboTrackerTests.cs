@@ -13,6 +13,7 @@ namespace ArkhamCombat.Tests
     // tracker by hand, in the order Unity would.
     public class ComboTrackerTests
     {
+        private const float MeterTimeoutSeconds = 2.5f;
         private const float LongerThanTheMeterTimeout = 60f;
 
         private GameObject hermesObject;
@@ -41,7 +42,7 @@ namespace ArkhamCombat.Tests
             attack = Attack("Jab");
 
             tracker = character.AddComponent<ComboTracker>();
-            tracker.Construct(new SceneGameEventsWith(dispatcher));
+            tracker.Construct(new SceneGameEventsWith(dispatcher), new FixedComboMeterSettings(MeterTimeoutSeconds, 3, 5, 8));
             tracker.CreateMeter();
             tracker.StartListeningToStrikes();
 
