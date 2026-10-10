@@ -185,10 +185,6 @@ namespace ArkhamCombat.Tests
 
     public class VariantPolicyTests
     {
-        private const int TargetOnTheLeft = -1;
-        private const int TargetOnTheRight = 1;
-        private const int TargetSideUnknown = 0;
-
         private AttackDefinition leftJab;
         private AttackDefinition rightJab;
 
@@ -199,7 +195,7 @@ namespace ArkhamCombat.Tests
             rightJab = Attack("Jab_R");
         }
 
-        private static VariantPickContext PickContext(AttackDefinition lastPicked, int targetSide, int randomSeed = 1) =>
+        private static VariantPickContext PickContext(AttackDefinition lastPicked, TargetSide targetSide, int randomSeed = 1) =>
             new VariantPickContext(lastPicked, targetSide, new Random(randomSeed));
 
         [Test]
@@ -210,7 +206,7 @@ namespace ArkhamCombat.Tests
 
             for (int seed = 0; seed < 50; seed++)
             {
-                AttackDefinition picked = pool.Pick(PickContext(lastPicked, TargetSideUnknown, seed));
+                AttackDefinition picked = pool.Pick(PickContext(lastPicked, TargetSide.DeadAhead, seed));
                 Assert.AreNotSame(lastPicked, picked, $"pick {seed} repeated the previous attack");
                 lastPicked = picked;
             }
@@ -221,7 +217,7 @@ namespace ArkhamCombat.Tests
         {
             VariantPool pool = new VariantPool(new NoRepeatPolicy(), leftJab);
 
-            Assert.AreSame(leftJab, pool.Pick(PickContext(leftJab, TargetSideUnknown)));
+            Assert.AreSame(leftJab, pool.Pick(PickContext(leftJab, TargetSide.DeadAhead)));
         }
 
         [Test]
@@ -229,23 +225,23 @@ namespace ArkhamCombat.Tests
         {
             VariantPool pool = new VariantPool(new TargetSidePolicy(), leftJab, rightJab);
 
-            Assert.AreSame(leftJab, pool.Pick(PickContext(null, TargetOnTheLeft)));
-            Assert.AreSame(rightJab, pool.Pick(PickContext(null, TargetOnTheRight)));
+            Assert.AreSame(leftJab, pool.Pick(PickContext(null, TargetSide.Left)));
+            Assert.AreSame(rightJab, pool.Pick(PickContext(null, TargetSide.Right)));
         }
 
         [Test]
-        public void TargetSide_WithNoSideKnown_FallsBackToNoRepeat()
+        public void TargetSide_WithTheTargetDeadAhead_FallsBackToNoRepeat()
         {
             VariantPool pool = new VariantPool(new TargetSidePolicy(), leftJab, rightJab);
 
-            Assert.AreSame(rightJab, pool.Pick(PickContext(leftJab, TargetSideUnknown)));
-            Assert.AreSame(leftJab, pool.Pick(PickContext(rightJab, TargetSideUnknown)));
+            Assert.AreSame(rightJab, pool.Pick(PickContext(leftJab, TargetSide.DeadAhead)));
+            Assert.AreSame(leftJab, pool.Pick(PickContext(rightJab, TargetSide.DeadAhead)));
         }
 
         [Test]
         public void AnEmptyPool_PicksNull()
         {
-            Assert.IsNull(new VariantPool(new RandomPolicy()).Pick(PickContext(null, TargetSideUnknown)));
+            Assert.IsNull(new VariantPool(new RandomPolicy()).Pick(PickContext(null, TargetSide.DeadAhead)));
         }
     }
 }

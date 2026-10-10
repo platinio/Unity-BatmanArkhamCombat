@@ -9,20 +9,19 @@ namespace ArkhamCombat.Combat
     {
         public readonly AttackDefinition LastPicked;
 
-        /// <summary>-1 left of the player, 1 right, 0 unknown or dead ahead.</summary>
-        public readonly int TargetSide;
+        public readonly TargetSide TargetSide;
 
         public readonly System.Random Random;
 
-        public VariantPickContext(AttackDefinition lastPicked, int targetSide, System.Random random)
+        public VariantPickContext(AttackDefinition lastPicked, TargetSide targetSide, System.Random random)
         {
             LastPicked = lastPicked;
             TargetSide = targetSide;
             Random = random;
         }
 
-        public bool IsTargetSideKnown => TargetSide != 0;
-        public bool IsTargetOnTheLeft => TargetSide < 0;
+        public bool IsTargetToOneSide => TargetSide != TargetSide.DeadAhead;
+        public bool IsTargetOnTheLeft => TargetSide == TargetSide.Left;
     }
 
     public interface IVariantPolicy
@@ -66,8 +65,8 @@ namespace ArkhamCombat.Combat
 
     /// <summary>
     /// The first entry when the target is on the left, the second when on the right, so a pool of
-    /// Jab_L and Jab_R leads with the hand nearer the target. With no side known it falls back to
-    /// no-repeat, which is what keeps the pool alternating until target selection exists.
+    /// Jab_L and Jab_R leads with the hand nearer the target. With the target dead ahead, or no
+    /// target, it falls back to no-repeat, which keeps the pool alternating.
     /// </summary>
     [Serializable]
     public sealed class TargetSidePolicy : IVariantPolicy
@@ -80,7 +79,7 @@ namespace ArkhamCombat.Combat
         public AttackDefinition Pick(IReadOnlyList<AttackDefinition> attacks, in VariantPickContext context)
         {
             bool hasLeftAndRightAttack = attacks.Count >= 2;
-            if (!context.IsTargetSideKnown || !hasLeftAndRightAttack)
+            if (!context.IsTargetToOneSide || !hasLeftAndRightAttack)
             {
                 return Fallback.Pick(attacks, context);
             }

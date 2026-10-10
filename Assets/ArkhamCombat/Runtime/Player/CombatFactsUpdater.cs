@@ -13,10 +13,6 @@ namespace ArkhamCombat.Player
         private const string Source = "CombatFacts";
         private const float NegligibleSqrMagnitude = 1e-4f;
 
-        private const int TargetOnTheLeft = -1;
-        private const int TargetDeadAhead = 0;
-        private const int TargetOnTheRight = 1;
-
         private ActionRunner runner;
         private IActionTargetPicker targetPicker;
         private ComboTracker comboTracker;
@@ -79,18 +75,17 @@ namespace ArkhamCombat.Player
             Write(CombatFacts.Keys.StickAngleToTarget, angle);
         }
 
-        /// <summary>-1 when the target is left of the facing, 1 when right, 0 within the dead-ahead angle either side.</summary>
-        public static int SideOf(Vector3 forward, Vector3 toTarget, float deadAheadAngle)
+        public static TargetSide SideOf(Vector3 forward, Vector3 toTarget, float deadAheadAngle)
         {
             float rightwardAmount = forward.z * toTarget.x - forward.x * toTarget.z;
             float deadAheadSine = Mathf.Sin(deadAheadAngle * Mathf.Deg2Rad);
             float deadAheadLimit = deadAheadSine * forward.magnitude * toTarget.magnitude;
             if (rightwardAmount > deadAheadLimit)
             {
-                return TargetOnTheRight;
+                return TargetSide.Right;
             }
 
-            return rightwardAmount < -deadAheadLimit ? TargetOnTheLeft : TargetDeadAhead;
+            return rightwardAmount < -deadAheadLimit ? TargetSide.Left : TargetSide.DeadAhead;
         }
 
         private IActionTarget TargetOfTheNextPress() => targetPicker.PickTarget(characterBrain.Context.Input.Move);
@@ -140,7 +135,7 @@ namespace ArkhamCombat.Player
         {
             toTarget = Vector3.zero;
             Facts.TargetDistance = float.PositiveInfinity;
-            Facts.TargetSide = TargetDeadAhead;
+            Facts.TargetSide = TargetSide.DeadAhead;
             Facts.TargetState = string.Empty;
             Facts.IsTargetBeyondLunge = true;
         }
@@ -151,7 +146,7 @@ namespace ArkhamCombat.Player
             WriteIfChanged(CombatFacts.Keys.ComboCount, Facts.ComboCount, ref lastWrittenComboCount);
             WriteIfChanged(CombatFacts.Keys.ComboTier, Facts.ComboTier, ref lastWrittenComboTier);
             WriteIfChanged(CombatFacts.Keys.TargetDistance, Facts.TargetDistance, ref lastWrittenTargetDistance);
-            WriteIfChanged(CombatFacts.Keys.TargetSide, Facts.TargetSide, ref lastWrittenTargetSide);
+            WriteIfChanged(CombatFacts.Keys.TargetSide, (int)Facts.TargetSide, ref lastWrittenTargetSide);
             WriteIfChanged(CombatFacts.Keys.TargetState, Facts.TargetState, ref lastWrittenTargetState);
             WriteIfChanged(CombatFacts.Keys.TargetBeyondLunge, Facts.IsTargetBeyondLunge, ref lastWrittenIsTargetBeyondLunge);
             WriteIfChanged(CombatFacts.Keys.IncomingAttackCounterable, Facts.IsIncomingAttackCounterable, ref lastWrittenIsIncomingAttackCounterable);
