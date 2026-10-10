@@ -4,11 +4,7 @@ using UnityEngine;
 
 namespace ArkhamCombat.Combat
 {
-    /// <summary>
-    /// A whole chain: its nodes, the root the position collapses to, and the interrupt edges that
-    /// are reachable from anywhere. One asset, authored as lists; nodes are found by id. Prepared
-    /// on load so lookups and edge order cost nothing at resolve time.
-    /// </summary>
+    /// <summary>Prepared on load so lookups and edge order cost nothing at resolve time.</summary>
     [CreateAssetMenu(menuName = "ArkhamCombat/Stance", fileName = "Stance")]
     public sealed class Stance : ScriptableObject
     {
@@ -57,7 +53,6 @@ namespace ArkhamCombat.Combat
             return nodesById.TryGetValue(id, out node);
         }
 
-        /// <summary>Sets every field from code. For tests and the fixture builder.</summary>
         public void Configure(string root, IEnumerable<ChainNode> nodes, IEnumerable<Edge> globalEdges = null, float chainResetSeconds = 0.6f)
         {
             this.root = root;
@@ -113,11 +108,6 @@ namespace ArkhamCombat.Combat
 
         private void OnValidate() => Prepare();
 
-        /// <summary>
-        /// Appends every structural problem to <paramref name="errors"/>: a missing root, duplicate
-        /// ids, a node with nothing to play, an edge to nowhere, and a node nothing reaches.
-        /// Returns true when there were none.
-        /// </summary>
         public bool Validate(List<string> errors)
         {
             int errorCountBefore = errors.Count;

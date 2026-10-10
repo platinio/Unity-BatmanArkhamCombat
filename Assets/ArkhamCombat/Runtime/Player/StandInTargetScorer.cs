@@ -5,9 +5,9 @@ using UnityEngine;
 namespace ArkhamCombat.Player
 {
     /// <summary>
-    /// Nearest roster target roughly along the direction. A stand-in for spec 04's scoring, behind
-    /// <see cref="ITargetScorer"/> so swapping it is an installer change, and reading an
-    /// <see cref="ITargetRoster"/> so it never finds targets on its own.
+    /// A stand-in for spec 04's scoring, behind <see cref="ITargetScorer"/> so swapping it is an
+    /// installer change, and reading an <see cref="ITargetRoster"/> so it never finds targets on
+    /// its own.
     /// </summary>
     public sealed class StandInTargetScorer : ITargetScorer
     {
@@ -43,7 +43,7 @@ namespace ArkhamCombat.Player
             return bestTarget;
         }
 
-        /// <summary>Lower is better. False when the candidate is gone, too far, or too far off the direction.</summary>
+        /// <summary>Lower is better.</summary>
         private bool TryScore(ICombatTarget candidate, Vector3 position, Vector3 direction, out float score)
         {
             score = float.MaxValue;

@@ -12,13 +12,13 @@ namespace ArkhamCombat.Combat
         /// <summary>Reported as the targetState fact: Idle, Staggered, and so on.</summary>
         string State { get; }
 
-        /// <summary>Takes a hit. The hit pipeline decides the reaction; the target applies it.</summary>
+        /// <summary>The hit pipeline decides the reaction; the target applies it.</summary>
         void Receive(AttackDefinition attack);
     }
 
     /// <summary>
-    /// Who is in the fight. The encounter director owns this once it exists; until then a scene
-    /// scan stands in. The picker reads it and never finds targets on its own.
+    /// The encounter director owns this once it exists; until then a scene scan stands in. The
+    /// picker reads it and never finds targets on its own.
     /// </summary>
     public interface ITargetRoster
     {

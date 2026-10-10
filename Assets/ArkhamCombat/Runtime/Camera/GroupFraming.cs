@@ -6,7 +6,6 @@ namespace ArkhamCombat.Cameras
 {
     /// <summary>
     /// Pure group framing math (spec 07): how a set of enemy positions bends the combat framing.
-    /// Static and allocation-free so it can be tested in EditMode with plain vectors.
     /// </summary>
     public static class GroupFraming
     {
@@ -40,10 +39,9 @@ namespace ArkhamCombat.Cameras
         }
 
         /// <summary>
-        /// Centroid is the mean of enemy positions; radius is the largest planar distance from the
-        /// character to an enemy. One enemy gives a centroid at that enemy and a radius equal to
-        /// its distance, which frames a duel correctly. An empty list returns
-        /// <paramref name="baseDistance"/> with no offset.
+        /// One enemy gives a centroid at that enemy and a radius equal to its distance, which
+        /// frames a duel correctly. An empty list returns <paramref name="baseDistance"/> with no
+        /// offset.
         /// </summary>
         public static Result Compute(
             Vector3 characterPosition,

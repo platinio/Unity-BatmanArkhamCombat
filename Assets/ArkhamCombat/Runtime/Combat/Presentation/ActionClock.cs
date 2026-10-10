@@ -5,9 +5,8 @@ using UnityEngine;
 namespace ArkhamCombat.Combat
 {
     /// <summary>
-    /// The duration clock with the cue schedule on it: advances normalized time by speed and reports
-    /// each cue once when its time is crossed. Pure so cue timing is tested without a tween library;
-    /// a driver composes it and turns <see cref="CueDue"/> into tweens.
+    /// Free of any tween library so cue timing is tested with plain numbers; a driver composes it
+    /// and turns <see cref="CueDue"/> into tweens.
     /// </summary>
     public sealed class ActionClock
     {

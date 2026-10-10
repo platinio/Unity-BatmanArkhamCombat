@@ -8,11 +8,9 @@ using Zenject;
 namespace ArkhamCombat.Shell
 {
     /// <summary>
-    /// The frame-data overlay from spec 01: one bar per recent action with its four windows as
-    /// coloured bands, cue marks, a playhead, and a tick for every press with what became of it.
-    /// Screen-space IMGUI on purpose; it is a tuning tool, not HUD. Everything it shows is read from
-    /// the trace of the runner on the player's <see cref="CombatActions"/>, so it never influences
-    /// what it measures. A player without one shows nothing.
+    /// Screen-space IMGUI on purpose; it is a tuning tool, not HUD. Everything it shows is read
+    /// from the trace of the runner on the player's <see cref="CombatActions"/>, so it never
+    /// influences what it measures. A player without one shows nothing.
     /// </summary>
     public sealed class FrameDataOverlay : MonoBehaviour
     {

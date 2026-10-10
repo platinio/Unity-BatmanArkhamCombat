@@ -9,9 +9,11 @@ using UnityEngine;
 
 namespace ArkhamCombat.Tests
 {
-    /// <summary>Builders and test doubles shared by the combat tests.</summary>
     public static class CombatTestDoubles
     {
+        // Hidden and never saved, so the open scene is left untouched.
+        public static GameObject HiddenObject(string name) => new GameObject(name) { hideFlags = HideFlags.HideAndDontSave };
+
         public static AttackDefinition Attack(
             string name,
             float duration = 1f,
@@ -178,7 +180,6 @@ namespace ArkhamCombat.Tests
             }
         }
 
-        /// <summary>Answers whatever it was last told to.</summary>
         public sealed class SettableActionStartGate : IActionStartGate
         {
             public bool CanStartFromIdle { get; set; }

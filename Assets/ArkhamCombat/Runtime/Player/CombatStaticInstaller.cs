@@ -6,9 +6,7 @@ using Zenject;
 namespace ArkhamCombat.Player
 {
     /// <summary>
-    /// What every fighting character in the scene shares, bound scene-wide beside the character
-    /// installer: the config, which kinds of press interrupt, who is in the fight and how a target
-    /// is scored. Each character's own combat is bound on the character by its
+    /// Each character's own combat is bound on the character by its
     /// <see cref="CombatCharacterInstaller"/>.
     /// </summary>
     [AutoAssetGeneration("Installers/Static", "CombatStaticInstaller")]

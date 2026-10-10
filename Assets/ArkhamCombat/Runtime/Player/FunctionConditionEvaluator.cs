@@ -9,9 +9,8 @@ using Zenject;
 namespace ArkhamCombat.Player
 {
     /// <summary>
-    /// Answers edge conditions by running their Functions against the character's agent variables. A
-    /// Function that cannot run is reported once and treated as false, so a broken graph fails closed.
-    /// Without a facts updater on the character the stick angle is never measured.
+    /// A Function that cannot run is reported once and treated as false, so a broken graph fails
+    /// closed. Without a facts updater on the character the stick angle is never measured.
     /// </summary>
     public sealed class FunctionConditionEvaluator : IConditionEvaluator
     {
@@ -67,7 +66,6 @@ namespace ArkhamCombat.Player
             return false;
         }
 
-        /// <summary>The load-time check: every authored condition must be a Function whose Result is a bool.</summary>
         private static void ReportInvalidConditions(Stance stance)
         {
             foreach (ChainNode node in stance.Nodes)

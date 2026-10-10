@@ -5,8 +5,7 @@ using UnityEngine;
 namespace ArkhamCombat.Player
 {
     /// <summary>
-    /// A thing to hit until enemies exist: the stand-in <see cref="ICombatTarget"/>. Reports a
-    /// state string, counts hits, and flashes so a landed strike is visible on a capsule. An enemy's
+    /// A thing to hit until enemies exist: the stand-in <see cref="ICombatTarget"/>. An enemy's
     /// status component implements the same interface and nothing player-side changes.
     /// </summary>
     public sealed class CombatDummy : MonoBehaviour, ICombatTarget

@@ -86,9 +86,6 @@ namespace ArkhamCombat.Tests
             kinds.Destroy();
         }
 
-        // Hidden and never saved, so the open scene is left untouched.
-        private static GameObject HiddenObject(string name) => new GameObject(name) { hideFlags = HideFlags.HideAndDontSave };
-
         private void PressStrike() => intents.Push(kinds.Strike, Vector2.zero);
 
         private void StartTheJab()

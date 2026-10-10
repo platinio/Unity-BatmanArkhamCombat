@@ -8,13 +8,6 @@ using Zenject;
 
 namespace ArkhamCombat.Player
 {
-    /// <summary>
-    /// Measures this character's <see cref="CombatFacts"/> each tick and mirrors them onto its agent
-    /// variables through the BH3 writer, so Functions read the same facts the resolver does and the
-    /// keys show in Variable Watch. The target facts describe the target the next press would get,
-    /// picked with the stick as it is now. Target side and stick angle are character-relative. A
-    /// character without a <see cref="ComboTracker"/> reports a combo of zero.
-    /// </summary>
     public sealed class CombatFactsUpdater : CharacterComponent
     {
         private const string Source = "CombatFacts";
@@ -56,7 +49,6 @@ namespace ArkhamCombat.Player
 
         private void Awake()
         {
-            // The brain on this object, not whichever one the container found in the scene.
             characterBrain = GetComponent<CharacterBrain>();
             comboTracker = GetComponent<ComboTracker>();
         }

@@ -5,8 +5,8 @@ using UnityEngine;
 namespace ArkhamCombat.Player
 {
     /// <summary>
-    /// The roster until the encounter director exists: every <see cref="ICombatTarget"/> component in
-    /// the scene, read on first use. <see cref="Refresh"/> re-reads after spawning.
+    /// A stand-in until the encounter director exists; <see cref="Refresh"/> re-reads after
+    /// spawning.
     /// </summary>
     public sealed class SceneTargetRoster : ITargetRoster
     {

@@ -3,9 +3,8 @@ using ArcaneOnyx.TPCharacterController.Inputs;
 namespace ArkhamCombat.Combat
 {
     /// <summary>
-    /// The facts an edge condition may read, filled once per frame before the resolver runs. A plain
-    /// mutable object: the factsUpdater writes it and mirrors it onto the agent's variables under the
-    /// keys in <see cref="Keys"/>, so a Function and a test see the same numbers.
+    /// A plain mutable object: the factsUpdater writes it and mirrors it onto the agent's variables
+    /// under the keys in <see cref="Keys"/>, so a Function and a test see the same numbers.
     /// </summary>
     public sealed class CombatFacts
     {
@@ -45,16 +44,14 @@ namespace ArkhamCombat.Combat
     }
 
     /// <summary>
-    /// Answers an edge's condition. The real one binds the edge's Function to the agent; tests inject
-    /// a fake so the resolver is proven without a graph. Called for every edge, condition or not, so
-    /// an implementation decides what an empty condition means (the real one: always met).
+    /// Called for every edge, condition or not, so an implementation decides what an empty
+    /// condition means (the real one: always met).
     /// </summary>
     public interface IConditionEvaluator
     {
         bool IsConditionMet(Edge edge, CombatFacts facts, Intent intent);
     }
 
-    /// <summary>Every edge matches. The default when nothing authored a condition.</summary>
     public sealed class AlwaysConditionEvaluator : IConditionEvaluator
     {
         public bool IsConditionMet(Edge edge, CombatFacts facts, Intent intent) => true;

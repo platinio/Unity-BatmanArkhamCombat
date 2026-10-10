@@ -11,10 +11,8 @@ using Zenject;
 namespace ArkhamCombat.Player
 {
     /// <summary>
-    /// Everything the player character is made of, bound scene-wide: the profile, the input reader,
-    /// the context, the state machine and the set of states. The profile and the state set are
-    /// picked on this asset in the inspector, so changing the character's feel or what it can do
-    /// is an asset change, not a scene or code edit.
+    /// The profile and the state set are picked on this asset in the inspector, so changing the
+    /// character's feel or what it can do is an asset change, not a scene or code edit.
     /// </summary>
     [AutoAssetGeneration("Installers/Static", "PlayerStaticInstaller")]
     [StaticInstaller(StaticInstallerExecutionOrder.Normal)]

@@ -12,9 +12,7 @@ namespace ArkhamCombat.Combat
     }
 
     /// <summary>
-    /// An action that can hit. Adds the four windows that time it, the travel numbers the warp uses,
-    /// and the fields the hit pipeline and the enemies read. Windows are normalized so nothing
-    /// downstream changes if a clip ever replaces the duration.
+    /// Windows are normalized so nothing downstream changes if a clip ever replaces the duration.
     /// </summary>
     [CreateAssetMenu(menuName = "ArkhamCombat/Attack", fileName = "Attack")]
     public sealed class AttackDefinition : ActionDefinition
@@ -63,7 +61,6 @@ namespace ArkhamCombat.Combat
         public bool IsCounterable => isCounterable;
         public bool IsUnblockable => isUnblockable;
 
-        /// <summary>Sets the attack fields from code. For tests and the fixture builder.</summary>
         public void ConfigureAttack(
             Window hitWindow,
             Window comboWindow,
@@ -89,8 +86,7 @@ namespace ArkhamCombat.Combat
         }
 
         /// <summary>
-        /// strikeDistance from the target, on the character's side. A character standing on the
-        /// target backs off along -Z so the result is still defined.
+        /// A character standing on the target backs off along -Z so the result is still defined.
         /// </summary>
         public Vector3 WarpDestination(Vector3 position, Vector3 targetPosition)
         {
@@ -105,7 +101,6 @@ namespace ArkhamCombat.Combat
             return targetPosition + awayFromTarget.normalized * strikeDistance;
         }
 
-        /// <summary>Planar distance the warp would travel from here to its end point.</summary>
         public float LungeDistance(Vector3 position, Vector3 targetPosition)
         {
             Vector3 lunge = WarpDestination(position, targetPosition) - position;
@@ -114,8 +109,8 @@ namespace ArkhamCombat.Combat
         }
 
         /// <summary>
-        /// The one lunge rule: the warp refuses, and the targetBeyondLunge fact is true, when the
-        /// travel to the end point exceeds maxLunge. Both sides read this so they can never disagree.
+        /// Both the warp and the targetBeyondLunge fact read this one rule, so they can never
+        /// disagree.
         /// </summary>
         public bool IsBeyondLunge(Vector3 position, Vector3 targetPosition) =>
             LungeDistance(position, targetPosition) > maxLunge;

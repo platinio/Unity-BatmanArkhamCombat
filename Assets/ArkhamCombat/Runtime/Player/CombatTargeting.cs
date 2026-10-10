@@ -5,12 +5,7 @@ using Zenject;
 
 namespace ArkhamCombat.Player
 {
-    /// <summary>
-    /// Picks targets for this character. A direction given in the character's movement frame, like
-    /// the stick, is turned into world space; with no direction the character's facing is used. The
-    /// scene-wide <see cref="ITargetScorer"/> then names the best target that way. It remembers
-    /// nothing, so every answer is for the moment it is asked.
-    /// </summary>
+    /// <summary>It remembers nothing, so every answer is for the moment it is asked.</summary>
     [RequireComponent(typeof(CharacterBrain))]
     public sealed class CombatTargeting : MonoBehaviour, IActionTargetPicker
     {
@@ -25,7 +20,6 @@ namespace ArkhamCombat.Player
 
         private void Awake()
         {
-            // The brain on this object, not whichever one the container found in the scene.
             characterBrain = GetComponent<CharacterBrain>();
         }
 

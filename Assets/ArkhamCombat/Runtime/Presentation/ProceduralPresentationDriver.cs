@@ -5,10 +5,9 @@ using UnityEngine;
 namespace ArkhamCombat.Presentation
 {
     /// <summary>
-    /// The demo's only driver: the core's action clock with DOTween cues on a body child. Cues fire
-    /// from the clock, not from DOTween's own time, so hit-stop and interrupts stop them exactly
-    /// where gameplay stopped. Every tween a cue starts carries this component as its id, so the
-    /// cue tweens can be killed or paused as a group.
+    /// Cues fire from the clock, not from DOTween's own time, so hit-stop and interrupts stop them
+    /// exactly where gameplay stopped. Every tween a cue starts carries this component as its id,
+    /// so the cue tweens can be killed or paused as a group.
     /// </summary>
     public sealed class ProceduralPresentationDriver : MonoBehaviour, IPresentationDriver, ICueTarget
     {

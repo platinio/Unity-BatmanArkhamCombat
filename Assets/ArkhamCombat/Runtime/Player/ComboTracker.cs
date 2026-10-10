@@ -7,10 +7,8 @@ using Zenject;
 namespace ArkhamCombat.Player
 {
     /// <summary>
-    /// Keeps this character's combo. It hears every strike in the scene through the Hermes events and
-    /// counts only its own character's: a landed strike raises the combo, a whiff loses it, and so
-    /// does going too long without a hit. Each change is announced with this character, so a listener
-    /// can follow one fighter among many. Without generated Hermes events the combo stays at zero.
+    /// It hears every strike in the scene and counts only its own character's. Without generated
+    /// Hermes events the combo stays at zero.
     /// </summary>
     public sealed class ComboTracker : CharacterComponent
     {
@@ -20,7 +18,6 @@ namespace ArkhamCombat.Player
 
         public int Count => meter.Count;
 
-        /// <summary>The number of tier thresholds the count has reached.</summary>
         public int Tier => meter.Tier;
 
         [Inject]

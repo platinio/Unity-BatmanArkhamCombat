@@ -4,7 +4,6 @@ using ArcaneOnyx.TPCharacterController.Inputs;
 
 namespace ArkhamCombat.Combat
 {
-    /// <summary>What the resolver is looking at: the chain position and the attack playing there, if any.</summary>
     public readonly struct ComboSituation
     {
         public readonly ChainNode Node;
@@ -35,7 +34,6 @@ namespace ArkhamCombat.Combat
         public bool IsInEvadeWindow => Attack != null && Attack.EvadeWindow.Contains(NormalizedTime);
     }
 
-    /// <summary>What the resolver chose, and which press it spent on it.</summary>
     public readonly struct Resolution
     {
         public static readonly Resolution None = default;
@@ -59,9 +57,9 @@ namespace ArkhamCombat.Combat
     }
 
     /// <summary>
-    /// Walks the chain to find where a queued press takes it. Exactly one intent is consumed per
-    /// resolve, and an unmatched intent stays queued, which is what lets a press during recovery
-    /// start the next chain from the root. Reads facts, never writes them.
+    /// Exactly one intent is consumed per resolve, and an unmatched intent stays queued, which is
+    /// what lets a press during recovery start the next chain from the root. Reads facts, never
+    /// writes them.
     /// </summary>
     public sealed class ComboResolver
     {
@@ -95,11 +93,6 @@ namespace ArkhamCombat.Combat
             return Resolution.None;
         }
 
-        /// <summary>
-        /// The gate a global edge passes before its condition is even asked. Evade needs the current
-        /// attack's evade window, or an idle character; a plain action playing cannot be evaded out of.
-        /// Counter needs a counterable attack incoming. Any other kind has no gate of its own.
-        /// </summary>
         public bool IsInterruptAllowed(Edge edge, in ComboSituation situation, CombatFacts facts)
         {
             if (edge.IntentKind == interruptKinds.Evade)
@@ -157,7 +150,6 @@ namespace ArkhamCombat.Combat
             return false;
         }
 
-        /// <summary>Consumes the newest matching press only when the edge leads somewhere and its condition is met.</summary>
         private bool TryTakeEdge(Stance stance, Edge edge, IntentBuffer intents, CombatFacts facts, bool isInterrupt, out Resolution resolution)
         {
             resolution = Resolution.None;

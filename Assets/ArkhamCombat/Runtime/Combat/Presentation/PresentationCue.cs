@@ -4,10 +4,9 @@ using UnityEngine;
 namespace ArkhamCombat.Combat
 {
     /// <summary>
-    /// What a cue does to the body, picked from a dropdown on the action asset. A kind is a small
-    /// class so a new kind is one file and appears on every asset without registration. The
-    /// signature returns nothing on purpose: the driver kills tweens by the target's id, so the core
-    /// never learns what a tween is.
+    /// A kind is a small class so a new kind is one file and appears on every asset without
+    /// registration. The signature returns nothing on purpose: the driver kills tweens by the
+    /// target's id, so the core never learns what a tween is.
     /// </summary>
     public interface ICueKind
     {
@@ -15,8 +14,8 @@ namespace ArkhamCombat.Combat
     }
 
     /// <summary>
-    /// The body a cue may touch. Only the body child and its props, never the root: the root is the
-    /// motor's, and a cue that moved it would fight the warp.
+    /// Only the body child and its props, never the root: the root is the motor's, and a cue that
+    /// moved it would fight the warp.
     /// </summary>
     public interface ICueTarget
     {
@@ -40,8 +39,7 @@ namespace ArkhamCombat.Combat
     }
 
     /// <summary>
-    /// One thing the body does during an action: a normalized time, a kind, and a few numbers. Lives
-    /// on the action next to the windows so the look is tuned where the timing is.
+    /// Lives on the action next to the windows so the look is tuned where the timing is.
     /// </summary>
     [Serializable]
     public sealed class PresentationCue
