@@ -15,7 +15,7 @@ namespace ArkhamCombat.Player
     /// picked with the stick as it is now. Target side and stick angle are character-relative. A
     /// character without a <see cref="ComboTracker"/> reports a combo of zero.
     /// </summary>
-    public sealed class CombatFactsUpdater : CombatComponent
+    public sealed class CombatFactsUpdater : CharacterComponent
     {
         private const string Source = "CombatFacts";
         private const float NegligibleSqrMagnitude = 1e-4f;

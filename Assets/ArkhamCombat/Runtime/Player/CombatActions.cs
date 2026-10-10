@@ -1,4 +1,5 @@
 using ArcaneOnyx.GameEventGenerator;
+using ArcaneOnyx.TPCharacterController;
 using ArkhamCombat.Combat;
 using UnityEngine;
 using Zenject;
@@ -14,7 +15,7 @@ namespace ArkhamCombat.Player
     /// and the frame's warp movement. Without generated Hermes events the actions still play and
     /// nothing is announced.
     /// </summary>
-    public sealed class CombatActions : CombatComponent
+    public sealed class CombatActions : CharacterComponent
     {
         private ActionRunner runner;
         private MotorWarpMover warpMover;

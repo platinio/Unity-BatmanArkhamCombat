@@ -1325,7 +1325,6 @@ GameObject:
   - component: {fileID: 1426181061}
   - component: {fileID: 1426181060}
   - component: {fileID: 1426181059}
-  - component: {fileID: 1426181063}
   - component: {fileID: 1426181064}
   - component: {fileID: 1426181065}
   - component: {fileID: 1426181066}
@@ -1353,6 +1352,11 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 3c5df45bc591ee548a2f2956059842e3, type: 3}
   m_Name: 
   m_EditorClassIdentifier: ArcaneOnyx.TPCharacterController::ArcaneOnyx.TPCharacterController.CharacterBrain
+  characterComponents:
+  - {fileID: 1426181065}
+  - {fileID: 1426181067}
+  - {fileID: 1426181069}
+  - {fileID: 1426181068}
 --- !u!114 &1426181060
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -1408,23 +1412,6 @@ Transform:
   - {fileID: 1033726840}
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
---- !u!114 &1426181063
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1426181058}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 9065b4088aedca6459f694f0e495d93c, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: ArkhamCombat.Player::ArkhamCombat.Player.CombatBrain
-  combatComponents:
-  - {fileID: 1426181065}
-  - {fileID: 1426181067}
-  - {fileID: 1426181069}
-  - {fileID: 1426181068}
 --- !u!114 &1426181064
 MonoBehaviour:
   m_ObjectHideFlags: 0

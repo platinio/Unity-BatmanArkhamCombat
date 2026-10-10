@@ -1,4 +1,5 @@
 using ArcaneOnyx.GameEventGenerator;
+using ArcaneOnyx.TPCharacterController;
 using ArkhamCombat.Combat;
 using UnityEngine;
 using Zenject;
@@ -11,7 +12,7 @@ namespace ArkhamCombat.Player
     /// does going too long without a hit. Each change is announced with this character, so a listener
     /// can follow one fighter among many. Without generated Hermes events the combo stays at zero.
     /// </summary>
-    public sealed class ComboTracker : CombatComponent
+    public sealed class ComboTracker : CharacterComponent
     {
         [Tooltip("When the tier rises, and how long the combo lasts without a new hit.")]
         [SerializeField] private ComboMeterSettings meterSettings = new ComboMeterSettings();
