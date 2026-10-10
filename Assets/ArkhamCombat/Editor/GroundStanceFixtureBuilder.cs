@@ -11,9 +11,10 @@ namespace ArkhamCombat.Editor
 {
     /// <summary>
     /// Builds the Ground stance fixture from spec 01 as assets: the four kinds of press, four attacks
-    /// with windows and cues, the stance, and a combat config pointing at it. Rebuilding updates the existing assets in
-    /// place so references and GUIDs survive. The GlideKick and Takedown edges wait for the
-    /// Functions of T9 and are not authored here.
+    /// with windows and cues, the stance, and a combat config naming the evade and counter kinds.
+    /// Rebuilding updates the existing assets in place so references and GUIDs survive, the scene's
+    /// reference to the stance on the character's installer among them. The GlideKick and Takedown
+    /// edges wait for the Functions of T9 and are not authored here.
     /// </summary>
     public static class GroundStanceFixtureBuilder
     {
@@ -23,7 +24,6 @@ namespace ArkhamCombat.Editor
         private const string SettingsFolder = "Assets/ArkhamCombat/Settings";
         private const string StancePath = StancesFolder + "/Ground.asset";
         private const string CombatConfigPath = SettingsFolder + "/CombatConfig.asset";
-        private const string CombatConfigStanceField = "stance";
         private const string CombatConfigEvadeKindField = "evadeKind";
         private const string CombatConfigCounterKindField = "counterKind";
         private const string LogPrefix = "[Fixture]";
@@ -43,7 +43,7 @@ namespace ArkhamCombat.Editor
 
             Stance stance = BuildStance(strike);
             ReportStanceProblems(stance);
-            PointCombatConfigAt(stance, evade, counter);
+            SetInterruptKindsOnCombatConfig(evade, counter);
 
             AssetDatabase.SaveAssets();
             Debug.Log($"{LogPrefix} Ground stance fixture built: {IntentsFolder}, {ActionsFolder}, {StancePath}, {CombatConfigPath}");
@@ -152,11 +152,10 @@ namespace ArkhamCombat.Editor
             }
         }
 
-        private static void PointCombatConfigAt(Stance stance, IntentKind evade, IntentKind counter)
+        private static void SetInterruptKindsOnCombatConfig(IntentKind evade, IntentKind counter)
         {
             CombatConfig config = LoadOrCreate<CombatConfig>(CombatConfigPath);
             SerializedObject serializedConfig = new SerializedObject(config);
-            serializedConfig.FindProperty(CombatConfigStanceField).objectReferenceValue = stance;
             serializedConfig.FindProperty(CombatConfigEvadeKindField).objectReferenceValue = evade;
             serializedConfig.FindProperty(CombatConfigCounterKindField).objectReferenceValue = counter;
             serializedConfig.ApplyModifiedPropertiesWithoutUndo();

@@ -49,12 +49,12 @@ namespace ArkhamCombat.Player
             ActionRunner runner,
             CombatConfig config,
             IMovementFrame frame,
-            [InjectOptional] IActionTargetPicker targetPicker)
+            IActionTargetPicker targetPicker)
         {
             this.runner = runner;
             this.config = config;
             this.frame = frame;
-            this.targetPicker = targetPicker ?? new NullActionTargetPicker();
+            this.targetPicker = targetPicker;
         }
 
         private void Awake()

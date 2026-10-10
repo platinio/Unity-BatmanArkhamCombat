@@ -153,13 +153,6 @@ namespace ArkhamCombat.Tests
 
             Assert.AreEqual(1, tracker.Count);
         }
-
-        private sealed class SceneGameEventsWith : ISceneGameEvents
-        {
-            public SceneGameEventsWith(GameEventDispatcher dispatcher) => GameEventDispatcher = dispatcher;
-
-            public GameEventDispatcher GameEventDispatcher { get; }
-        }
     }
 }
 #endif
