@@ -45,7 +45,11 @@ namespace ArkhamCombat.Player
 
         private void Start() => StartListeningToTheRunner();
 
-        private void OnDestroy() => StopListeningToTheRunner();
+        private void OnDestroy()
+        {
+            StopListeningToTheRunner();
+            runner?.Trace.StopListening();
+        }
 
         public override void Tick(float deltaTime) =>
             runner.Tick(deltaTime, transform.position, startGate.CanStartFromIdle);
