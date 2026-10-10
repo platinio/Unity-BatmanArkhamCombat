@@ -32,6 +32,7 @@ namespace ArkhamCombat.Tests
         private RecordingWarpMover warpMover;
         private RecordingHitWindowListener hitWindowListener;
         private RecordingEvents events;
+        private RecordingActionTargetPicker targetPicker;
 
         [SetUp]
         public void SetUp()
@@ -58,6 +59,7 @@ namespace ArkhamCombat.Tests
             warpMover = new RecordingWarpMover();
             hitWindowListener = new RecordingHitWindowListener();
             events = new RecordingEvents();
+            targetPicker = new RecordingActionTargetPicker();
         }
 
         [TearDown]
@@ -250,7 +252,7 @@ namespace ArkhamCombat.Tests
         public void TheWarp_ArrivesAtStrikeDistance_WhenTheWarpWindowCloses()
         {
             ActionRunner runner = CreateRunner();
-            runner.Target = new PointTarget(new Vector3(0f, 0f, 3f));
+            targetPicker.TargetToGive = new PointTarget(new Vector3(0f, 0f, 3f));
             StartJab(runner);
 
             Vector3 position = Vector3.zero;
@@ -269,7 +271,7 @@ namespace ArkhamCombat.Tests
         {
             ActionRunner runner = CreateRunner();
             PointTarget target = new PointTarget(new Vector3(0f, 0f, 3f));
-            runner.Target = target;
+            targetPicker.TargetToGive = target;
             StartJab(runner);
 
             Vector3 position = Vector3.zero;
@@ -294,13 +296,13 @@ namespace ArkhamCombat.Tests
             Assert.IsTrue(jab.IsBeyondLunge(Vector3.zero, justBeyond));
 
             ActionRunner runnerWithTargetInside = CreateRunner();
-            runnerWithTargetInside.Target = new PointTarget(justInside);
+            targetPicker.TargetToGive = new PointTarget(justInside);
             StartJab(runnerWithTargetInside);
             Tick(runnerWithTargetInside);
             Assert.IsFalse(runnerWithTargetInside.WasWarpRefused);
 
             ActionRunner runnerWithTargetBeyond = CreateRunner();
-            runnerWithTargetBeyond.Target = new PointTarget(justBeyond);
+            targetPicker.TargetToGive = new PointTarget(justBeyond);
             StartJab(runnerWithTargetBeyond);
             Tick(runnerWithTargetBeyond);
             Assert.IsTrue(runnerWithTargetBeyond.WasWarpRefused);
@@ -310,7 +312,7 @@ namespace ArkhamCombat.Tests
         public void TheWarp_IsRefused_WhenTheTargetIsFarBeyondTheLungeLimit()
         {
             ActionRunner runner = CreateRunner();
-            runner.Target = new PointTarget(new Vector3(0f, 0f, 10f));
+            targetPicker.TargetToGive = new PointTarget(new Vector3(0f, 0f, 10f));
             StartJab(runner);
 
             TickFor(runner, WarpWindow.End);
@@ -330,6 +332,83 @@ namespace ArkhamCombat.Tests
 
             Assert.AreEqual(0, warpMover.MoveCount);
             Assert.IsFalse(runner.WasWarpRefused);
+        }
+
+        [Test]
+        public void AnActionStartedByAPress_PicksItsTargetOnce_WithTheStickAtThePress()
+        {
+            ActionRunner runner = CreateRunner();
+            Vector2 stickRight = new Vector2(1f, 0f);
+            PointTarget pickedAtThePress = new PointTarget(new Vector3(0f, 0f, 2f));
+            targetPicker.TargetToGive = pickedAtThePress;
+            Press(kinds.Strike, stickRight);
+
+            Tick(runner);
+            targetPicker.TargetToGive = new PointTarget(new Vector3(2f, 0f, 0f));
+            TickFor(runner, HitWindow.Start);
+
+            CollectionAssert.AreEqual(new[] { stickRight }, targetPicker.AskedDirections, "asked once, with the stick at the press");
+            Assert.AreSame(pickedAtThePress, runner.CurrentActionTarget, "the target stays for the whole action");
+            Assert.AreSame(pickedAtThePress, hitWindowListener.LastOpenedAgainst, "the hit goes to the target the action started with");
+        }
+
+        [Test]
+        public void TheActionTarget_IsClearedWhenTheActionEnds()
+        {
+            ActionRunner runner = CreateRunner();
+            targetPicker.TargetToGive = new PointTarget(new Vector3(0f, 0f, 2f));
+            StartJab(runner);
+
+            TickFor(runner, AttackSeconds);
+
+            Assert.IsFalse(runner.IsPlaying);
+            Assert.IsNull(runner.CurrentActionTarget);
+        }
+
+        [Test]
+        public void AFollowUpInTheCombo_PicksItsTargetAgain()
+        {
+            ActionRunner runner = CreateRunner();
+            PointTarget jabTarget = new PointTarget(new Vector3(0f, 0f, 2f));
+            PointTarget crossTarget = new PointTarget(new Vector3(2f, 0f, 0f));
+            Vector2 stickRight = new Vector2(1f, 0f);
+            targetPicker.TargetToGive = jabTarget;
+            StartJab(runner);
+
+            targetPicker.TargetToGive = crossTarget;
+            Press(kinds.Strike, stickRight);
+            TickFor(runner, ComboWindow.Start);
+
+            Assert.AreSame(cross, runner.CurrentAction);
+            Assert.AreSame(crossTarget, runner.CurrentActionTarget, "consecutive attacks may go to different targets");
+            CollectionAssert.AreEqual(new[] { Vector2.zero, stickRight }, targetPicker.AskedDirections);
+        }
+
+        [Test]
+        public void AnActionStartedFromCode_PicksItsTargetStraightAhead()
+        {
+            ActionRunner runner = CreateRunner();
+            stance.TryGetNode("Evade", out ChainNode evade);
+            ActionDefinition flinch = Action("Flinch", 0.5f);
+
+            runner.Interrupt(evade, Vector3.zero);
+            runner.PlayAction(flinch, Vector3.zero);
+
+            CollectionAssert.AreEqual(new[] { Vector2.zero, Vector2.zero }, targetPicker.AskedDirections);
+        }
+
+        [Test]
+        public void WithoutATargetPicker_AnActionHasNoTarget_AndPlaysInPlace()
+        {
+            ActionRunner runner = CreateRunnerWithoutTargetPicker();
+            StartJab(runner);
+            Assert.IsTrue(runner.IsPlaying);
+            Assert.IsNull(runner.CurrentActionTarget);
+
+            Assert.DoesNotThrow(() => TickFor(runner, AttackSeconds));
+            Assert.AreEqual(0, warpMover.MoveCount);
+            Assert.AreEqual(1, hitWindowListener.OpenedCount);
+            Assert.IsNull(hitWindowListener.LastOpenedAgainst);
         }
 
         [Test]
@@ -387,9 +466,14 @@ namespace ArkhamCombat.Tests
         }
 
         private ActionRunner CreateRunner() =>
+            new ActionRunner(stance, intents, facts, new AlwaysConditionEvaluator(), kinds.InterruptKinds, driver, warpMover, hitWindowListener, events, targetPicker);
+
+        private ActionRunner CreateRunnerWithoutTargetPicker() =>
             new ActionRunner(stance, intents, facts, new AlwaysConditionEvaluator(), kinds.InterruptKinds, driver, warpMover, hitWindowListener, events);
 
         private void Press(IntentKind kind) => intents.Push(kind, Vector2.zero);
+
+        private void Press(IntentKind kind, Vector2 stickAtPress) => intents.Push(kind, stickAtPress);
 
         /// <summary>For a runner at the root: the press is taken on the first tick, so the jab starts at time zero.</summary>
         private void StartJab(ActionRunner runner)
