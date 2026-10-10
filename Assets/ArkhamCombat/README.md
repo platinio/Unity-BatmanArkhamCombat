@@ -298,5 +298,5 @@ policies, the meter, the combo tracker on a dispatcher built by the test, the re
 doubles, its started and ended events, the stand-in picker on test targets, the character brain listing the character components already on a character, the combat actions with a start gate that
 allows and refuses and their announcements on a dispatcher built by the test, the attacking state switch's rule, the character installer on containers built by the test (which
 condition evaluator a stance gets, the optional pieces and their do-nothing versions, a runner for a character with
-nothing optional), and the assembly boundary (no DOTween or Zenject in the core). The intent buffer's tests live in
+nothing optional), the player installer reporting an empty state list and an empty state slot, and the assembly boundary (no DOTween or Zenject in the core). The intent buffer's tests live in
 the controller submodule, and so do the character brain skipping and reporting an empty entry of its list. Entering the `Attacking` state needs the whole controller and is checked in play mode.
