@@ -26,21 +26,16 @@ namespace ArkhamCombat.Player
         private CharacterBrain characterBrain;
         private CharacterMotor motor;
         private ActionRunner runner;
-        private ComboMeter meter;
 
         public ActionRunner Runner => runner;
 
         private bool IsCharacterBrainRunning => characterBrain.StateMachine != null && characterBrain.enabled;
 
         [Inject]
-        private void Construct(
-            CharacterMotor motor,
-            ActionRunner runner,
-            ComboMeter meter)
+        private void Construct(CharacterMotor motor, ActionRunner runner)
         {
             this.motor = motor;
             this.runner = runner;
-            this.meter = meter;
         }
 
         private void Awake()
@@ -70,7 +65,6 @@ namespace ArkhamCombat.Player
             float deltaTime = Time.deltaTime;
 
             TickCombatComponents(deltaTime);
-            meter.Tick(deltaTime);
             runner.Tick(deltaTime, transform.position, CanStartActionFromIdle());
             EnterAttackingStateWhileAnActionPlays();
         }
@@ -86,7 +80,6 @@ namespace ArkhamCombat.Player
                 }
             }
         }
-
 
         // Attacking counts too: an idle runner while still in Attacking is recovery, so a queued press
         // continues the combo without a one-frame trip through Locomotion.

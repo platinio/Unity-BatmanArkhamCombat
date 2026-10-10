@@ -1,5 +1,6 @@
 using System.Collections.Generic;
 using ArkhamCombat.Combat;
+using ArkhamCombat.Player;
 using UnityEngine;
 using Zenject;
 
@@ -51,7 +52,14 @@ namespace ArkhamCombat.Shell
         [SerializeField] private Vector2 origin = new Vector2(12f, 80f);
 
         [Inject] private ActionRunner runner;
-        [Inject] private ComboMeter meter;
+
+        private ComboTracker comboTracker;
+
+        private int ComboCount => comboTracker != null ? comboTracker.Count : 0;
+
+        private int ComboTier => comboTracker != null ? comboTracker.Tier : 0;
+
+        private void Start() => comboTracker = FindAnyObjectByType<ComboTracker>();
 
         private void OnGUI()
         {
@@ -71,7 +79,7 @@ namespace ArkhamCombat.Shell
         private string HeaderText()
         {
             string node = runner.CurrentNode != null ? runner.CurrentNode.Id : "-";
-            return $"Combo {meter.Count} (tier {meter.Tier})   node {node}   t {runner.NormalizedTime:0.00}{OpenWindowsText()}";
+            return $"Combo {ComboCount} (tier {ComboTier})   node {node}   t {runner.NormalizedTime:0.00}{OpenWindowsText()}";
         }
 
         private string OpenWindowsText()

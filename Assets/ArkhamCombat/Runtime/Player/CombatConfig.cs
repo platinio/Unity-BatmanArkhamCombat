@@ -5,9 +5,10 @@ using UnityEngine;
 namespace ArkhamCombat.Player
 {
     /// <summary>
-    /// Everything the player's combat is tuned by: the stance, the meter, and the numbers the
-    /// stand-in target and hit checks use until specs 04 and 05 replace them. One asset, bound by
-    /// the combat installer, so a different feel is a different asset.
+    /// Everything the player's combat is tuned by, except the combo meter, which is tuned on each
+    /// character's ComboTracker: the stance and the numbers the stand-in target and hit checks use
+    /// until specs 04 and 05 replace them. One asset, bound by the combat installer, so a different
+    /// feel is a different asset.
     /// </summary>
     [CreateAssetMenu(menuName = "ArkhamCombat/Combat Config", fileName = "CombatConfig")]
     public sealed class CombatConfig : ScriptableObject
@@ -22,9 +23,6 @@ namespace ArkhamCombat.Player
 
         [Tooltip("The kind of press that counters. Its global edges are taken only while a counterable attack is incoming.")]
         [SerializeField] private IntentKind counterKind;
-
-        [Header("Meter")]
-        [SerializeField] private ComboMeterSettings meter = new ComboMeterSettings();
 
         [Header("Facing")]
         [Tooltip("SmoothDamp time for turning toward the target while an action plays. Small: the warp needs the character squared up.")]
@@ -47,7 +45,6 @@ namespace ArkhamCombat.Player
         public Stance Stance => stance;
         public IntentKind EvadeKind => evadeKind;
         public IntentKind CounterKind => counterKind;
-        public ComboMeterSettings Meter => meter;
         public float FaceTargetSmoothTime => faceTargetSmoothTime;
         public float MaxLungeWhileIdle => maxLungeWhileIdle;
         public float MaxTargetDistance => maxTargetDistance;

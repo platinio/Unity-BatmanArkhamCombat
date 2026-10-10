@@ -13,7 +13,7 @@ namespace ArkhamCombat.Player
     /// variables through the BH3 writer, so Functions read the same facts the resolver does and the
     /// keys show in Variable Watch. The target facts describe the target the next press would get,
     /// picked with the stick as it is now. Target side and stick angle are character-relative. A
-    /// character without a combo meter reports a combo of zero.
+    /// character without a <see cref="ComboTracker"/> reports a combo of zero.
     /// </summary>
     public sealed class CombatFactsUpdater : CombatComponent
     {
@@ -29,7 +29,7 @@ namespace ArkhamCombat.Player
 
         private ActionRunner runner;
         private IActionTargetPicker targetPicker;
-        private ComboMeter meter;
+        private ComboTracker comboTracker;
         private CombatConfig config;
         private IMovementFrame frame;
         private CharacterBrain characterBrain;
@@ -49,20 +49,19 @@ namespace ArkhamCombat.Player
             ActionRunner runner,
             CombatConfig config,
             IMovementFrame frame,
-            [InjectOptional] IActionTargetPicker targetPicker,
-            [InjectOptional] ComboMeter meter)
+            [InjectOptional] IActionTargetPicker targetPicker)
         {
             this.runner = runner;
             this.config = config;
             this.frame = frame;
             this.targetPicker = targetPicker ?? new NullActionTargetPicker();
-            this.meter = meter;
         }
 
         private void Awake()
         {
             // The brain on this object, not whichever one the container found in the scene.
             characterBrain = GetComponent<CharacterBrain>();
+            comboTracker = GetComponent<ComboTracker>();
         }
 
         public override void Tick(float deltaTime)
@@ -108,9 +107,9 @@ namespace ArkhamCombat.Player
 
         private void MeasureCombo()
         {
-            bool hasMeter = meter != null;
-            Facts.ComboCount = hasMeter ? meter.Count : 0;
-            Facts.ComboTier = hasMeter ? meter.Tier : 0;
+            bool hasComboTracker = comboTracker != null;
+            Facts.ComboCount = hasComboTracker ? comboTracker.Count : 0;
+            Facts.ComboTier = hasComboTracker ? comboTracker.Tier : 0;
         }
 
         private void MeasureTarget(IActionTarget target, AttackDefinition currentAttack)

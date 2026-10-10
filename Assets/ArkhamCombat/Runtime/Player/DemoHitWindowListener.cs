@@ -1,3 +1,4 @@
+using ArcaneOnyx.GameEventGenerator;
 using ArcaneOnyx.TPCharacterController.Motor;
 using ArkhamCombat.Combat;
 using UnityEngine;
@@ -6,19 +7,20 @@ namespace ArkhamCombat.Player
 {
     /// <summary>
     /// A range check at the hit window's start, standing in for spec 05's targeted land check:
-    /// within strike distance plus a margin lands and feeds the meter; anything else is a whiff and
-    /// resets it. Closing has nothing to do because the check is instantaneous.
+    /// within strike distance plus a margin the strike lands, anything else is a whiff. Either way it
+    /// tells the scene through a Hermes event that names the attacker; whoever keeps that character's
+    /// combo does the counting. Closing has nothing to do because the check is instantaneous.
     /// </summary>
     public sealed class DemoHitWindowListener : IHitWindowListener
     {
-        private readonly ComboMeter meter;
         private readonly CombatConfig config;
         private readonly Transform character;
+        private readonly ISceneGameEvents sceneGameEvents;
 
-        public DemoHitWindowListener(ComboMeter meter, CombatConfig config, CharacterMotor motor)
+        public DemoHitWindowListener(CombatConfig config, CharacterMotor motor, ISceneGameEvents sceneGameEvents)
         {
-            this.meter = meter;
             this.config = config;
+            this.sceneGameEvents = sceneGameEvents;
             character = motor.transform;
         }
 
@@ -27,11 +29,11 @@ namespace ArkhamCombat.Player
             if (target is ICombatTarget victim && victim.IsValid && IsWithinStrikeRange(attack, victim.Position))
             {
                 victim.Receive(attack);
-                meter.Increment(ComboIncrementReason.StrikeLanded);
+                AnnounceStrikeLanded(attack, victim);
             }
             else
             {
-                meter.Reset(ComboResetReason.Whiff);
+                AnnounceStrikeWhiffed(attack);
             }
         }
 
@@ -43,5 +45,23 @@ namespace ArkhamCombat.Player
             toTarget.y = 0f;
             return toTarget.magnitude <= attack.StrikeDistance + config.HitRangeMargin;
         }
+
+        private void AnnounceStrikeLanded(AttackDefinition attack, ICombatTarget victim)
+        {
+#if HERMES_EVENTS_GENERATED
+            sceneGameEvents?.GameEventDispatcher.StrikeLandedGameEvent.Raise(character.gameObject, attack, GameObjectOf(victim));
+#endif
+        }
+
+        private void AnnounceStrikeWhiffed(AttackDefinition attack)
+        {
+#if HERMES_EVENTS_GENERATED
+            sceneGameEvents?.GameEventDispatcher.StrikeWhiffedGameEvent.Raise(character.gameObject, attack);
+#endif
+        }
+
+        // A target that is not a component has no object to name, and the event carries null for it.
+        private static GameObject GameObjectOf(ICombatTarget victim) =>
+            victim is Component component ? component.gameObject : null;
     }
 }

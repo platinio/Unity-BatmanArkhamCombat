@@ -685,6 +685,64 @@ MonoBehaviour:
   m_ShadowLayerMask: 1
   m_RenderingLayers: 1
   m_ShadowRenderingLayers: 1
+--- !u!1 &727989597
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 727989600}
+  - component: {fileID: 727989599}
+  - component: {fileID: 727989598}
+  m_Layer: 0
+  m_Name: SceneGameEvents
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!114 &727989598
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 727989597}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: d9e83b7a1775481983b00e9a451e940b, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Hermes.Runtime::ArcaneOnyx.GameEventGenerator.SceneGameEvents
+  gameEventDispatcher: {fileID: 727989599}
+--- !u!114 &727989599
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 727989597}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 9600cb314a9aa2a46ae1aeefd905ce60, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Hermes.Events::ArcaneOnyx.GameEventGenerator.GameEventDispatcher
+--- !u!4 &727989600
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 727989597}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 0}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &933822115
 GameObject:
   m_ObjectHideFlags: 0
@@ -1271,6 +1329,7 @@ GameObject:
   - component: {fileID: 1426181064}
   - component: {fileID: 1426181065}
   - component: {fileID: 1426181066}
+  - component: {fileID: 1426181067}
   m_Layer: 0
   m_Name: Player
   m_TagString: Player
@@ -1359,6 +1418,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: ArkhamCombat.Player::ArkhamCombat.Player.CombatBrain
   combatComponents:
   - {fileID: 1426181065}
+  - {fileID: 1426181067}
 --- !u!114 &1426181064
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -1399,6 +1459,21 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 338d7203ddc2b034c9ed365b93e602d0, type: 3}
   m_Name: 
   m_EditorClassIdentifier: ArkhamCombat.Player::ArkhamCombat.Player.CombatTargeting
+--- !u!114 &1426181067
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1426181058}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 69401e5dffde2bd4c96ef7a20bcbfc92, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: ArkhamCombat.Player::ArkhamCombat.Player.ComboTracker
+  meterSettings:
+    tierThresholds: 030000000500000008000000
+    meterTimeoutSeconds: 2.5
 --- !u!1 &1454199925
 GameObject:
   m_ObjectHideFlags: 0
@@ -2345,3 +2420,4 @@ SceneRoots:
   - {fileID: 1309846544}
   - {fileID: 1850291381}
   - {fileID: 2109480530}
+  - {fileID: 727989600}
