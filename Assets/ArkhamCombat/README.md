@@ -88,7 +88,7 @@ character's context, before any `Awake`.
 
 | Assembly | Folder | Holds | References |
 |---|---|---|---|
-| `ArkhamCombat.Combat` | `Runtime/Combat` | The core: actions and windows, the chain, the resolver, the meter, the runner, the clock, the interfaces the runner talks through | The character controller (intent types), VisualScriptingExtension (`FunctionCall<bool>` on edges). Never DOTween, never Zenject (a test asserts both), never Hermes: the generated event assemblies reference this one |
+| `ArkhamCombat.Combat` | `Runtime/Combat` | The core: actions and windows, the chain, the resolver, the meter, the runner, the clock, the hit rules, the interfaces the runner talks through | The character controller (intent types), VisualScriptingExtension (`FunctionCall<bool>` on edges). Never DOTween, never Zenject (a test asserts both), never Hermes: the generated event assemblies reference this one |
 | `ArkhamCombat.Presentation` | `Runtime/Presentation` | The DOTween driver and the cue kinds | Combat, DOTween |
 | `ArkhamCombat.Player` | `Runtime/Player` | The scene installer and the character installer, the character components that run combat each frame (facts updater, combo tracker, combat actions, attacking state switch), the `Attacking` state, the Function evaluator, and the stand-ins behind the core's interfaces | Combat, Presentation, BH3 (fact writer), Zenject, Hermes (runtime and the two generated assemblies) |
 | `ArkhamCombat.Shell` | `Runtime/Shell` | The frame-data overlay and the camera demo | Combat, Camera, Player (the overlay reads the `CombatActions` and the `ComboTracker`) |
@@ -171,6 +171,19 @@ The ordered list of per-frame jobs is the controller's too: `CharacterComponent`
 | `IActionStartGate` | `CanStartFromIdle`: whether a character playing nothing may start an action from a press right now. The runner does not ask it; whoever ticks the runner passes the answer in. `AlwaysOpenActionStartGate` never holds a press back |
 | `IWarpMover` | Moves the character during the warp. The runner never touches a transform |
 | `IHitWindowListener` | The hit code, told when the hit window opens, with the attack and target, and when it closes, at its end or on any interrupt, so a hit window never stays open behind an interrupted attack |
+
+### Hits (`Runtime/Combat/Hits`)
+
+| Type | Responsibility |
+|---|---|
+| `HitResolver` | The land check. Hits are targeted: a strike lands on the one target its action picked when that target stands within the attack's `StrikeDistance` plus `HitRangeMargin`, and within `HitAngle` degrees either side of the attacker's facing, both measured on the ground. Nothing is swept and no collider is asked. `TryLand` answers and hands back the `HitInfo`. An attacker standing on its target hits whichever way it faces |
+| `StrikeOrigin` | Where a strike comes from and which way its attacker faces. The caller supplies both, so the check never reads a transform |
+| `HitInfo` | A strike that passed the land check, as its target receives it: the attack, and the flat direction from the attacker to the target |
+| `HitReceiver` | One character's health and what each hit does to it: takes the attack's damage, asks `ReactionRules` and returns the `HitResult`. The dead take nothing |
+| `ReactionRules` | The attacker asks for a reaction and the receiver's profile decides the one that plays. No health left is death, whatever was asked. Armor turns a flinch into nothing and a stagger into a flinch, and damage still applies. A knockdown knocks down, through armor too, unless the profile cannot be knocked down, and then it staggers |
+| `HitResult`, `AppliedReaction` | Whether the hit landed and what the target does: nothing, flinch, stagger, knockdown or death. `HitReaction` on the attack is what was asked for; this is what happened |
+| `HitReceiverProfile` | The asset a character that can be hit points at: `maxHealth`, `isArmored`, `canBeKnockedDown` |
+| `IHitCheckSettings` | The two values the land check is tuned by: `HitRangeMargin` and `HitAngle`. The core only declares it |
 
 ### Presentation (`Runtime/Presentation`)
 
@@ -294,7 +307,7 @@ Background is on.
 ## Tests
 
 `ArkhamCombat.Tests` runs in EditMode and needs no scene: windows, actions, stance validation, pool
-policies, the group framing math on plain vectors, the stand-in hit check against a target with and without a pending warp, the targeting component's stick threshold and frame, the trace marking presses until it stops listening, one test that fails loudly when the Hermes events are not generated, the meter, the combo tracker on a dispatcher built by the test, the resolver, the clock, the runner with the null driver and recording test
+policies, the reaction table row by row, a receiver's health down to death and past it, the land check by range and by angle, the group framing math on plain vectors, the stand-in hit check against a target with and without a pending warp, the targeting component's stick threshold and frame, the trace marking presses until it stops listening, one test that fails loudly when the Hermes events are not generated, the meter, the combo tracker on a dispatcher built by the test, the resolver, the clock, the runner with the null driver and recording test
 doubles, its started and ended events, the stand-in picker on test targets, the character brain listing the character components already on a character, the combat actions with a start gate that
 allows and refuses and their announcements on a dispatcher built by the test, the attacking state switch's rule, the character installer on containers built by the test (which
 condition evaluator a stance gets, the optional pieces and their do-nothing versions, a runner for a character with
