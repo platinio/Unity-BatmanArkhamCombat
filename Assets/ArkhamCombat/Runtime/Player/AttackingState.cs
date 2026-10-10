@@ -21,35 +21,21 @@ namespace ArkhamCombat.Player
 
         private readonly CharacterContext context;
         private readonly IFacingSettings settings;
-        private CombatActions combatActions;
+        private readonly CombatActions combatActions;
 
-        public AttackingState(CharacterContext context, IFacingSettings settings)
+        public AttackingState(CharacterContext context, IFacingSettings settings, CombatActions combatActions)
         {
             this.context = context;
             this.settings = settings;
+            this.combatActions = combatActions;
         }
 
-        // Found on the character at first use, not handed to the constructor: the scene builds this
-        // state and cannot see into the character's own context, where the runner lives.
-        private CombatActions CombatActions
-        {
-            get
-            {
-                if (combatActions == null)
-                {
-                    combatActions = context.Transform.GetComponent<CombatActions>();
-                }
-
-                return combatActions;
-            }
-        }
-
-        private ActionRunner Runner => CombatActions.Runner;
+        private ActionRunner Runner => combatActions.Runner;
 
         public void Enter() { }
 
         // Warp movement left over from this attack must not carry into the next one.
-        public void Exit() => CombatActions.TakePendingWarpMovement();
+        public void Exit() => combatActions.TakePendingWarpMovement();
 
         public void Tick(float deltaTime)
         {
@@ -71,7 +57,7 @@ namespace ArkhamCombat.Player
 
         private Vector3 TakeWarpVelocity(float deltaTime)
         {
-            Vector3 warpMovement = CombatActions.TakePendingWarpMovement();
+            Vector3 warpMovement = combatActions.TakePendingWarpMovement();
             return deltaTime > NegligibleDeltaTime ? warpMovement / deltaTime : Vector3.zero;
         }
 
