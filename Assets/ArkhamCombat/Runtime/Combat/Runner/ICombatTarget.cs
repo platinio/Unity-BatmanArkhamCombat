@@ -12,8 +12,7 @@ namespace ArkhamCombat.Combat
         /// <summary>Reported as the targetState fact: Idle, Staggered, and so on.</summary>
         string State { get; }
 
-        /// <summary>The hit pipeline decides the reaction; the target applies it.</summary>
-        void Receive(AttackDefinition attack);
+        HitResult Receive(HitInfo hit);
     }
 
     /// <summary>

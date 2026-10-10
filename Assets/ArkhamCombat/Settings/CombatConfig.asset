@@ -22,4 +22,6 @@ MonoBehaviour:
   maxTargetDistance: 8
   maxTargetAngle: 110
   angleCountingAsDoubleDistance: 90
+  stickPushedMagnitude: 0.1
   hitRangeMargin: 0.6
+  hitAngle: 60

@@ -10,7 +10,7 @@ namespace ArkhamCombat.Player
     /// stance is set on each character's CombatCharacterInstaller.
     /// </summary>
     [CreateAssetMenu(menuName = "ArkhamCombat/Combat Config", fileName = "CombatConfig")]
-    public sealed class CombatConfig : ScriptableObject, IComboMeterSettings, ITargetingSettings, IFacingSettings, ICombatFactsSettings, IHitRangeSettings
+    public sealed class CombatConfig : ScriptableObject, IComboMeterSettings, ITargetingSettings, IFacingSettings, ICombatFactsSettings, IHitCheckSettings
     {
         [Header("Interrupts")]
         [Tooltip("The kind of press that evades. Its global edges are taken only inside the current attack's evade window, or while idle.")]
@@ -50,9 +50,12 @@ namespace ArkhamCombat.Player
         [Tooltip("A stick pushed less than this (0 to 1) is at rest; the target is then picked along the facing instead of the stick.")]
         [SerializeField, Range(0f, 1f)] private float stickPushedMagnitude = 0.1f;
 
-        [Header("Stand-in hit check (spec 05 replaces this)")]
-        [Tooltip("A strike lands when the target is within strikeDistance plus this at the hit window's start.")]
+        [Header("Hit check")]
+        [Tooltip("A strike lands only on a target within the attack's strikeDistance plus this, as the hit window opens.")]
         [SerializeField, Min(0f)] private float hitRangeMargin = 0.6f;
+
+        [Tooltip("A strike lands only on a target within this many degrees either side of the attacker's facing. 180 hits all around.")]
+        [SerializeField, Range(0f, 180f)] private float hitAngle = 60f;
 
         public IntentKind EvadeKind => evadeKind;
         public IntentKind CounterKind => counterKind;
@@ -71,6 +74,7 @@ namespace ArkhamCombat.Player
         float ICombatFactsSettings.MaxLungeWhileIdle => maxLungeWhileIdle;
         float ICombatFactsSettings.StickPushedMagnitude => stickPushedMagnitude;
 
-        float IHitRangeSettings.HitRangeMargin => hitRangeMargin;
+        float IHitCheckSettings.HitRangeMargin => hitRangeMargin;
+        float IHitCheckSettings.HitAngle => hitAngle;
     }
 }
