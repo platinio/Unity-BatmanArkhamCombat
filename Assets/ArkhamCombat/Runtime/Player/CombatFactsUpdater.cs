@@ -61,9 +61,8 @@ namespace ArkhamCombat.Player
         public void UpdateStickAngle(Vector2 moveAtPress)
         {
             float angle = 0f;
-            bool canMeasureAngle = Facts.HasTarget
-                                   && moveAtPress.sqrMagnitude > NegligibleSqrMagnitude
-                                   && toTarget.sqrMagnitude > NegligibleSqrMagnitude;
+            bool isStickPushed = moveAtPress.magnitude > settings.StickPushedMagnitude;
+            bool canMeasureAngle = Facts.HasTarget && isStickPushed && toTarget.sqrMagnitude > NegligibleSqrMagnitude;
             if (canMeasureAngle)
             {
                 Vector3 stick = frame.Frame * new Vector3(moveAtPress.x, 0f, moveAtPress.y);

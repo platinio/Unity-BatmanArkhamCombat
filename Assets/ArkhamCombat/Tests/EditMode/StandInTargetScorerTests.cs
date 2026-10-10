@@ -16,14 +16,6 @@ namespace ArkhamCombat.Tests
             IReadOnlyList<ICombatTarget> ITargetRoster.Targets => Targets;
         }
 
-        private sealed class TargetingSettings : ITargetingSettings
-        {
-            public float MaxTargetDistance { get; set; } = 8f;
-            public float MaxTargetAngle { get; set; } = 110f;
-            public float AngleCountingAsDoubleDistance { get; set; } = 90f;
-            public float StickPushedMagnitude { get; set; } = 0.1f;
-        }
-
         private TargetingSettings settings;
         private ListRoster roster;
         private ITargetScorer scorer;
