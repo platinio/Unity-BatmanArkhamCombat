@@ -8,9 +8,6 @@ namespace ArkhamCombat.Combat
     /// </summary>
     public sealed class HitResolver
     {
-        /// <summary>Closer than this the attacker stands on the target, which has no direction to be in front of.</summary>
-        private const float StandingOnTargetSqrDistance = 1e-6f;
-
         private readonly IHitCheckSettings settings;
 
         public HitResolver(IHitCheckSettings settings)
@@ -23,7 +20,7 @@ namespace ArkhamCombat.Combat
             Vector3 toTarget = targetPosition - origin.Position;
             toTarget.y = 0f;
 
-            bool isStandingOnTarget = toTarget.sqrMagnitude < StandingOnTargetSqrDistance;
+            bool isStandingOnTarget = toTarget.sqrMagnitude < AttackDefinition.StandingOnTargetSqrDistance;
             if (isStandingOnTarget)
             {
                 hit = new HitInfo(attack, Vector3.zero);

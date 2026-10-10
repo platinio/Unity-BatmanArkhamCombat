@@ -5,7 +5,7 @@ namespace ArkhamCombat.Combat
     [CreateAssetMenu(menuName = "ArkhamCombat/Hit Receiver Profile", fileName = "HitReceiverProfile")]
     public sealed class HitReceiverProfile : ScriptableObject
     {
-        [Tooltip("Health the character starts with. It dies when this reaches zero.")]
+        [Tooltip("Health the character starts with. It dies when its health reaches zero.")]
         [SerializeField, Min(1f)] private float maxHealth = 100f;
 
         [Tooltip("Armor shrugs off light hits: a Flinch does nothing and a Stagger only flinches. Damage still applies.")]
