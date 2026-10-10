@@ -68,6 +68,7 @@ namespace ArkhamCombat.Player
 
         float ICombatFactsSettings.DeadAheadAngle => deadAheadAngle;
         float ICombatFactsSettings.MaxLungeWhileIdle => maxLungeWhileIdle;
+        float ICombatFactsSettings.StickPushedMagnitude => stickPushedMagnitude;
 
         float IHitRangeSettings.HitRangeMargin => hitRangeMargin;
     }

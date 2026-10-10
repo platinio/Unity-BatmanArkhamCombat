@@ -8,5 +8,6 @@ namespace ArkhamCombat.Player
     {
         float DeadAheadAngle { get; }
         float MaxLungeWhileIdle { get; }
+        float StickPushedMagnitude { get; }
     }
 }

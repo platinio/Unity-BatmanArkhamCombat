@@ -5,6 +5,7 @@ using ArcaneOnyx.GameEventGenerator;
 #endif
 using ArcaneOnyx.TPCharacterController.Inputs;
 using ArkhamCombat.Combat;
+using ArkhamCombat.Player;
 using UnityEngine;
 
 namespace ArkhamCombat.Tests
@@ -224,6 +225,14 @@ namespace ArkhamCombat.Tests
             public Vector3 Position { get; set; }
 
             public PointTarget(Vector3 position) => Position = position;
+        }
+
+        public sealed class TargetingSettings : ITargetingSettings
+        {
+            public float MaxTargetDistance { get; set; } = 8f;
+            public float MaxTargetAngle { get; set; } = 110f;
+            public float AngleCountingAsDoubleDistance { get; set; } = 90f;
+            public float StickPushedMagnitude { get; set; } = 0.1f;
         }
 
         public sealed class PointCombatTarget : ICombatTarget
