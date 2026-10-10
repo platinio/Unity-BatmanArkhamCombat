@@ -14,6 +14,8 @@ namespace ArkhamCombat.Tests
     public class TargetedHitWindowListenerTests
     {
         private const float StrikeDistance = 1f;
+        private const float WithinReach = 1f;
+        private const float BeyondReach = 1.6f;
 
         private GameObject character;
         private MotorWarpMover warpMover;
@@ -27,7 +29,7 @@ namespace ArkhamCombat.Tests
             CharacterMotor motor = character.AddComponent<CharacterMotor>();
             warpMover = new MotorWarpMover();
 #if HERMES_EVENTS_GENERATED
-            listener = new TargetedHitWindowListener(new HitCheckSettings(), motor, warpMover, BuildSceneGameEvents());
+            listener = new TargetedHitWindowListener(new HitCheckSettings(), motor, warpMover, BuildSceneGameEventsRecordingStrikes());
 #else
             listener = new TargetedHitWindowListener(new HitCheckSettings(), motor, warpMover, null);
 #endif
@@ -104,8 +106,7 @@ namespace ArkhamCombat.Tests
         private List<StrikeLandedEventArgs> landedStrikes;
         private List<StrikeWhiffedEventArgs> whiffedStrikes;
 
-        // Edit mode runs no Awake, so the dispatcher's events are built by hand.
-        private ISceneGameEvents BuildSceneGameEvents()
+        private ISceneGameEvents BuildSceneGameEventsRecordingStrikes()
         {
             hermesObject = HiddenObject("Hermes");
             GameEventDispatcher dispatcher = hermesObject.AddComponent<GameEventDispatcher>();
@@ -121,9 +122,9 @@ namespace ArkhamCombat.Tests
         }
 
         [Test]
-        public void AStrikeThatLands_IsAnnouncedWithItsAttacker_AndNotAsAWhiff()
+        public void AStrikeThatLands_IsAnnouncedAsLanded()
         {
-            listener.HitWindowOpened(jab, TargetAhead(1f));
+            listener.HitWindowOpened(jab, TargetAhead(WithinReach));
 
             Assert.AreEqual(1, landedStrikes.Count);
             Assert.AreSame(character, landedStrikes[0].Attacker);
@@ -134,7 +135,7 @@ namespace ArkhamCombat.Tests
         [Test]
         public void AStrikeOutOfRange_IsAnnouncedAsAWhiff()
         {
-            listener.HitWindowOpened(jab, TargetAhead(1.6f));
+            listener.HitWindowOpened(jab, TargetAhead(BeyondReach));
 
             Assert.AreEqual(1, whiffedStrikes.Count);
             Assert.AreSame(character, whiffedStrikes[0].Attacker);
@@ -144,7 +145,7 @@ namespace ArkhamCombat.Tests
         [Test]
         public void AStrikeTheTargetIgnores_IsAnnouncedAsAWhiff()
         {
-            PointCombatTarget deadTarget = TargetAhead(1f);
+            PointCombatTarget deadTarget = TargetAhead(WithinReach);
             deadTarget.ResultToGive = HitResult.Ignored;
 
             listener.HitWindowOpened(jab, deadTarget);
@@ -156,7 +157,7 @@ namespace ArkhamCombat.Tests
         [Test]
         public void AStrikeAtAnInvalidTarget_IsAnnouncedAsAWhiff()
         {
-            PointCombatTarget goneTarget = TargetAhead(1f);
+            PointCombatTarget goneTarget = TargetAhead(WithinReach);
             goneTarget.IsValid = false;
 
             listener.HitWindowOpened(jab, goneTarget);

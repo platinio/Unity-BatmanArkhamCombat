@@ -310,7 +310,7 @@ Background is on.
 
 ## Tests
 
-`ArkhamCombat.Tests` runs in EditMode and needs no scene: windows, actions, stance validation, pool
+`ArkhamCombat.Tests` runs in EditMode and needs no scene. Edit mode runs no `Awake` and no `Start`, so a test that needs what they do calls the component's internal set-up methods by hand, in the order Unity would. It covers: windows, actions, stance validation, pool
 policies, the reaction table row by row, a receiver's health down to death and past it, the land check by range and by angle, the group framing math on plain vectors, the hit window listener against a target in and out of reach, behind, with a pending warp, and one that ignores the hit, with its announcements on a dispatcher built by the test, the dummy taking hits, dying, lying down and refusing hits without a profile, the targeting component's stick threshold and frame, the trace marking presses until it stops listening, one test that fails loudly when the Hermes events are not generated, the meter, the combo tracker on a dispatcher built by the test, the resolver, the clock, the runner with the null driver and recording test
 doubles, its started and ended events, the stand-in picker on test targets, the character brain listing the character components already on a character, the combat actions with a start gate that
 allows and refuses and their announcements on a dispatcher built by the test, the attacking state switch's rule, the character installer on containers built by the test (which

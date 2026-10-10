@@ -12,7 +12,6 @@ namespace ArkhamCombat.Combat
         /// <summary>Reported as the targetState fact: Idle, Staggered, and so on.</summary>
         string State { get; }
 
-        /// <summary>The target decides what the hit does to it, and answers whether it landed at all.</summary>
         HitResult Receive(HitInfo hit);
     }
 

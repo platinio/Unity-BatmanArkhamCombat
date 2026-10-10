@@ -3,7 +3,7 @@ using UnityEngine;
 
 namespace ArkhamCombat.Combat
 {
-    /// <summary>What an attack asks of its target. The target's profile may answer with less.</summary>
+    /// <summary>What an attack asks of its target.</summary>
     public enum HitReaction
     {
         Flinch,

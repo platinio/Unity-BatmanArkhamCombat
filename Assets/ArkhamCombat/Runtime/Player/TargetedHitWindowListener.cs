@@ -5,10 +5,6 @@ using UnityEngine;
 
 namespace ArkhamCombat.Player
 {
-    /// <summary>
-    /// Lands the attack on the one target its action picked. The check is made once, as the hit
-    /// window opens, so closing has nothing to do.
-    /// </summary>
     public sealed class TargetedHitWindowListener : IHitWindowListener
     {
         private readonly HitResolver hitResolver;

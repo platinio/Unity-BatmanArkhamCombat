@@ -38,7 +38,7 @@ namespace ArkhamCombat.Player
 
         private void Awake()
         {
-            FindBody();
+            PrepareBody();
             CreateReceiver();
         }
 
@@ -50,7 +50,7 @@ namespace ArkhamCombat.Player
             }
         }
 
-        internal void FindBody()
+        internal void PrepareBody()
         {
             bodyRenderer = GetComponentInChildren<Renderer>();
             propertyBlock = new MaterialPropertyBlock();
@@ -87,7 +87,7 @@ namespace ArkhamCombat.Player
 
             if (result.WasKilled)
             {
-                FallOver(hit.Direction);
+                FallOver(hit.DirectionFromAttackerToTarget);
             }
 
             return result;
@@ -117,7 +117,8 @@ namespace ArkhamCombat.Player
         private void FallOver(Vector3 hitDirection)
         {
             bool hasHitDirection = hitDirection != Vector3.zero;
-            Vector3 fallDirection = hasHitDirection ? hitDirection : -transform.forward;
+            Vector3 backward = -transform.forward;
+            Vector3 fallDirection = hasHitDirection ? hitDirection : backward;
 
             LowerOntoItsSide();
             LieDownAlong(fallDirection);
