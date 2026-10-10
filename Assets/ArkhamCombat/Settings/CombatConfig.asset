@@ -18,6 +18,8 @@ MonoBehaviour:
   comboTimeoutSeconds: 2.5
   faceTargetSmoothTime: 0.05
   maxLungeWhileIdle: 4
+  deadAheadAngle: 6
   maxTargetDistance: 8
   maxTargetAngle: 110
+  angleCountingAsDoubleDistance: 90
   hitRangeMargin: 0.6
