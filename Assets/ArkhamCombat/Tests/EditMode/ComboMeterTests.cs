@@ -21,12 +21,10 @@ namespace ArkhamCombat.Tests
             meter.ComboReset += reason => raisedEvents.Add($"reset {reason}");
         }
 
-        [TestCase(ComboIncrementReason.StrikeLanded)]
-        [TestCase(ComboIncrementReason.CounterSucceeded)]
-        [TestCase(ComboIncrementReason.EvadeSucceeded)]
-        public void EveryIncrementReason_RaisesTheCount(ComboIncrementReason reason)
+        [Test]
+        public void AnIncrement_RaisesTheCount()
         {
-            meter.Increment(reason);
+            meter.Increment();
 
             Assert.AreEqual(1, meter.Count);
             Assert.AreEqual("combo 1 tier 0", raisedEvents[0]);
@@ -37,7 +35,7 @@ namespace ArkhamCombat.Tests
         [TestCase(ComboResetReason.Timeout)]
         public void EveryResetReason_ZeroesTheCount_AndSaysWhy(ComboResetReason reason)
         {
-            meter.Increment(ComboIncrementReason.StrikeLanded);
+            meter.Increment();
             raisedEvents.Clear();
 
             meter.Reset(reason);
@@ -62,7 +60,7 @@ namespace ArkhamCombat.Tests
 
             for (int count = 1; count <= expectedTierAtCount.Length; count++)
             {
-                meter.Increment(ComboIncrementReason.StrikeLanded);
+                meter.Increment();
                 Assert.AreEqual(expectedTierAtCount[count - 1], meter.Tier, $"tier at count {count}");
             }
         }
@@ -73,7 +71,7 @@ namespace ArkhamCombat.Tests
             meter.Tick(10f);
             Assert.IsEmpty(raisedEvents, "nothing to time out at zero");
 
-            meter.Increment(ComboIncrementReason.StrikeLanded);
+            meter.Increment();
             meter.Tick(1.9f);
             Assert.AreEqual(1, meter.Count, "just before the timeout the count is kept");
 
@@ -85,9 +83,9 @@ namespace ArkhamCombat.Tests
         [Test]
         public void AnIncrement_RestartsTheTimeout()
         {
-            meter.Increment(ComboIncrementReason.StrikeLanded);
+            meter.Increment();
             meter.Tick(1.5f);
-            meter.Increment(ComboIncrementReason.EvadeSucceeded);
+            meter.Increment();
             meter.Tick(1.5f);
 
             Assert.AreEqual(2, meter.Count, "the second increment started the timeout over");

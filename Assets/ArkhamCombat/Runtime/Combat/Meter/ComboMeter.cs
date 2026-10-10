@@ -4,13 +4,6 @@ using UnityEngine;
 
 namespace ArkhamCombat.Combat
 {
-    public enum ComboIncrementReason
-    {
-        StrikeLanded,
-        CounterSucceeded,
-        EvadeSucceeded
-    }
-
     public enum ComboResetReason
     {
         PlayerHit,
@@ -49,7 +42,7 @@ namespace ArkhamCombat.Combat
 
         private bool HasTimedOut => secondsSinceIncrement >= settings.MeterTimeoutSeconds;
 
-        public void Increment(ComboIncrementReason reason)
+        public void Increment()
         {
             Count++;
             secondsSinceIncrement = 0f;
