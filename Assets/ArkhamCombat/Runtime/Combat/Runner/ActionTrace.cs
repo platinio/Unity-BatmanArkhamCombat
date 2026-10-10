@@ -49,6 +49,7 @@ namespace ArkhamCombat.Combat
 
         private readonly List<Record> records = new List<Record>();
         private readonly int capacity;
+        private readonly IntentBuffer intents;
         private readonly Dictionary<Intent, Mark> marksByIntent = new Dictionary<Intent, Mark>();
 
         /// <summary>Where a press arriving now would be marked: the runner updates it every tick.</summary>
@@ -64,6 +65,7 @@ namespace ArkhamCombat.Combat
         public ActionTrace(IntentBuffer intents, int capacity = 8)
         {
             this.capacity = capacity;
+            this.intents = intents;
             if (intents != null)
             {
                 intents.Pushed += OnIntentPushed;
@@ -72,6 +74,20 @@ namespace ArkhamCombat.Combat
             }
 
             BeginIdle();
+        }
+
+        // The buffer outlives the character it belongs to, so a trace left listening keeps a dead
+        // runner alive and marks presses on it forever.
+        public void StopListening()
+        {
+            if (intents == null)
+            {
+                return;
+            }
+
+            intents.Pushed -= OnIntentPushed;
+            intents.Consumed -= OnIntentConsumed;
+            intents.Expired -= OnIntentExpired;
         }
 
         public void BeginAction(ChainNode node, ActionDefinition action)
