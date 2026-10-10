@@ -4,6 +4,22 @@ using UnityEngine;
 
 namespace ArkhamCombat.Combat
 {
+    /// <summary>Why the combo meter went up.</summary>
+    public enum ComboIncrementReason
+    {
+        StrikeLanded,
+        CounterSucceeded,
+        EvadeSucceeded
+    }
+
+    /// <summary>Why the combo meter went back to zero.</summary>
+    public enum ComboResetReason
+    {
+        PlayerHit,
+        Whiff,
+        Timeout
+    }
+
     /// <summary>Tunables for the meter, serialized by whoever owns one.</summary>
     [Serializable]
     public sealed class ComboMeterSettings

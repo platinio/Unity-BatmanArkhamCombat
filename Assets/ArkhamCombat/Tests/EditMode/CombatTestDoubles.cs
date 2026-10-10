@@ -109,15 +109,24 @@ namespace ArkhamCombat.Tests
             }
         }
 
-        /// <summary>Writes each event as a short line, so a test can assert on what happened in order.</summary>
-        public sealed class RecordingEvents : ICombatEvents
+        /// <summary>
+        /// Writes each action a runner starts or ends as a short line, so a test can assert on what
+        /// happened in order.
+        /// </summary>
+        public sealed class RecordingActionListener
         {
             public readonly List<string> Log = new List<string>();
 
-            public void ActionStarted(ActionDefinition action, bool isInterrupt) =>
+            public void ListenTo(ActionRunner runner)
+            {
+                runner.ActionStarted += RecordActionStarted;
+                runner.ActionEnded += RecordActionEnded;
+            }
+
+            private void RecordActionStarted(ActionDefinition action, bool isInterrupt) =>
                 Log.Add(isInterrupt ? $"interrupt with {action.name}" : $"start {action.name}");
 
-            public void ActionEnded(ActionDefinition action, bool wasInterrupted) =>
+            private void RecordActionEnded(ActionDefinition action, bool wasInterrupted) =>
                 Log.Add(wasInterrupted ? $"interrupted {action.name}" : $"end {action.name}");
         }
 

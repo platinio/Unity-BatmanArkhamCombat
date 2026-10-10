@@ -121,5 +121,63 @@ MonoBehaviour:
   - {fileID: -7569309434495924065}
   - {fileID: -4659856245694459524}
   - {fileID: -8552589171966593529}
-  id: 4
+  - {fileID: 2425482787602585118}
+  - {fileID: 2437310033171860748}
+  id: 6
   silenced: 0
+--- !u!114 &2425482787602585118
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: c1a46adf4cb9e314aad7035f65526a82, type: 3}
+  m_Name: ActionStarted
+  m_EditorClassIdentifier: Hermes.Runtime::ArcaneOnyx.GameEventGenerator.GameEventDefinition
+  Name: ActionStarted
+  icon: {fileID: 0}
+  id: 5b6708d965e4f7a40aa6413fb8ba7637_4
+  description: Raised by a character's CombatActions when one of its actions starts.
+    IsInterrupt is true when an interrupt started it (an evade, a counter, a reaction)
+    rather than the combo. Listeners filter by Character.
+  args:
+  - variableType: GameObject
+    variableName: Character
+  - variableType: ActionDefinition
+    variableName: Action
+  - variableType: bool
+    variableName: IsInterrupt
+  namespaces:
+  - UnityEngine
+  - ArkhamCombat.Combat
+--- !u!114 &2437310033171860748
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: c1a46adf4cb9e314aad7035f65526a82, type: 3}
+  m_Name: ActionEnded
+  m_EditorClassIdentifier: Hermes.Runtime::ArcaneOnyx.GameEventGenerator.GameEventDefinition
+  Name: ActionEnded
+  icon: {fileID: 0}
+  id: 5b6708d965e4f7a40aa6413fb8ba7637_5
+  description: Raised by a character's CombatActions when one of its actions ends.
+    WasInterrupted is true when another action or a cancel cut it short. Listeners
+    filter by Character.
+  args:
+  - variableType: GameObject
+    variableName: Character
+  - variableType: ActionDefinition
+    variableName: Action
+  - variableType: bool
+    variableName: WasInterrupted
+  namespaces:
+  - UnityEngine
+  - ArkhamCombat.Combat

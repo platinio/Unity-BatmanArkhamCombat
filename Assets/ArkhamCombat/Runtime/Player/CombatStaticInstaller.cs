@@ -7,10 +7,9 @@ namespace ArkhamCombat.Player
 {
     /// <summary>
     /// What every fighting character in the scene shares, bound scene-wide beside the character
-    /// installer: the config, which kinds of press interrupt, where combat events go, who is in the
-    /// fight and how a target is scored. Each character's own combat is bound on the character by
-    /// its <see cref="CombatCharacterInstaller"/>. Where combat events go is picked on this asset,
-    /// so swapping the logging stub for the Hermes adapter is an inspector change.
+    /// installer: the config, which kinds of press interrupt, who is in the fight and how a target
+    /// is scored. Each character's own combat is bound on the character by its
+    /// <see cref="CombatCharacterInstaller"/>.
     /// </summary>
     [AutoAssetGeneration("Installers/Static", "CombatStaticInstaller")]
     [StaticInstaller(StaticInstallerExecutionOrder.Normal)]
@@ -18,9 +17,6 @@ namespace ArkhamCombat.Player
     {
         [Tooltip("The interrupt kinds and the stand-in tunables.")]
         [SerializeField] private CombatConfig config;
-
-        [Tooltip("Where presentation events go. The logging stub until the Hermes adapter exists.")]
-        [SerializeReference, SubclassSelector] private ICombatEvents events = new LoggingCombatEvents();
 
         public override void InstallBindings()
         {
@@ -34,7 +30,6 @@ namespace ArkhamCombat.Player
         {
             Container.Bind<CombatConfig>().FromInstance(config);
             Container.Bind<InterruptKinds>().FromResolveGetter<CombatConfig>(InterruptKindsOf).AsSingle();
-            Container.Bind<ICombatEvents>().FromInstance(events ?? new NullCombatEvents());
         }
 
         private void BindTargeting()

@@ -12,6 +12,8 @@ StrikeLandedGameEvent = new StrikeLandedEvent(this);
 StrikeWhiffedGameEvent = new StrikeWhiffedEvent(this);
 ComboChangedGameEvent = new ComboChangedEvent(this);
 ComboResetGameEvent = new ComboResetEvent(this);
+ActionStartedGameEvent = new ActionStartedEvent(this);
+ActionEndedGameEvent = new ActionEndedEvent(this);
 
         }
 
