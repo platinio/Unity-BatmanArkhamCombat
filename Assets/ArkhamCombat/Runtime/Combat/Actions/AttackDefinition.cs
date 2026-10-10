@@ -17,7 +17,6 @@ namespace ArkhamCombat.Combat
     [CreateAssetMenu(menuName = "ArkhamCombat/Attack", fileName = "Attack")]
     public sealed class AttackDefinition : ActionDefinition
     {
-        /// <summary>Closer than this the character stands on the target, and there is no direction from one to the other.</summary>
         internal const float StandingOnTargetSqrDistance = 1e-6f;
 
         [Header("Windows (normalized time)")]

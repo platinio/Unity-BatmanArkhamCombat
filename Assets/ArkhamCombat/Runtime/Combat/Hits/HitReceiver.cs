@@ -24,8 +24,9 @@ namespace ArkhamCombat.Combat
                 return HitResult.Ignored;
             }
 
-            TakeDamage(hit.Attack.Damage);
-            return HitResult.Landed(ReactionRules.Resolve(hit.Attack.Reaction, profile, Health));
+            TakeDamage(hit.Damage);
+            AppliedReaction appliedReaction = ReactionRules.Resolve(hit.RequestedReaction, profile, Health);
+            return HitResult.Landed(appliedReaction);
         }
 
         private void TakeDamage(float damage)

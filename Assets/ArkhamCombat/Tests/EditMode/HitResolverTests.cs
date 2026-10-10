@@ -9,7 +9,10 @@ namespace ArkhamCombat.Tests
     {
         private const float StrikeDistance = 1f;
         private const float HitRangeMargin = 0.5f;
+        private const float Range = StrikeDistance + HitRangeMargin;
         private const float HitAngle = 60f;
+        private const float ALittle = 0.1f;
+        private const float ADegree = 1f;
         private const float DirectionTolerance = 1e-4f;
 
         private static readonly StrikeOrigin AtTheOriginFacingForward = new StrikeOrigin(Vector3.zero, Vector3.forward);
@@ -30,7 +33,7 @@ namespace ArkhamCombat.Tests
             Object.DestroyImmediate(jab);
         }
 
-        private bool LandsOn(Vector3 targetPosition) => resolver.TryLand(jab, AtTheOriginFacingForward, targetPosition, out _);
+        private bool CanLandOn(Vector3 targetPosition) => resolver.TryLand(jab, AtTheOriginFacingForward, targetPosition, out _);
 
         private static Vector3 PositionAt(float degreesOffTheFacing, float distance) =>
             Quaternion.Euler(0f, degreesOffTheFacing, 0f) * Vector3.forward * distance;
@@ -38,39 +41,39 @@ namespace ArkhamCombat.Tests
         [Test]
         public void ATargetWithinStrikeDistancePlusTheMargin_IsHit()
         {
-            Assert.IsTrue(LandsOn(Vector3.forward * 1.4f));
+            Assert.IsTrue(CanLandOn(Vector3.forward * (Range - ALittle)));
         }
 
         [Test]
         public void ATargetExactlyAtTheEdgeOfTheRange_IsHit()
         {
-            Assert.IsTrue(LandsOn(Vector3.forward * (StrikeDistance + HitRangeMargin)));
+            Assert.IsTrue(CanLandOn(Vector3.forward * Range));
         }
 
         [Test]
         public void ATargetBeyondTheRange_IsAWhiff()
         {
-            Assert.IsFalse(LandsOn(Vector3.forward * 1.6f));
+            Assert.IsFalse(CanLandOn(Vector3.forward * (Range + ALittle)));
         }
 
         [Test]
         public void ATargetBehindTheAttacker_IsAWhiff()
         {
-            Assert.IsFalse(LandsOn(Vector3.back * StrikeDistance));
+            Assert.IsFalse(CanLandOn(Vector3.back * StrikeDistance));
         }
 
         [Test]
         public void ATargetJustInsideTheHitAngle_IsHit()
         {
-            Assert.IsTrue(LandsOn(PositionAt(HitAngle - 1f, StrikeDistance)));
-            Assert.IsTrue(LandsOn(PositionAt(-(HitAngle - 1f), StrikeDistance)));
+            Assert.IsTrue(CanLandOn(PositionAt(HitAngle - ADegree, StrikeDistance)));
+            Assert.IsTrue(CanLandOn(PositionAt(-(HitAngle - ADegree), StrikeDistance)));
         }
 
         [Test]
         public void ATargetJustOutsideTheHitAngle_IsAWhiff()
         {
-            Assert.IsFalse(LandsOn(PositionAt(HitAngle + 1f, StrikeDistance)));
-            Assert.IsFalse(LandsOn(PositionAt(-(HitAngle + 1f), StrikeDistance)));
+            Assert.IsFalse(CanLandOn(PositionAt(HitAngle + ADegree, StrikeDistance)));
+            Assert.IsFalse(CanLandOn(PositionAt(-(HitAngle + ADegree), StrikeDistance)));
         }
 
         [Test]
@@ -78,7 +81,7 @@ namespace ArkhamCombat.Tests
         {
             Vector3 inRangeButHighAbove = new Vector3(0f, 5f, StrikeDistance);
 
-            Assert.IsTrue(LandsOn(inRangeButHighAbove));
+            Assert.IsTrue(CanLandOn(inRangeButHighAbove));
         }
 
         [Test]
@@ -96,23 +99,38 @@ namespace ArkhamCombat.Tests
         {
             StrikeOrigin facingAway = new StrikeOrigin(Vector3.zero, Vector3.back);
 
-            bool hasLanded = resolver.TryLand(jab, facingAway, Vector3.zero, out HitInfo hit);
+            bool hasLanded = resolver.TryLand(jab, facingAway, Vector3.zero, out _);
 
             Assert.IsTrue(hasLanded);
-            Assert.AreEqual(Vector3.zero, hit.Direction);
         }
 
         [Test]
-        public void TheHit_CarriesTheAttack_AndPointsFromTheAttackerTowardTheTarget()
+        public void TheHit_OnATargetTheAttackerStandsOn_HasNoDirection()
         {
-            Vector3 aheadAndToTheRight = new Vector3(0.6f, 2f, 0.8f);
+            resolver.TryLand(jab, AtTheOriginFacingForward, Vector3.zero, out HitInfo hit);
 
-            resolver.TryLand(jab, AtTheOriginFacingForward, aheadAndToTheRight, out HitInfo hit);
+            Assert.AreEqual(Vector3.zero, hit.DirectionFromAttackerToTarget);
+        }
+
+        [Test]
+        public void TheHit_CarriesTheAttack()
+        {
+            resolver.TryLand(jab, AtTheOriginFacingForward, Vector3.forward * StrikeDistance, out HitInfo hit);
 
             Assert.AreSame(jab, hit.Attack);
-            Assert.AreEqual(0.6f, hit.Direction.x, DirectionTolerance);
-            Assert.AreEqual(0f, hit.Direction.y, DirectionTolerance);
-            Assert.AreEqual(0.8f, hit.Direction.z, DirectionTolerance);
+        }
+
+        [Test]
+        public void TheHit_PointsFromTheAttackerTowardTheTarget_OnTheGround_WithLengthOne()
+        {
+            Vector3 aheadToTheRightAndAbove = new Vector3(0.6f, 2f, 0.8f);
+
+            resolver.TryLand(jab, AtTheOriginFacingForward, aheadToTheRightAndAbove, out HitInfo hit);
+
+            Vector3 direction = hit.DirectionFromAttackerToTarget;
+            Assert.AreEqual(0.6f, direction.x, DirectionTolerance);
+            Assert.AreEqual(0f, direction.y, DirectionTolerance);
+            Assert.AreEqual(0.8f, direction.z, DirectionTolerance);
         }
     }
 }

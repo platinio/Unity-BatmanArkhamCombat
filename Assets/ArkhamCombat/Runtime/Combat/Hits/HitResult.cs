@@ -1,9 +1,5 @@
 namespace ArkhamCombat.Combat
 {
-    /// <summary>
-    /// What the target of a hit does. An attack asks for a <see cref="HitReaction"/>; the target's
-    /// profile and the health it has left decide this.
-    /// </summary>
     public enum AppliedReaction
     {
         None,
@@ -15,20 +11,19 @@ namespace ArkhamCombat.Combat
 
     public readonly struct HitResult
     {
-        /// <summary>The dead take nothing: no damage and no reaction.</summary>
         public static readonly HitResult Ignored = default;
 
         public readonly bool HasLanded;
-        public readonly AppliedReaction Reaction;
+        public readonly AppliedReaction AppliedReaction;
 
-        private HitResult(bool hasLanded, AppliedReaction reaction)
+        private HitResult(AppliedReaction appliedReaction)
         {
-            HasLanded = hasLanded;
-            Reaction = reaction;
+            HasLanded = true;
+            AppliedReaction = appliedReaction;
         }
 
-        public static HitResult Landed(AppliedReaction reaction) => new HitResult(true, reaction);
+        public static HitResult Landed(AppliedReaction appliedReaction) => new HitResult(appliedReaction);
 
-        public bool WasKilled => Reaction == AppliedReaction.Death;
+        public bool WasKilled => AppliedReaction == AppliedReaction.Death;
     }
 }
