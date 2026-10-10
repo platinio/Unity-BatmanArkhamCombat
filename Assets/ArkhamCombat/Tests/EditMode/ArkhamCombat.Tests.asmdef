@@ -1,0 +1,34 @@
+{
+    "name": "ArkhamCombat.Tests",
+    "rootNamespace": "ArkhamCombat.Tests",
+    "references": [
+        "ArkhamCombat.Camera",
+        "ArkhamCombat.Combat",
+        "ArkhamCombat.Presentation",
+        "ArkhamCombat.Player",
+        "ArcaneOnyx.TPCharacterController",
+        "ArcaneOnyx.VisualScriptingExtension.Runtime",
+        "Hermes.EventArgs",
+        "Hermes.Events",
+        "Unity.VisualScripting.Core",
+        "Unity.VisualScripting.Flow",
+        "UnityEditor.TestRunner",
+        "UnityEngine.TestRunner",
+        "Zenject"
+    ],
+    "includePlatforms": [
+        "Editor"
+    ],
+    "excludePlatforms": [],
+    "allowUnsafeCode": false,
+    "overrideReferences": true,
+    "precompiledReferences": [
+        "nunit.framework.dll"
+    ],
+    "autoReferenced": false,
+    "defineConstraints": [
+        "UNITY_INCLUDE_TESTS"
+    ],
+    "versionDefines": [],
+    "noEngineReferences": false
+}

@@ -1,0 +1,17 @@
+{
+    "name": "ArkhamCombat.Presentation",
+    "rootNamespace": "ArkhamCombat.Presentation",
+    "references": [
+        "ArkhamCombat.Combat",
+        "MackySoft.SerializeReferenceExtensions"
+    ],
+    "includePlatforms": [],
+    "excludePlatforms": [],
+    "allowUnsafeCode": false,
+    "overrideReferences": false,
+    "precompiledReferences": [],
+    "autoReferenced": true,
+    "defineConstraints": [],
+    "versionDefines": [],
+    "noEngineReferences": false
+}

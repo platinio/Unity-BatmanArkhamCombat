@@ -1,0 +1,183 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &-8552589171966593529
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: c1a46adf4cb9e314aad7035f65526a82, type: 3}
+  m_Name: ComboReset
+  m_EditorClassIdentifier: Hermes.Runtime::ArcaneOnyx.GameEventGenerator.GameEventDefinition
+  Name: ComboReset
+  icon: {fileID: 0}
+  id: 5b6708d965e4f7a40aa6413fb8ba7637_3
+  description: Raised by a character's ComboTracker when it loses its combo, just
+    before the change to zero. Listeners filter by Character.
+  args:
+  - variableType: GameObject
+    variableName: Character
+  - variableType: ComboResetReason
+    variableName: Reason
+  namespaces:
+  - UnityEngine
+  - ArkhamCombat.Combat
+--- !u!114 &-7569309434495924065
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: c1a46adf4cb9e314aad7035f65526a82, type: 3}
+  m_Name: StrikeWhiffed
+  m_EditorClassIdentifier: Hermes.Runtime::ArcaneOnyx.GameEventGenerator.GameEventDefinition
+  Name: StrikeWhiffed
+  icon: {fileID: 0}
+  id: 5b6708d965e4f7a40aa6413fb8ba7637_1
+  description: Raised when a character's strike hits nothing. Listeners filter by
+    Attacker.
+  args:
+  - variableType: GameObject
+    variableName: Attacker
+  - variableType: AttackDefinition
+    variableName: Attack
+  namespaces:
+  - UnityEngine
+  - ArkhamCombat.Combat
+--- !u!114 &-7293883920013382626
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: c1a46adf4cb9e314aad7035f65526a82, type: 3}
+  m_Name: StrikeLanded
+  m_EditorClassIdentifier: Hermes.Runtime::ArcaneOnyx.GameEventGenerator.GameEventDefinition
+  Name: StrikeLanded
+  icon: {fileID: 0}
+  id: 5b6708d965e4f7a40aa6413fb8ba7637_0
+  description: Raised when a character's strike lands on a target. Listeners filter
+    by Attacker.
+  args:
+  - variableType: GameObject
+    variableName: Attacker
+  - variableType: AttackDefinition
+    variableName: Attack
+  - variableType: GameObject
+    variableName: Target
+  namespaces:
+  - UnityEngine
+  - ArkhamCombat.Combat
+--- !u!114 &-4659856245694459524
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: c1a46adf4cb9e314aad7035f65526a82, type: 3}
+  m_Name: ComboChanged
+  m_EditorClassIdentifier: Hermes.Runtime::ArcaneOnyx.GameEventGenerator.GameEventDefinition
+  Name: ComboChanged
+  icon: {fileID: 0}
+  id: 5b6708d965e4f7a40aa6413fb8ba7637_2
+  description: Raised by a character's ComboTracker whenever its combo count changes,
+    a reset to zero included. Listeners filter by Character.
+  args:
+  - variableType: GameObject
+    variableName: Character
+  - variableType: int
+    variableName: Count
+  - variableType: int
+    variableName: Tier
+  namespaces:
+  - UnityEngine
+  - ArkhamCombat.Combat
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: daeb9e6aff6a4655b254ce95e10b6792, type: 3}
+  m_Name: CombatGameEvents
+  m_EditorClassIdentifier: Hermes.Runtime::ArcaneOnyx.GameEventGenerator.GameEventDefinitionDatabase
+  items:
+  - {fileID: -7293883920013382626}
+  - {fileID: -7569309434495924065}
+  - {fileID: -4659856245694459524}
+  - {fileID: -8552589171966593529}
+  - {fileID: 2425482787602585118}
+  - {fileID: 2437310033171860748}
+  id: 6
+  silenced: 0
+--- !u!114 &2425482787602585118
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: c1a46adf4cb9e314aad7035f65526a82, type: 3}
+  m_Name: ActionStarted
+  m_EditorClassIdentifier: Hermes.Runtime::ArcaneOnyx.GameEventGenerator.GameEventDefinition
+  Name: ActionStarted
+  icon: {fileID: 0}
+  id: 5b6708d965e4f7a40aa6413fb8ba7637_4
+  description: Raised by a character's CombatActions when one of its actions starts.
+    IsInterrupt is true when an interrupt started it (an evade, a counter, a reaction)
+    rather than the combo. Listeners filter by Character.
+  args:
+  - variableType: GameObject
+    variableName: Character
+  - variableType: ActionDefinition
+    variableName: Action
+  - variableType: bool
+    variableName: IsInterrupt
+  namespaces:
+  - UnityEngine
+  - ArkhamCombat.Combat
+--- !u!114 &2437310033171860748
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: c1a46adf4cb9e314aad7035f65526a82, type: 3}
+  m_Name: ActionEnded
+  m_EditorClassIdentifier: Hermes.Runtime::ArcaneOnyx.GameEventGenerator.GameEventDefinition
+  Name: ActionEnded
+  icon: {fileID: 0}
+  id: 5b6708d965e4f7a40aa6413fb8ba7637_5
+  description: Raised by a character's CombatActions when one of its actions ends.
+    WasInterrupted is true when another action or a cancel cut it short. Listeners
+    filter by Character.
+  args:
+  - variableType: GameObject
+    variableName: Character
+  - variableType: ActionDefinition
+    variableName: Action
+  - variableType: bool
+    variableName: WasInterrupted
+  namespaces:
+  - UnityEngine
+  - ArkhamCombat.Combat

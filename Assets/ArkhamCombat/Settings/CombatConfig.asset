@@ -1,0 +1,25 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 7c067c4c55deed2429250c375df3acef, type: 3}
+  m_Name: CombatConfig
+  m_EditorClassIdentifier: ArkhamCombat.Player::ArkhamCombat.Player.CombatConfig
+  evadeKind: {fileID: 11400000, guid: fd7d3c32ea399d546bb3da590da64df3, type: 2}
+  counterKind: {fileID: 11400000, guid: b4c3884cf89a4ae4f99f251cbdd386b5, type: 2}
+  comboTierThresholds: 030000000500000008000000
+  comboTimeoutSeconds: 2.5
+  faceTargetSmoothTime: 0.05
+  maxLungeWhileIdle: 4
+  deadAheadAngle: 6
+  maxTargetDistance: 8
+  maxTargetAngle: 110
+  angleCountingAsDoubleDistance: 90
+  hitRangeMargin: 0.6

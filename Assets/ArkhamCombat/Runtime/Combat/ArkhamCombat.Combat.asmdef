@@ -1,0 +1,20 @@
+{
+    "name": "ArkhamCombat.Combat",
+    "rootNamespace": "ArkhamCombat.Combat",
+    "references": [
+        "ArcaneOnyx.TPCharacterController",
+        "ArcaneOnyx.VisualScriptingExtension.Runtime",
+        "MackySoft.SerializeReferenceExtensions",
+        "Unity.VisualScripting.Core",
+        "Unity.VisualScripting.Flow"
+    ],
+    "includePlatforms": [],
+    "excludePlatforms": [],
+    "allowUnsafeCode": false,
+    "overrideReferences": true,
+    "precompiledReferences": [],
+    "autoReferenced": true,
+    "defineConstraints": [],
+    "versionDefines": [],
+    "noEngineReferences": false
+}

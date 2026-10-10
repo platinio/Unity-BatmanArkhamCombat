@@ -6,10 +6,11 @@ namespace ArkhamCombat.Cameras
 {
     /// <summary>
     /// Pure group framing math (spec 07): how a set of enemy positions bends the combat framing.
-    /// Static and allocation-free so it can be tested in EditMode with plain vectors.
     /// </summary>
     public static class GroupFraming
     {
+        private const float NegligibleSqrDistance = 1e-6f;
+
         public readonly struct Result
         {
             /// <summary>False when there were no enemies; every other field then holds the fallback.</summary>
@@ -40,10 +41,9 @@ namespace ArkhamCombat.Cameras
         }
 
         /// <summary>
-        /// Centroid is the mean of enemy positions; radius is the largest planar distance from the
-        /// character to an enemy. One enemy gives a centroid at that enemy and a radius equal to
-        /// its distance, which frames a duel correctly. An empty list returns
-        /// <paramref name="baseDistance"/> with no offset.
+        /// One enemy gives a centroid at that enemy and a radius equal to its distance, which
+        /// frames a duel correctly. An empty list returns <paramref name="baseDistance"/> with no
+        /// offset.
         /// </summary>
         public static Result Compute(
             Vector3 characterPosition,
@@ -84,7 +84,7 @@ namespace ArkhamCombat.Cameras
 
             float minYawDistance = Mathf.Max(0f, settings.YawMinCentroidDistance);
             bool hasYawTarget = toCentroid.sqrMagnitude > minYawDistance * minYawDistance
-                                && toCentroid.sqrMagnitude > 1e-6f;
+                                && toCentroid.sqrMagnitude > NegligibleSqrDistance;
 
             float yaw = hasYawTarget
                 ? Mathf.Atan2(toCentroid.x, toCentroid.z) * Mathf.Rad2Deg

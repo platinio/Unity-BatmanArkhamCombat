@@ -6,14 +6,20 @@ using Zenject;
 namespace ArkhamCombat.Shell
 {
     /// <summary>
-    /// Binds the combat framing to the rig from the first frame. The demo is combat only, so there
-    /// is no other mode to switch from. Stand-in for the encounter director until spec 06 lands: the
-    /// hand-placed enemies here are what the director's roster will replace.
+    /// The demo is combat only, so there is no other mode to switch from. Stand-in for the
+    /// encounter director until spec 06 lands: the hand-placed enemies here are what the director's
+    /// roster will replace.
     /// </summary>
     public sealed class CombatCameraDemo : MonoBehaviour
     {
+        private const float ReadoutWidth = 900f;
+        private const float ReadoutHeight = 60f;
+
         [Tooltip("Capsules standing in for the roster. Disabled ones are ignored.")]
         [SerializeField] private Transform[] enemies;
+
+        [Tooltip("Top-left corner of the readout.")]
+        [SerializeField] private Vector2 origin = new Vector2(12f, 12f);
 
         [Inject] private PlayerCameraRig rig;
 
@@ -47,7 +53,7 @@ namespace ArkhamCombat.Shell
             string bearing = group.HasYawTarget ? $"{group.CentroidYaw:0}" : "held";
 
             GUI.Label(
-                new Rect(12, 12, 900, 60),
+                new Rect(origin.x, origin.y, ReadoutWidth, ReadoutHeight),
                 $"Combat camera   enemies {(group.HasGroup ? "yes" : "none")}   target yaw {bearing}   yaw {rig.Yaw:0}   pitch {rig.Pitch:0}\n" +
                 $"distance {framing.Distance:0.00}   fov {framing.Fov:0}   pivot offset {framing.PivotOffset.x:0.00},{framing.PivotOffset.z:0.00}");
         }

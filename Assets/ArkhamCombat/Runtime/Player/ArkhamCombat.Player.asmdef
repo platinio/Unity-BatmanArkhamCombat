@@ -4,7 +4,15 @@
     "references": [
         "ArcaneOnyx.TPCharacterController",
         "ArcaneOnyx.UnityExtensions.Runtime",
+        "ArcaneOnyx.BehaviorTree",
+        "ArcaneOnyx.VisualScriptingExtension.Runtime",
+        "ArkhamCombat.Combat",
+        "ArkhamCombat.Presentation",
+        "Hermes.EventArgs",
+        "Hermes.Events",
+        "Hermes.Runtime",
         "MackySoft.SerializeReferenceExtensions",
+        "Unity.VisualScripting.Core",
         "Zenject"
     ],
     "includePlatforms": [],
