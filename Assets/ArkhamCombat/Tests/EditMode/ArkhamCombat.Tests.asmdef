@@ -2,6 +2,7 @@
     "name": "ArkhamCombat.Tests",
     "rootNamespace": "ArkhamCombat.Tests",
     "references": [
+        "ArkhamCombat.Camera",
         "ArkhamCombat.Combat",
         "ArkhamCombat.Presentation",
         "ArkhamCombat.Player",
