@@ -30,6 +30,8 @@ namespace ArkhamCombat.Combat
         private bool isWarping;
         private float idleSeconds;
 
+        private const float NegligibleWindowTime = 1e-5f;
+
         // Code that starts an action has no press, so its target is picked straight ahead.
         private static readonly Vector2 StraightAhead = Vector2.zero;
 
@@ -412,7 +414,7 @@ namespace ArkhamCombat.Combat
             float frameStart = Mathf.Max(previousTime, warpWindow.Start);
             float frameEnd = Mathf.Min(currentTime, warpWindow.End);
             float timeLeftInWindow = warpWindow.End - frameStart;
-            float shareOfDistance = timeLeftInWindow <= 1e-5f ? 1f : Mathf.Clamp01((frameEnd - frameStart) / timeLeftInWindow);
+            float shareOfDistance = timeLeftInWindow <= NegligibleWindowTime ? 1f : Mathf.Clamp01((frameEnd - frameStart) / timeLeftInWindow);
 
             Vector3 distanceLeft = attack.WarpDestination(position, CurrentActionTarget.Position) - position;
             distanceLeft.y = 0f;
