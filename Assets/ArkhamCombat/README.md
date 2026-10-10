@@ -286,7 +286,7 @@ both generated assemblies reference it.
 | A new pool policy | One class implementing `IVariantPolicy`; same dropdown rule |
 | Real target selection | Implement `ITargetScorer`, bind it in `CombatStaticInstaller`; `CombatTargeting` keeps turning the stick into a world direction. A character that aims another way (an enemy agent) gets its own `IActionTargetPicker` component, which the character installer binds in place of `CombatTargeting` |
 | The encounter roster | Implement `ITargetRoster`, bind it in `CombatStaticInstaller` |
-| Enemies as targets | Their status component implements `ICombatTarget`, with a `HitReceiver` built from the enemy's own `HitReceiverProfile` |
+| Enemies as targets | Their status component implements `ICombatTarget`, with a `HitReceiver` built from the enemy's own `HitReceiverProfile`. How the enemy looks when it dies is a component of its own; the dummy's fall is only the dummy's picture |
 | A tougher or armored target | A new `HitReceiverProfile` asset (**Create → ArkhamCombat → Hit Receiver Profile**), set on the target |
 | Another way of landing hits (a swept volume) | Implement `IHitWindowListener`, bind it in `CombatCharacterInstaller` in place of `TargetedHitWindowListener` |
 | Real animation | A second `IPresentationDriver` component that sets clip time from the clock; on the character or under it, the character installer binds it. See spec 10 |

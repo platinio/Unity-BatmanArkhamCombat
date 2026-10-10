@@ -38,10 +38,7 @@ namespace ArkhamCombat.Player
 
         private void Awake()
         {
-            bodyRenderer = GetComponentInChildren<Renderer>();
-            propertyBlock = new MaterialPropertyBlock();
-            colourProperty = MaterialColourProperty.Of(bodyRenderer != null ? bodyRenderer.sharedMaterial : null);
-
+            FindBody();
             CreateReceiver();
         }
 
@@ -51,6 +48,13 @@ namespace ArkhamCombat.Player
             {
                 EndFlash();
             }
+        }
+
+        internal void FindBody()
+        {
+            bodyRenderer = GetComponentInChildren<Renderer>();
+            propertyBlock = new MaterialPropertyBlock();
+            colourProperty = MaterialColourProperty.Of(bodyRenderer != null ? bodyRenderer.sharedMaterial : null);
         }
 
         internal void CreateReceiver()

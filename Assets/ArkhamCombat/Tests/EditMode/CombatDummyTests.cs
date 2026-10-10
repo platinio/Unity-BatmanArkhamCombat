@@ -9,7 +9,8 @@ using static ArkhamCombat.Tests.CombatTestDoubles;
 
 namespace ArkhamCombat.Tests
 {
-    // Edit mode runs no Awake, so each test creates the dummy's receiver by hand.
+    // Edit mode runs no Awake, so each test finds the dummy's body and creates its receiver by hand,
+    // in the order Awake would.
     public class CombatDummyTests
     {
         private const float MaxHealth = 30f;
@@ -29,8 +30,10 @@ namespace ArkhamCombat.Tests
             jab = Attack("Jab", damage: AThirdOfItsHealth);
             finisher = Attack("Finisher", damage: MaxHealth);
 
-            dummyObject = HiddenObject("Dummy");
+            dummyObject = GameObject.CreatePrimitive(PrimitiveType.Capsule);
+            dummyObject.hideFlags = HideFlags.HideAndDontSave;
             dummy = dummyObject.AddComponent<CombatDummy>();
+            dummy.FindBody();
         }
 
         [TearDown]
@@ -101,6 +104,33 @@ namespace ArkhamCombat.Tests
 
             Vector3 whereItsHeadPoints = dummy.transform.up;
             Assert.AreEqual(1f, Vector3.Dot(whereItsHeadPoints, hitDirection), DirectionTolerance);
+        }
+
+        [Test]
+        public void AKilledDummy_IsLoweredOntoItsSide()
+        {
+            GiveTheDummyItsProfile();
+            Bounds standingBounds = dummyObject.GetComponent<Renderer>().bounds;
+            float halfHeight = standingBounds.extents.y;
+            float halfWidth = standingBounds.extents.x;
+            float standingHeight = dummy.transform.position.y;
+
+            dummy.Receive(HitWith(finisher));
+
+            Assert.AreEqual(standingHeight - (halfHeight - halfWidth), dummy.transform.position.y, DirectionTolerance);
+        }
+
+        [Test]
+        public void AKilledDummy_StopsBlockingTheWay()
+        {
+            GiveTheDummyItsProfile();
+            Collider bodyCollider = dummyObject.GetComponent<Collider>();
+
+            dummy.Receive(HitWith(jab));
+            Assert.IsTrue(bodyCollider.enabled, "a dummy that is still alive stays in the way");
+
+            dummy.Receive(HitWith(finisher));
+            Assert.IsFalse(bodyCollider.enabled);
         }
 
         [Test]

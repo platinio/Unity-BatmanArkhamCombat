@@ -154,6 +154,18 @@ namespace ArkhamCombat.Tests
         }
 
         [Test]
+        public void AStrikeAtAnInvalidTarget_IsAnnouncedAsAWhiff()
+        {
+            PointCombatTarget goneTarget = TargetAhead(1f);
+            goneTarget.IsValid = false;
+
+            listener.HitWindowOpened(jab, goneTarget);
+
+            Assert.AreEqual(1, whiffedStrikes.Count);
+            Assert.IsEmpty(landedStrikes);
+        }
+
+        [Test]
         public void ATargetThatCannotBeHit_IsAWhiff()
         {
             listener.HitWindowOpened(jab, new PointTarget(new Vector3(0f, 0f, 1f)));
