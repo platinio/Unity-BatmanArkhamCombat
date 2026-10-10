@@ -294,7 +294,7 @@ Background is on.
 ## Tests
 
 `ArkhamCombat.Tests` runs in EditMode and needs no scene: windows, actions, stance validation, pool
-policies, the meter, the combo tracker on a dispatcher built by the test, the resolver, the clock, the runner with the null driver and recording test
+policies, the group framing math on plain vectors, the meter, the combo tracker on a dispatcher built by the test, the resolver, the clock, the runner with the null driver and recording test
 doubles, its started and ended events, the stand-in picker on test targets, the character brain listing the character components already on a character, the combat actions with a start gate that
 allows and refuses and their announcements on a dispatcher built by the test, the attacking state switch's rule, the character installer on containers built by the test (which
 condition evaluator a stance gets, the optional pieces and their do-nothing versions, a runner for a character with
