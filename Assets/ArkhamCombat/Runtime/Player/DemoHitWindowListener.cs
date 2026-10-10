@@ -14,11 +14,17 @@ namespace ArkhamCombat.Player
     {
         private readonly IHitRangeSettings settings;
         private readonly Transform character;
+        private readonly MotorWarpMover warpMover;
         private readonly ISceneGameEvents sceneGameEvents;
 
-        public DemoHitWindowListener(IHitRangeSettings settings, CharacterMotor motor, ISceneGameEvents sceneGameEvents)
+        public DemoHitWindowListener(
+            IHitRangeSettings settings,
+            CharacterMotor motor,
+            MotorWarpMover warpMover,
+            ISceneGameEvents sceneGameEvents)
         {
             this.settings = settings;
+            this.warpMover = warpMover;
             this.sceneGameEvents = sceneGameEvents;
             character = motor.transform;
         }
@@ -38,9 +44,12 @@ namespace ArkhamCombat.Player
 
         public void HitWindowClosed() { }
 
+        // The hit window opens on the tick the warp closes, and that tick's warp share has not
+        // reached the transform yet, so the check measures from where the character lands.
         private bool IsWithinStrikeRange(AttackDefinition attack, Vector3 targetPosition)
         {
-            Vector3 toTarget = targetPosition - character.position;
+            Vector3 whereTheWarpLands = character.position + warpMover.PendingMovement;
+            Vector3 toTarget = targetPosition - whereTheWarpLands;
             toTarget.y = 0f;
             return toTarget.magnitude <= attack.StrikeDistance + settings.HitRangeMargin;
         }

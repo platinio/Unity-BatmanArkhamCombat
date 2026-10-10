@@ -3,10 +3,16 @@ using UnityEngine;
 
 namespace ArkhamCombat.Player
 {
-    /// <summary>The runner never touches the motor; this is the only bridge to it.</summary>
+    /// <summary>
+    /// The runner asks for movement here and never touches the motor. The attacking state hands
+    /// the pending movement to the motor as the frame's velocity, after every character component
+    /// has ticked, so until then the transform is behind by <see cref="PendingMovement"/>.
+    /// </summary>
     public sealed class MotorWarpMover : IWarpMover
     {
         private Vector3 pendingMovement;
+
+        public Vector3 PendingMovement => pendingMovement;
 
         public void MoveBy(Vector3 planarOffset)
         {

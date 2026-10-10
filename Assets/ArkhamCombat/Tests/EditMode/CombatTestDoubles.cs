@@ -226,6 +226,23 @@ namespace ArkhamCombat.Tests
             public PointTarget(Vector3 position) => Position = position;
         }
 
+        public sealed class PointCombatTarget : ICombatTarget
+        {
+            public bool IsValid { get; set; } = true;
+            public Vector3 Position { get; set; }
+            public string State => "Idle";
+            public AttackDefinition LastReceived;
+            public int HitsTaken;
+
+            public PointCombatTarget(Vector3 position) => Position = position;
+
+            public void Receive(AttackDefinition attack)
+            {
+                LastReceived = attack;
+                HitsTaken++;
+            }
+        }
+
         public sealed class RecordingCue : ICueKind
         {
             public readonly List<float> PlayedAt = new List<float>();
