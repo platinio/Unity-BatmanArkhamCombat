@@ -20,16 +20,12 @@ namespace ArkhamCombat.Combat
     }
 
     /// <summary>
-    /// Presentation events raised by the core: what the HUD, audio and camera listen to. Gameplay
-    /// never listens here; it is called directly. The one real implementation is the Hermes adapter
-    /// in the shell; tests use a fake, and the installer can pick a logging stub from a dropdown.
+    /// What the runner announces scene-wide: an action started or ended. Tests use a fake, and the
+    /// installer can pick a logging stub from a dropdown. Strikes and combo changes are not here;
+    /// they are Hermes events that name the character they belong to.
     /// </summary>
     public interface ICombatEvents
     {
-        void ComboChanged(int count, int tier);
-
-        void ComboReset(ComboResetReason reason);
-
         void ActionStarted(ActionDefinition action, bool isInterrupt);
 
         void ActionEnded(ActionDefinition action, bool wasInterrupted);
@@ -39,10 +35,6 @@ namespace ArkhamCombat.Combat
     [Serializable]
     public sealed class NullCombatEvents : ICombatEvents
     {
-        public void ComboChanged(int count, int tier) { }
-
-        public void ComboReset(ComboResetReason reason) { }
-
         public void ActionStarted(ActionDefinition action, bool isInterrupt) { }
 
         public void ActionEnded(ActionDefinition action, bool wasInterrupted) { }
@@ -52,10 +44,6 @@ namespace ArkhamCombat.Combat
     [Serializable]
     public sealed class LoggingCombatEvents : ICombatEvents
     {
-        public void ComboChanged(int count, int tier) => Debug.Log($"[Combat] combo {count} (tier {tier})");
-
-        public void ComboReset(ComboResetReason reason) => Debug.Log($"[Combat] combo reset: {reason}");
-
         public void ActionStarted(ActionDefinition action, bool isInterrupt) =>
             Debug.Log($"[Combat] {(isInterrupt ? "interrupt" : "action")} {action.name}");
 

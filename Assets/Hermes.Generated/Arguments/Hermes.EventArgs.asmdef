@@ -1,0 +1,24 @@
+{
+    "name": "Hermes.EventArgs",
+    "rootNamespace": "",
+    "references": [
+        "ArkhamCombat.Combat",
+        "Unity.VisualScripting.Core",
+        "Unity.VisualScripting.Flow"
+    ],
+    "includePlatforms": [],
+    "excludePlatforms": [],
+    "allowUnsafeCode": false,
+    "overrideReferences": false,
+    "precompiledReferences": [],
+    "autoReferenced": true,
+    "defineConstraints": [],
+    "versionDefines": [
+        {
+            "name": "com.unity.visualscripting",
+            "expression": "1.0.0",
+            "define": "MODULE_VISUAL_SCRIPTING_EXIST"
+        }
+    ],
+    "noEngineReferences": false
+}

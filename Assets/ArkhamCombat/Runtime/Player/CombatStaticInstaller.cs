@@ -17,7 +17,7 @@ namespace ArkhamCombat.Player
     [StaticInstaller(StaticInstallerExecutionOrder.Normal)]
     public sealed class CombatStaticInstaller : ScriptableObjectInstaller
     {
-        [Tooltip("The stance, the meter and the stand-in tunables.")]
+        [Tooltip("The stance and the stand-in tunables.")]
         [SerializeField] private CombatConfig config;
 
         [Tooltip("Where presentation events go. The logging stub until the Hermes adapter exists.")]
@@ -46,11 +46,6 @@ namespace ArkhamCombat.Player
         {
             Container.Bind<CombatFactsUpdater>().FromComponentInHierarchy().AsSingle();
             Container.Bind<CombatFacts>().FromMethod(FactsFromTheSceneUpdater).AsSingle();
-            Container.Bind<ComboMeter>()
-                .FromMethod(injectContext => new ComboMeter(
-                    injectContext.Container.Resolve<CombatConfig>().Meter,
-                    injectContext.Container.Resolve<ICombatEvents>()))
-                .AsSingle();
             Container.Bind<IntentBuffer>().FromResolveGetter<ICharacterInput>(input => input.Intents).AsSingle();
         }
 

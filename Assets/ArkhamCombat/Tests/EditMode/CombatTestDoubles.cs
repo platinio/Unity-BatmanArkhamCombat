@@ -111,10 +111,6 @@ namespace ArkhamCombat.Tests
         {
             public readonly List<string> Log = new List<string>();
 
-            public void ComboChanged(int count, int tier) => Log.Add($"combo {count} tier {tier}");
-
-            public void ComboReset(ComboResetReason reason) => Log.Add($"reset {reason}");
-
             public void ActionStarted(ActionDefinition action, bool isInterrupt) =>
                 Log.Add(isInterrupt ? $"interrupt with {action.name}" : $"start {action.name}");
 

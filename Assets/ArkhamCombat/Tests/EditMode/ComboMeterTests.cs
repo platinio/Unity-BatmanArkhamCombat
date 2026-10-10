@@ -1,6 +1,6 @@
+using System.Collections.Generic;
 using ArkhamCombat.Combat;
 using NUnit.Framework;
-using static ArkhamCombat.Tests.CombatTestDoubles;
 
 namespace ArkhamCombat.Tests
 {
@@ -8,14 +8,16 @@ namespace ArkhamCombat.Tests
     {
         private const float TimeoutSeconds = 2f;
 
-        private RecordingEvents events;
+        private List<string> raisedEvents;
         private ComboMeter meter;
 
         [SetUp]
         public void SetUp()
         {
-            events = new RecordingEvents();
-            meter = new ComboMeter(new ComboMeterSettings(TimeoutSeconds, tierThresholds: new[] { 3, 5, 8 }), events);
+            raisedEvents = new List<string>();
+            meter = new ComboMeter(new ComboMeterSettings(TimeoutSeconds, tierThresholds: new[] { 3, 5, 8 }));
+            meter.ComboChanged += (count, tier) => raisedEvents.Add($"combo {count} tier {tier}");
+            meter.ComboReset += reason => raisedEvents.Add($"reset {reason}");
         }
 
         [TestCase(ComboIncrementReason.StrikeLanded)]
@@ -26,7 +28,7 @@ namespace ArkhamCombat.Tests
             meter.Increment(reason);
 
             Assert.AreEqual(1, meter.Count);
-            Assert.AreEqual("combo 1 tier 0", events.Log[0]);
+            Assert.AreEqual("combo 1 tier 0", raisedEvents[0]);
         }
 
         [TestCase(ComboResetReason.PlayerHit)]
@@ -35,13 +37,13 @@ namespace ArkhamCombat.Tests
         public void EveryResetReason_ZeroesTheCount_AndSaysWhy(ComboResetReason reason)
         {
             meter.Increment(ComboIncrementReason.StrikeLanded);
-            events.Log.Clear();
+            raisedEvents.Clear();
 
             meter.Reset(reason);
 
             Assert.AreEqual(0, meter.Count);
-            Assert.AreEqual($"reset {reason}", events.Log[0]);
-            Assert.AreEqual("combo 0 tier 0", events.Log[1]);
+            Assert.AreEqual($"reset {reason}", raisedEvents[0]);
+            Assert.AreEqual("combo 0 tier 0", raisedEvents[1]);
         }
 
         [Test]
@@ -49,7 +51,7 @@ namespace ArkhamCombat.Tests
         {
             meter.Reset(ComboResetReason.Whiff);
 
-            Assert.IsEmpty(events.Log);
+            Assert.IsEmpty(raisedEvents);
         }
 
         [Test]
@@ -68,7 +70,7 @@ namespace ArkhamCombat.Tests
         public void TheTimeout_ResetsTheMeter_OnlyWhenTheCountIsAboveZero()
         {
             meter.Tick(10f);
-            Assert.IsEmpty(events.Log, "nothing to time out at zero");
+            Assert.IsEmpty(raisedEvents, "nothing to time out at zero");
 
             meter.Increment(ComboIncrementReason.StrikeLanded);
             meter.Tick(1.9f);
@@ -76,7 +78,7 @@ namespace ArkhamCombat.Tests
 
             meter.Tick(0.1f);
             Assert.AreEqual(0, meter.Count);
-            Assert.AreEqual("reset Timeout", events.Log[1]);
+            Assert.AreEqual("reset Timeout", raisedEvents[1]);
         }
 
         [Test]

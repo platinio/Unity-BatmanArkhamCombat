@@ -5,6 +5,7 @@
         "ArcaneOnyx.TPCharacterController",
         "ArkhamCombat.Camera",
         "ArkhamCombat.Combat",
+        "ArkhamCombat.Player",
         "Zenject"
     ],
     "includePlatforms": [],

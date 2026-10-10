@@ -4,7 +4,7 @@ using UnityEngine;
 
 namespace ArkhamCombat.Combat
 {
-    /// <summary>Tunables for the meter, held on a config asset.</summary>
+    /// <summary>Tunables for the meter, serialized by whoever owns one.</summary>
     [Serializable]
     public sealed class ComboMeterSettings
     {
@@ -29,19 +29,24 @@ namespace ArkhamCombat.Combat
     /// <summary>
     /// The combo count beside the chain, with its own increment and reset rules and its own timeout.
     /// Not the chain: a chain can continue after a whiff and the meter will not, and the meter keeps
-    /// counting across a counter and an evade that the chain never sees.
+    /// counting across a counter and an evade that the chain never sees. It belongs to one character
+    /// and tells its owner about every change through plain events.
     /// </summary>
     public sealed class ComboMeter
     {
         private readonly ComboMeterSettings settings;
-        private readonly ICombatEvents events;
         private float secondsSinceIncrement;
 
-        public ComboMeter(ComboMeterSettings settings, ICombatEvents events)
+        public ComboMeter(ComboMeterSettings settings)
         {
             this.settings = settings ?? throw new ArgumentNullException(nameof(settings));
-            this.events = events ?? new NullCombatEvents();
         }
+
+        /// <summary>The new count and tier, after every increment and after a reset.</summary>
+        public event Action<int, int> ComboChanged;
+
+        /// <summary>Why a combo was lost, raised just before the change to zero.</summary>
+        public event Action<ComboResetReason> ComboReset;
 
         public int Count { get; private set; }
 
@@ -59,7 +64,7 @@ namespace ArkhamCombat.Combat
             Count++;
             secondsSinceIncrement = 0f;
             Tier = TierReachedAt(Count);
-            events.ComboChanged(Count, Tier);
+            ComboChanged?.Invoke(Count, Tier);
         }
 
         /// <summary>Raises nothing when already at zero, so a whiff on an empty meter is silent.</summary>
@@ -73,8 +78,8 @@ namespace ArkhamCombat.Combat
 
             Count = 0;
             Tier = 0;
-            events.ComboReset(reason);
-            events.ComboChanged(0, 0);
+            ComboReset?.Invoke(reason);
+            ComboChanged?.Invoke(Count, Tier);
         }
 
         /// <summary>The timeout only runs while there is a combo to lose.</summary>

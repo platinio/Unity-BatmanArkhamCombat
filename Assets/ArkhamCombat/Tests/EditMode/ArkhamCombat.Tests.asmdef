@@ -6,6 +6,8 @@
         "ArkhamCombat.Presentation",
         "ArkhamCombat.Player",
         "ArcaneOnyx.TPCharacterController",
+        "Hermes.EventArgs",
+        "Hermes.Events",
         "UnityEditor.TestRunner",
         "UnityEngine.TestRunner"
     ],
