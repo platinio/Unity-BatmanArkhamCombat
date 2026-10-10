@@ -6,10 +6,14 @@
         "ArkhamCombat.Presentation",
         "ArkhamCombat.Player",
         "ArcaneOnyx.TPCharacterController",
+        "ArcaneOnyx.VisualScriptingExtension.Runtime",
         "Hermes.EventArgs",
         "Hermes.Events",
+        "Unity.VisualScripting.Core",
+        "Unity.VisualScripting.Flow",
         "UnityEditor.TestRunner",
-        "UnityEngine.TestRunner"
+        "UnityEngine.TestRunner",
+        "Zenject"
     ],
     "includePlatforms": [
         "Editor"

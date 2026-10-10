@@ -1,54 +1,31 @@
 using System.Collections.Generic;
 using ArcaneOnyx.TPCharacterController;
-using ArcaneOnyx.TPCharacterController.Motor;
-using ArcaneOnyx.TPCharacterController.States;
-using ArkhamCombat.Combat;
 using UnityEngine;
-using Zenject;
 
 namespace ArkhamCombat.Player
 {
     /// <summary>
-    /// Runs the combat side once per frame, before the character brain ticks the state machine.
-    /// It only pushes the state machine into Attacking when an action starts; leaving it alone
-    /// otherwise is what keeps Locomotion unaware that combat exists. Because this runs first, the
-    /// combat components see the previous frame's stick and a press expires one tick late; at any
-    /// playable frame rate neither is visible.
+    /// Runs the combat side once per frame, before the character brain ticks the state machine: it
+    /// ticks the character's combat components in the order of its list, and that is all it does.
+    /// Because this runs first, the combat components see the previous frame's stick and a press
+    /// expires one tick late; at any playable frame rate neither is visible.
     /// </summary>
     [DefaultExecutionOrder(-10)]
     [RequireComponent(typeof(CharacterBrain))]
     public sealed class CombatBrain : MonoBehaviour
     {
-        [Tooltip("The per-frame combat jobs on this character, ticked top to bottom before the " +
-                 "runner. A job sees what the jobs above it wrote this frame.")]
+        [Tooltip("The per-frame combat jobs on this character, ticked top to bottom. A job sees " +
+                 "what the jobs above it wrote this frame.")]
         [SerializeField] private List<CombatComponent> combatComponents = new List<CombatComponent>();
 
         private CharacterBrain characterBrain;
-        private CharacterMotor motor;
-        private ActionRunner runner;
-
-        public ActionRunner Runner => runner;
 
         private bool IsCharacterBrainRunning => characterBrain.StateMachine != null && characterBrain.enabled;
-
-        [Inject]
-        private void Construct(CharacterMotor motor, ActionRunner runner)
-        {
-            this.motor = motor;
-            this.runner = runner;
-        }
 
         private void Awake()
         {
             // The brain on this object, not whichever one the container found in the scene.
             characterBrain = GetComponent<CharacterBrain>();
-
-            if (runner == null)
-            {
-                Debug.LogError(
-                    $"[{nameof(CombatBrain)}] Nothing was injected. The scene needs a SceneContext and the combat installer.", this);
-                enabled = false;
-            }
 
             ReportCombatComponentErrors();
         }
@@ -62,11 +39,7 @@ namespace ArkhamCombat.Player
                 return;
             }
 
-            float deltaTime = Time.deltaTime;
-
-            TickCombatComponents(deltaTime);
-            runner.Tick(deltaTime, transform.position, CanStartActionFromIdle());
-            EnterAttackingStateWhileAnActionPlays();
+            TickCombatComponents(Time.deltaTime);
         }
 
         internal void TickCombatComponents(float deltaTime)
@@ -78,19 +51,6 @@ namespace ArkhamCombat.Player
                 {
                     combatComponent.Tick(deltaTime);
                 }
-            }
-        }
-
-        // Attacking counts too: an idle runner while still in Attacking is recovery, so a queued press
-        // continues the combo without a one-frame trip through Locomotion.
-        private bool CanStartActionFromIdle() =>
-            motor.Ground.IsGrounded && (IsInState<LocomotionState>() || IsInState<AttackingState>());
-
-        private void EnterAttackingStateWhileAnActionPlays()
-        {
-            if (runner.IsPlaying && !IsInState<AttackingState>())
-            {
-                characterBrain.StateMachine.Change<AttackingState>();
             }
         }
 
@@ -112,7 +72,5 @@ namespace ArkhamCombat.Player
                 }
             }
         }
-
-        private bool IsInState<TState>() where TState : ICharacterState => characterBrain.StateMachine.Current is TState;
     }
 }

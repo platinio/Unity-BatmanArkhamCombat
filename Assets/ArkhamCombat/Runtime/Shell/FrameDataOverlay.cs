@@ -2,7 +2,6 @@ using System.Collections.Generic;
 using ArkhamCombat.Combat;
 using ArkhamCombat.Player;
 using UnityEngine;
-using Zenject;
 
 namespace ArkhamCombat.Shell
 {
@@ -10,7 +9,8 @@ namespace ArkhamCombat.Shell
     /// The frame-data overlay from spec 01: one bar per recent action with its four windows as
     /// coloured bands, cue marks, a playhead, and a tick for every press with what became of it.
     /// Screen-space IMGUI on purpose; it is a tuning tool, not HUD. Everything it shows is read from
-    /// the runner's trace, so it never influences what it measures.
+    /// the trace of the runner on the scene's <see cref="CombatActions"/>, so it never influences
+    /// what it measures. A scene without one shows nothing.
     /// </summary>
     public sealed class FrameDataOverlay : MonoBehaviour
     {
@@ -51,15 +51,19 @@ namespace ArkhamCombat.Shell
         [Tooltip("Top-left corner of the strip.")]
         [SerializeField] private Vector2 origin = new Vector2(12f, 80f);
 
-        [Inject] private ActionRunner runner;
-
+        private ActionRunner runner;
         private ComboTracker comboTracker;
 
         private int ComboCount => comboTracker != null ? comboTracker.Count : 0;
 
         private int ComboTier => comboTracker != null ? comboTracker.Tier : 0;
 
-        private void Start() => comboTracker = FindAnyObjectByType<ComboTracker>();
+        private void Start()
+        {
+            CombatActions combatActions = FindAnyObjectByType<CombatActions>();
+            runner = combatActions != null ? combatActions.Runner : null;
+            comboTracker = FindAnyObjectByType<ComboTracker>();
+        }
 
         private void OnGUI()
         {

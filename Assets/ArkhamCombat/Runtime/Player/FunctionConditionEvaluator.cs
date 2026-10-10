@@ -9,9 +9,9 @@ using Zenject;
 namespace ArkhamCombat.Player
 {
     /// <summary>
-    /// Answers edge conditions by running their Functions against the player's agent variables. A
+    /// Answers edge conditions by running their Functions against the character's agent variables. A
     /// Function that cannot run is reported once and treated as false, so a broken graph fails closed.
-    /// Without a facts updater in the scene the stick angle is never measured.
+    /// Without a facts updater on the character the stick angle is never measured.
     /// </summary>
     public sealed class FunctionConditionEvaluator : IConditionEvaluator
     {

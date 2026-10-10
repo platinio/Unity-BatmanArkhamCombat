@@ -1330,6 +1330,10 @@ GameObject:
   - component: {fileID: 1426181065}
   - component: {fileID: 1426181066}
   - component: {fileID: 1426181067}
+  - component: {fileID: 1426181071}
+  - component: {fileID: 1426181070}
+  - component: {fileID: 1426181069}
+  - component: {fileID: 1426181068}
   m_Layer: 0
   m_Name: Player
   m_TagString: Player
@@ -1419,6 +1423,8 @@ MonoBehaviour:
   combatComponents:
   - {fileID: 1426181065}
   - {fileID: 1426181067}
+  - {fileID: 1426181069}
+  - {fileID: 1426181068}
 --- !u!114 &1426181064
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -1474,6 +1480,61 @@ MonoBehaviour:
   meterSettings:
     tierThresholds: 030000000500000008000000
     meterTimeoutSeconds: 2.5
+--- !u!114 &1426181068
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1426181058}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 5bd12152778e18040992d00774ada885, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: ArkhamCombat.Player::ArkhamCombat.Player.AttackingStateSwitch
+--- !u!114 &1426181069
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1426181058}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: f0a5300dc90b2a04baa5ff1ff382a26b, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: ArkhamCombat.Player::ArkhamCombat.Player.CombatActions
+--- !u!114 &1426181070
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1426181058}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 533b27a9574a5e44bac479503bea0efd, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: ArkhamCombat.Player::ArkhamCombat.Player.CombatCharacterInstaller
+  stance: {fileID: 11400000, guid: 417965012c9051c4fa318b5cbb6e89c1, type: 2}
+--- !u!114 &1426181071
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1426181058}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 08eca9f7688a0a24685b89133b020c8e, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Zenject::Zenject.GameObjectContext
+  _scriptableObjectInstallers: []
+  _monoInstallers:
+  - {fileID: 1426181070}
+  _installerPrefabs: []
+  _autoRun: 1
+  _kernel: {fileID: 0}
 --- !u!1 &1454199925
 GameObject:
   m_ObjectHideFlags: 0

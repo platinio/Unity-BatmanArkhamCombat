@@ -1,5 +1,8 @@
 using System;
 using System.Collections.Generic;
+#if HERMES_EVENTS_GENERATED
+using ArcaneOnyx.GameEventGenerator;
+#endif
 using ArcaneOnyx.TPCharacterController.Inputs;
 using ArkhamCombat.Combat;
 using UnityEngine;
@@ -165,6 +168,33 @@ namespace ArkhamCombat.Tests
                 return TargetToGive;
             }
         }
+
+        /// <summary>Answers whatever it was last told to.</summary>
+        public sealed class SettableActionStartGate : IActionStartGate
+        {
+            public bool CanStartFromIdle { get; set; }
+        }
+
+        /// <summary>A character input that holds presses and never moves the stick.</summary>
+        public sealed class StillCharacterInput : ICharacterInput
+        {
+            public Vector2 Move => Vector2.zero;
+            public Vector2 LookDelta => Vector2.zero;
+            public bool SprintHeld => false;
+            public IntentBuffer Intents { get; } = new IntentBuffer();
+
+            public void ExpireQueuedIntents() => Intents.ExpireAll();
+        }
+
+#if HERMES_EVENTS_GENERATED
+        /// <summary>The scene's Hermes object, reduced to the dispatcher a test built. Null for a scene without one.</summary>
+        public sealed class SceneGameEventsWith : ISceneGameEvents
+        {
+            public SceneGameEventsWith(GameEventDispatcher dispatcher) => GameEventDispatcher = dispatcher;
+
+            public GameEventDispatcher GameEventDispatcher { get; }
+        }
+#endif
 
         public sealed class PointTarget : IActionTarget
         {

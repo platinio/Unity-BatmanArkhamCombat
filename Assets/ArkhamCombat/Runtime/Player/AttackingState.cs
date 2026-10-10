@@ -20,30 +20,40 @@ namespace ArkhamCombat.Player
         private const float NegligibleSqrDistance = 1e-4f;
 
         private readonly CharacterContext context;
-        private readonly ActionRunner runner;
-        private readonly MotorWarpMover warpMover;
         private readonly CombatConfig config;
+        private CombatActions combatActions;
 
-        public AttackingState(
-            CharacterContext context,
-            ActionRunner runner,
-            MotorWarpMover warpMover,
-            CombatConfig config)
+        public AttackingState(CharacterContext context, CombatConfig config)
         {
             this.context = context;
-            this.runner = runner;
-            this.warpMover = warpMover;
             this.config = config;
         }
+
+        // Found on the character at first use, not handed to the constructor: the scene builds this
+        // state and cannot see into the character's own context, where the runner lives.
+        private CombatActions CombatActions
+        {
+            get
+            {
+                if (combatActions == null)
+                {
+                    combatActions = context.Transform.GetComponent<CombatActions>();
+                }
+
+                return combatActions;
+            }
+        }
+
+        private ActionRunner Runner => CombatActions.Runner;
 
         public void Enter() { }
 
         // Warp movement left over from this attack must not carry into the next one.
-        public void Exit() => warpMover.TakePendingMovement();
+        public void Exit() => CombatActions.TakePendingWarpMovement();
 
         public void Tick(float deltaTime)
         {
-            if (!runner.IsPlaying)
+            if (!Runner.IsPlaying)
             {
                 context.StateMachine.Change<LocomotionState>();
                 return;
@@ -54,21 +64,21 @@ namespace ArkhamCombat.Player
                 {
                     PlanarVelocity = TakeWarpVelocity(deltaTime),
                     Rotation = TurnTowardTarget(deltaTime),
-                    SuppressGravity = runner.IsWarpWindowOpen
+                    SuppressGravity = Runner.IsWarpWindowOpen
                 },
                 deltaTime);
         }
 
         private Vector3 TakeWarpVelocity(float deltaTime)
         {
-            Vector3 warpMovement = warpMover.TakePendingMovement();
+            Vector3 warpMovement = CombatActions.TakePendingWarpMovement();
             return deltaTime > NegligibleDeltaTime ? warpMovement / deltaTime : Vector3.zero;
         }
 
         /// <summary>Turns toward the target while one is valid, otherwise holds the current heading.</summary>
         private Quaternion TurnTowardTarget(float deltaTime)
         {
-            IActionTarget target = runner.CurrentActionTarget;
+            IActionTarget target = Runner.CurrentActionTarget;
             Quaternion currentRotation = context.Transform.rotation;
 
             if (target == null || !target.IsValid)
