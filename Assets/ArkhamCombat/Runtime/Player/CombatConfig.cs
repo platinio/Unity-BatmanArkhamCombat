@@ -36,12 +36,18 @@ namespace ArkhamCombat.Player
         [Tooltip("Lunge limit the targetBeyondLunge fact is measured against while no attack plays.")]
         [SerializeField, Min(0f)] private float maxLungeWhileIdle = 4f;
 
+        [Tooltip("A target within this many degrees either side of the facing counts as dead ahead for the targetSide fact, rather than left or right.")]
+        [SerializeField, Range(0f, 90f)] private float deadAheadAngle = 6f;
+
         [Header("Stand-in target selection (spec 04 replaces this)")]
         [Tooltip("Dummies farther than this are never picked.")]
         [SerializeField, Min(0f)] private float maxTargetDistance = 8f;
 
         [Tooltip("Dummies more than this many degrees off the stick (or the facing, with no stick) are never picked.")]
         [SerializeField, Range(0f, 180f)] private float maxTargetAngle = 110f;
+
+        [Tooltip("A dummy this many degrees off the stick scores as if it were twice as far. Lower favours aim over distance.")]
+        [SerializeField, Min(1f)] private float angleCountingAsDoubleDistance = 90f;
 
         [Header("Stand-in hit check (spec 05 replaces this)")]
         [Tooltip("A strike lands when the target is within strikeDistance plus this at the hit window's start.")]
@@ -51,8 +57,10 @@ namespace ArkhamCombat.Player
         public IntentKind CounterKind => counterKind;
         public float FaceTargetSmoothTime => faceTargetSmoothTime;
         public float MaxLungeWhileIdle => maxLungeWhileIdle;
+        public float DeadAheadAngle => deadAheadAngle;
         public float MaxTargetDistance => maxTargetDistance;
         public float MaxTargetAngle => maxTargetAngle;
+        public float AngleCountingAsDoubleDistance => angleCountingAsDoubleDistance;
         public float HitRangeMargin => hitRangeMargin;
 
         IReadOnlyList<int> IComboMeterSettings.TierThresholds => comboTierThresholds;

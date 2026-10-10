@@ -24,9 +24,6 @@ namespace ArkhamCombat.Player
         private const int TargetDeadAhead = 0;
         private const int TargetOnTheRight = 1;
 
-        // The sine of the angle either side of the facing that still counts as dead ahead (about six degrees).
-        private const float DeadAheadSine = 0.1f;
-
         private ActionRunner runner;
         private IActionTargetPicker targetPicker;
         private ComboTracker comboTracker;
@@ -90,11 +87,12 @@ namespace ArkhamCombat.Player
             Write(CombatFacts.Keys.StickAngleToTarget, angle);
         }
 
-        /// <summary>-1 when the target is left of the facing, 1 when right, 0 inside a narrow dead-ahead band.</summary>
-        public static int SideOf(Vector3 forward, Vector3 toTarget)
+        /// <summary>-1 when the target is left of the facing, 1 when right, 0 within the dead-ahead angle either side.</summary>
+        public static int SideOf(Vector3 forward, Vector3 toTarget, float deadAheadAngle)
         {
             float rightwardAmount = forward.z * toTarget.x - forward.x * toTarget.z;
-            float deadAheadLimit = DeadAheadSine * forward.magnitude * toTarget.magnitude;
+            float deadAheadSine = Mathf.Sin(deadAheadAngle * Mathf.Deg2Rad);
+            float deadAheadLimit = deadAheadSine * forward.magnitude * toTarget.magnitude;
             if (rightwardAmount > deadAheadLimit)
             {
                 return TargetOnTheRight;
@@ -137,7 +135,7 @@ namespace ArkhamCombat.Player
             forward.y = 0f;
 
             Facts.TargetDistance = toTarget.magnitude;
-            Facts.TargetSide = SideOf(forward, toTarget);
+            Facts.TargetSide = SideOf(forward, toTarget, config.DeadAheadAngle);
             Facts.TargetState = target is ICombatTarget combatant ? combatant.State : string.Empty;
 
             // The same lunge rule the warp refuses by; the fact describes the next press's target, the warp the current action's.

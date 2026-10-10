@@ -2,6 +2,7 @@ using System.Collections.Generic;
 using ArkhamCombat.Combat;
 using ArkhamCombat.Player;
 using NUnit.Framework;
+using UnityEditor;
 using UnityEngine;
 
 namespace ArkhamCombat.Tests
@@ -47,6 +48,26 @@ namespace ArkhamCombat.Tests
             PointCombatTarget target = new PointCombatTarget(position);
             roster.Targets.Add(target);
             return target;
+        }
+
+        private void SetAngleCountingAsDoubleDistance(float degrees)
+        {
+            SerializedObject serializedConfig = new SerializedObject(config);
+            serializedConfig.FindProperty("angleCountingAsDoubleDistance").floatValue = degrees;
+            serializedConfig.ApplyModifiedPropertiesWithoutUndo();
+        }
+
+        [Test]
+        public void ASmallerAngleCountingAsDoubleDistance_FavoursAimOverDistance()
+        {
+            PointCombatTarget nearButOffTheDirection = AddTargetAt(Quaternion.Euler(0f, 30f, 0f) * Vector3.forward * 2f);
+            PointCombatTarget fartherButDeadAhead = AddTargetAt(Vector3.forward * 3f);
+
+            Assert.AreSame(nearButOffTheDirection, scorer.BestTarget(Vector3.zero, Vector3.forward));
+
+            SetAngleCountingAsDoubleDistance(30f);
+
+            Assert.AreSame(fartherButDeadAhead, scorer.BestTarget(Vector3.zero, Vector3.forward));
         }
 
         [Test]

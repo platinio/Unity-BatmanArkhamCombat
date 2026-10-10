@@ -13,9 +13,6 @@ namespace ArkhamCombat.Player
     {
         private const float NegligibleSqrMagnitude = 1e-4f;
 
-        // A target this many degrees off the direction scores as if it were twice as far.
-        private const float AngleThatDoublesTheScore = 90f;
-
         private readonly CombatConfig config;
         private readonly ITargetRoster roster;
 
@@ -71,7 +68,7 @@ namespace ArkhamCombat.Player
                 return false;
             }
 
-            score = distance * (1f + angle / AngleThatDoublesTheScore);
+            score = distance * (1f + angle / config.AngleCountingAsDoubleDistance);
             return true;
         }
     }
