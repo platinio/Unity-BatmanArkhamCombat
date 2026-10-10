@@ -2,7 +2,6 @@ using System.Collections.Generic;
 using ArkhamCombat.Combat;
 using ArkhamCombat.Player;
 using NUnit.Framework;
-using UnityEditor;
 using UnityEngine;
 
 namespace ArkhamCombat.Tests
@@ -28,33 +27,31 @@ namespace ArkhamCombat.Tests
             IReadOnlyList<ICombatTarget> ITargetRoster.Targets => Targets;
         }
 
-        private CombatConfig config;
+        private sealed class TargetingSettings : ITargetingSettings
+        {
+            public float MaxTargetDistance { get; set; } = 8f;
+            public float MaxTargetAngle { get; set; } = 110f;
+            public float AngleCountingAsDoubleDistance { get; set; } = 90f;
+            public float StickPushedMagnitude { get; set; } = 0.1f;
+        }
+
+        private TargetingSettings settings;
         private ListRoster roster;
         private ITargetScorer scorer;
 
         [SetUp]
         public void SetUp()
         {
-            config = ScriptableObject.CreateInstance<CombatConfig>();
+            settings = new TargetingSettings();
             roster = new ListRoster();
-            scorer = new StandInTargetScorer(config, roster);
+            scorer = new StandInTargetScorer(settings, roster);
         }
-
-        [TearDown]
-        public void TearDown() => Object.DestroyImmediate(config);
 
         private PointCombatTarget AddTargetAt(Vector3 position)
         {
             PointCombatTarget target = new PointCombatTarget(position);
             roster.Targets.Add(target);
             return target;
-        }
-
-        private void SetAngleCountingAsDoubleDistance(float degrees)
-        {
-            SerializedObject serializedConfig = new SerializedObject(config);
-            serializedConfig.FindProperty("angleCountingAsDoubleDistance").floatValue = degrees;
-            serializedConfig.ApplyModifiedPropertiesWithoutUndo();
         }
 
         [Test]
@@ -65,7 +62,7 @@ namespace ArkhamCombat.Tests
 
             Assert.AreSame(nearButOffTheDirection, scorer.BestTarget(Vector3.zero, Vector3.forward));
 
-            SetAngleCountingAsDoubleDistance(30f);
+            settings.AngleCountingAsDoubleDistance = 30f;
 
             Assert.AreSame(fartherButDeadAhead, scorer.BestTarget(Vector3.zero, Vector3.forward));
         }
