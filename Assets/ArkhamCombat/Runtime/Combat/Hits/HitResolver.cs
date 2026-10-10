@@ -2,12 +2,10 @@ using UnityEngine;
 
 namespace ArkhamCombat.Combat
 {
-    /// <summary>
-    /// Hits are targeted: a strike lands on the one target its action picked when that target is
-    /// within range and in front. Nothing is swept and no collider is asked.
-    /// </summary>
     public sealed class HitResolver
     {
+        private static readonly Vector3 NoDirection = Vector3.zero;
+
         private readonly IHitCheckSettings settings;
 
         public HitResolver(IHitCheckSettings settings)
@@ -17,13 +15,12 @@ namespace ArkhamCombat.Combat
 
         public bool TryLand(AttackDefinition attack, StrikeOrigin origin, Vector3 targetPosition, out HitInfo hit)
         {
-            Vector3 toTarget = targetPosition - origin.Position;
-            toTarget.y = 0f;
+            Vector3 toTarget = OnTheGround(targetPosition - origin.Position);
 
             bool isStandingOnTarget = toTarget.sqrMagnitude < AttackDefinition.StandingOnTargetSqrDistance;
             if (isStandingOnTarget)
             {
-                hit = new HitInfo(attack, Vector3.zero);
+                hit = new HitInfo(attack, NoDirection);
                 return true;
             }
 
@@ -42,9 +39,10 @@ namespace ArkhamCombat.Combat
 
         private bool IsInFront(StrikeOrigin origin, Vector3 toTarget)
         {
-            Vector3 facing = origin.Forward;
-            facing.y = 0f;
+            Vector3 facing = OnTheGround(origin.Forward);
             return Vector3.Angle(facing, toTarget) <= settings.HitAngle;
         }
+
+        private static Vector3 OnTheGround(Vector3 vector) => new Vector3(vector.x, 0f, vector.z);
     }
 }

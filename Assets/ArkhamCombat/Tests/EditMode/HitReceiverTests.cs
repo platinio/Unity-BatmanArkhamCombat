@@ -9,6 +9,10 @@ namespace ArkhamCombat.Tests
     public class HitReceiverTests
     {
         private const float MaxHealth = 100f;
+        private const float SomeDamage = 30f;
+        private const float MostOfItsHealth = 60f;
+        private const float TheRestOfItsHealth = MaxHealth - MostOfItsHealth;
+        private const float MoreThanItsHealth = 250f;
 
         private readonly List<Object> createdAssets = new List<Object>();
 
@@ -47,15 +51,24 @@ namespace ArkhamCombat.Tests
         }
 
         [Test]
-        public void AHit_TakesTheAttacksDamage_AndPlaysItsReaction()
+        public void AHit_TakesTheAttacksDamage()
         {
             HitReceiver receiver = ReceiverWith();
 
-            HitResult result = receiver.Receive(HitDealing(30f, HitReaction.Stagger));
+            HitResult result = receiver.Receive(HitDealing(SomeDamage));
 
-            Assert.AreEqual(70f, receiver.Health);
             Assert.IsTrue(result.HasLanded);
-            Assert.AreEqual(AppliedReaction.Stagger, result.Reaction);
+            Assert.AreEqual(MaxHealth - SomeDamage, receiver.Health);
+        }
+
+        [Test]
+        public void AHit_PlaysTheReactionTheAttackAskedFor()
+        {
+            HitReceiver receiver = ReceiverWith();
+
+            HitResult result = receiver.Receive(HitDealing(SomeDamage, HitReaction.Stagger));
+
+            Assert.AreEqual(AppliedReaction.Stagger, result.AppliedReaction);
             Assert.IsFalse(result.WasKilled);
         }
 
@@ -64,23 +77,23 @@ namespace ArkhamCombat.Tests
         {
             HitReceiver receiver = ReceiverWith(isArmored: true);
 
-            HitResult result = receiver.Receive(HitDealing(30f, HitReaction.Flinch));
+            HitResult result = receiver.Receive(HitDealing(SomeDamage, HitReaction.Flinch));
 
-            Assert.AreEqual(70f, receiver.Health);
+            Assert.AreEqual(MaxHealth - SomeDamage, receiver.Health);
             Assert.IsTrue(result.HasLanded);
-            Assert.AreEqual(AppliedReaction.None, result.Reaction);
+            Assert.AreEqual(AppliedReaction.None, result.AppliedReaction);
         }
 
         [Test]
         public void TheHitThatEmptiesTheHealth_Kills()
         {
             HitReceiver receiver = ReceiverWith();
-            receiver.Receive(HitDealing(60f));
+            receiver.Receive(HitDealing(MostOfItsHealth));
 
-            HitResult result = receiver.Receive(HitDealing(40f));
+            HitResult result = receiver.Receive(HitDealing(TheRestOfItsHealth));
 
             Assert.IsTrue(result.WasKilled);
-            Assert.AreEqual(AppliedReaction.Death, result.Reaction);
+            Assert.AreEqual(AppliedReaction.Death, result.AppliedReaction);
             Assert.IsFalse(receiver.IsAlive);
         }
 
@@ -89,7 +102,7 @@ namespace ArkhamCombat.Tests
         {
             HitReceiver receiver = ReceiverWith();
 
-            receiver.Receive(HitDealing(250f));
+            receiver.Receive(HitDealing(MoreThanItsHealth));
 
             Assert.AreEqual(0f, receiver.Health);
         }
@@ -100,11 +113,11 @@ namespace ArkhamCombat.Tests
             HitReceiver receiver = ReceiverWith();
             receiver.Receive(HitDealing(MaxHealth));
 
-            HitResult result = receiver.Receive(HitDealing(10f));
+            HitResult result = receiver.Receive(HitDealing(SomeDamage));
 
             Assert.IsFalse(result.HasLanded);
             Assert.IsFalse(result.WasKilled, "it was killed by the hit before, not by this one");
-            Assert.AreEqual(AppliedReaction.None, result.Reaction);
+            Assert.AreEqual(AppliedReaction.None, result.AppliedReaction);
             Assert.AreEqual(0f, receiver.Health);
         }
     }
