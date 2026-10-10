@@ -13,12 +13,12 @@ namespace ArkhamCombat.Player
     {
         private const float NegligibleSqrMagnitude = 1e-4f;
 
-        private readonly CombatConfig config;
+        private readonly ITargetingSettings settings;
         private readonly ITargetRoster roster;
 
-        public StandInTargetScorer(CombatConfig config, ITargetRoster roster)
+        public StandInTargetScorer(ITargetingSettings settings, ITargetRoster roster)
         {
-            this.config = config;
+            this.settings = settings;
             this.roster = roster;
         }
 
@@ -56,19 +56,19 @@ namespace ArkhamCombat.Player
             toCandidate.y = 0f;
 
             float distance = toCandidate.magnitude;
-            if (distance > config.MaxTargetDistance)
+            if (distance > settings.MaxTargetDistance)
             {
                 return false;
             }
 
             bool hasDirection = direction.sqrMagnitude > NegligibleSqrMagnitude;
             float angle = hasDirection ? Vector3.Angle(direction, toCandidate) : 0f;
-            if (angle > config.MaxTargetAngle)
+            if (angle > settings.MaxTargetAngle)
             {
                 return false;
             }
 
-            score = distance * (1f + angle / config.AngleCountingAsDoubleDistance);
+            score = distance * (1f + angle / settings.AngleCountingAsDoubleDistance);
             return true;
         }
     }

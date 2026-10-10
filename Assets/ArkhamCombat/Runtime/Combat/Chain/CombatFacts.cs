@@ -32,8 +32,7 @@ namespace ArkhamCombat.Combat
         public bool HasTarget;
         public float TargetDistance;
 
-        /// <summary>-1 left of the player, 1 right, 0 none or dead ahead.</summary>
-        public int TargetSide;
+        public TargetSide TargetSide;
 
         public string TargetState = string.Empty;
         public bool IsTargetBeyondLunge;
