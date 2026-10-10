@@ -4,6 +4,7 @@ using ArkhamCombat.Player;
 using NUnit.Framework;
 using UnityEditor;
 using UnityEngine;
+using static ArkhamCombat.Tests.CombatTestDoubles;
 
 namespace ArkhamCombat.Tests
 {
@@ -18,8 +19,7 @@ namespace ArkhamCombat.Tests
         [SetUp]
         public void SetUp()
         {
-            // Hidden and never saved, so the open scene is left untouched.
-            character = new GameObject("Character") { hideFlags = HideFlags.HideAndDontSave };
+            character = HiddenObject("Character");
         }
 
         [TearDown]

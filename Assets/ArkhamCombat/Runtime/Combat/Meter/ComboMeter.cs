@@ -4,7 +4,6 @@ using UnityEngine;
 
 namespace ArkhamCombat.Combat
 {
-    /// <summary>Why the combo meter went up.</summary>
     public enum ComboIncrementReason
     {
         StrikeLanded,
@@ -12,7 +11,6 @@ namespace ArkhamCombat.Combat
         EvadeSucceeded
     }
 
-    /// <summary>Why the combo meter went back to zero.</summary>
     public enum ComboResetReason
     {
         PlayerHit,
@@ -21,10 +19,8 @@ namespace ArkhamCombat.Combat
     }
 
     /// <summary>
-    /// The combo count beside the chain, with its own increment and reset rules and its own timeout.
-    /// Not the chain: a chain can continue after a whiff and the meter will not, and the meter keeps
-    /// counting across a counter and an evade that the chain never sees. It belongs to one character
-    /// and tells its owner about every change through plain events.
+    /// Not the chain: a chain can continue after a whiff and the meter will not, and the meter
+    /// keeps counting across a counter and an evade that the chain never sees.
     /// </summary>
     public sealed class ComboMeter
     {
@@ -76,7 +72,6 @@ namespace ArkhamCombat.Combat
             ComboChanged?.Invoke(Count, Tier);
         }
 
-        /// <summary>The timeout only runs while there is a combo to lose.</summary>
         public void Tick(float deltaTime)
         {
             if (IsEmpty)

@@ -4,10 +4,9 @@ using ArcaneOnyx.TPCharacterController.Inputs;
 namespace ArkhamCombat.Combat
 {
     /// <summary>
-    /// What the frame-data overlay draws: the last few actions, each with the presses that arrived
-    /// while it played and what became of them. Pure bookkeeping fed by the runner and the buffer's
-    /// events, so the overlay only reads. An idle stretch is a record too, so a press that arrives
-    /// between actions is not lost from the picture.
+    /// Pure bookkeeping fed by the runner and the buffer's events, so the overlay only reads. An
+    /// idle stretch is a record too, so a press that arrives between actions is not lost from the
+    /// picture.
     /// </summary>
     public sealed class ActionTrace
     {
@@ -32,7 +31,6 @@ namespace ArkhamCombat.Combat
         {
             public string NodeId;
 
-            /// <summary>Null for an idle stretch.</summary>
             public ActionDefinition Action;
 
             public AttackDefinition Attack => Action as AttackDefinition;
@@ -44,7 +42,6 @@ namespace ArkhamCombat.Combat
             public bool HasEnded;
             public bool WasInterrupted;
 
-            /// <summary>Whether the warp refused because the target was beyond the lunge limit.</summary>
             public bool WasWarpRefused;
 
             public readonly List<Mark> Marks = new List<Mark>();

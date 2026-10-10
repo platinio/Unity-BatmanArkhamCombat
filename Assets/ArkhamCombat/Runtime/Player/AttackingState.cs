@@ -8,11 +8,11 @@ using Zenject;
 namespace ArkhamCombat.Player
 {
     /// <summary>
-    /// The character while an action plays. Movement input never moves it: the frame's planar
-    /// velocity is whatever the runner's warp produced, and the character turns toward the target.
-    /// Gravity is held during the warp so a lunge does not dip. A follow-up is not a state change;
-    /// the runner swaps the action and this state keeps ticking, so StateChanged still means
-    /// "started fighting" rather than "third punch".
+    /// Movement input never moves it: the frame's planar velocity is whatever the runner's warp
+    /// produced, and the character turns toward the target. Gravity is held during the warp so a
+    /// lunge does not dip. A follow-up is not a state change; the runner swaps the action and this
+    /// state keeps ticking, so StateChanged still means "started fighting" rather than "third
+    /// punch".
     /// </summary>
     public sealed class AttackingState : ICharacterState
     {
@@ -75,7 +75,6 @@ namespace ArkhamCombat.Player
             return deltaTime > NegligibleDeltaTime ? warpMovement / deltaTime : Vector3.zero;
         }
 
-        /// <summary>Turns toward the target while one is valid, otherwise holds the current heading.</summary>
         private Quaternion TurnTowardTarget(float deltaTime)
         {
             IActionTarget target = Runner.CurrentActionTarget;

@@ -4,10 +4,9 @@ using UnityEngine;
 
 namespace ArkhamCombat.Combat
 {
-    /// <summary>What a pool policy may look at when it picks. A struct so a pick allocates nothing.</summary>
+    /// <summary>A struct so a pick allocates nothing.</summary>
     public readonly struct VariantPickContext
     {
-        /// <summary>The attack this node played last time, or null the first time.</summary>
         public readonly AttackDefinition LastPicked;
 
         /// <summary>-1 left of the player, 1 right, 0 unknown or dead ahead.</summary>
@@ -26,13 +25,11 @@ namespace ArkhamCombat.Combat
         public bool IsTargetOnTheLeft => TargetSide < 0;
     }
 
-    /// <summary>Picks one attack from a pool. Implementations are picked from a dropdown on the node.</summary>
     public interface IVariantPolicy
     {
         AttackDefinition Pick(IReadOnlyList<AttackDefinition> attacks, in VariantPickContext context);
     }
 
-    /// <summary>Random, but never the same attack twice in a row when there is a choice.</summary>
     [Serializable]
     public sealed class NoRepeatPolicy : IVariantPolicy
     {
@@ -60,7 +57,6 @@ namespace ArkhamCombat.Combat
         }
     }
 
-    /// <summary>Uniform random, repeats allowed.</summary>
     [Serializable]
     public sealed class RandomPolicy : IVariantPolicy
     {
@@ -93,10 +89,7 @@ namespace ArkhamCombat.Combat
         }
     }
 
-    /// <summary>
-    /// A set of attacks a node may play, with the rule for choosing between them. The policy is a
-    /// dropdown so adding a rule is one class, not a switch.
-    /// </summary>
+    /// <summary>The policy is a dropdown so adding a rule is one class, not a switch.</summary>
     [Serializable]
     public sealed class VariantPool
     {
@@ -117,7 +110,6 @@ namespace ArkhamCombat.Combat
         public int Count => attacks.Count;
         public bool IsEmpty => attacks.Count == 0;
 
-        /// <summary>Null when the pool is empty. A null policy degrades to the first entry rather than failing.</summary>
         public AttackDefinition Pick(in VariantPickContext context)
         {
             if (IsEmpty)

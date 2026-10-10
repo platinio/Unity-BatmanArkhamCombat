@@ -9,11 +9,7 @@ namespace ArkhamCombat.Combat
     [AttributeUsage(AttributeTargets.Field)]
     public sealed class ChainNodeIdAttribute : PropertyAttribute { }
 
-    /// <summary>
-    /// One way out of a chain position: which kind of press takes it, under what condition, where it goes.
-    /// The condition is a Function with a bool result, so designers write the rule in a graph; null
-    /// means always. Destinations are ids rather than references so a stance stays one asset.
-    /// </summary>
+    /// <summary>Destinations are ids rather than references so a stance stays one asset.</summary>
     [Serializable]
     public sealed class Edge
     {
@@ -40,7 +36,6 @@ namespace ArkhamCombat.Combat
         public IntentKind IntentKind => intentKind;
         public bool HasIntentKind => intentKind != null;
 
-        /// <summary>Safe to print for an edge whose kind is missing.</summary>
         public string IntentKindName => HasIntentKind ? intentKind.name : "no kind";
 
         public FunctionCall<bool> Condition => condition;

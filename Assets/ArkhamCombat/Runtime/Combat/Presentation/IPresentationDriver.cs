@@ -2,8 +2,7 @@ namespace ArkhamCombat.Combat
 {
     /// <summary>
     /// Where the runner reads time from. The runner never owns a clock of its own, so hit-stop and
-    /// speed changes made on the driver stay honest in every window and warp. For this demo the
-    /// driver is procedural; a clip-backed one is the upgrade path and changes nothing here.
+    /// speed changes made on the driver stay honest in every window and warp.
     /// </summary>
     public interface IPresentationDriver
     {

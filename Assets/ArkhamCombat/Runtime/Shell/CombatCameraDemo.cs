@@ -6,9 +6,9 @@ using Zenject;
 namespace ArkhamCombat.Shell
 {
     /// <summary>
-    /// Binds the combat framing to the rig from the first frame. The demo is combat only, so there
-    /// is no other mode to switch from. Stand-in for the encounter director until spec 06 lands: the
-    /// hand-placed enemies here are what the director's roster will replace.
+    /// The demo is combat only, so there is no other mode to switch from. Stand-in for the
+    /// encounter director until spec 06 lands: the hand-placed enemies here are what the director's
+    /// roster will replace.
     /// </summary>
     public sealed class CombatCameraDemo : MonoBehaviour
     {

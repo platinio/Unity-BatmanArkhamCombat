@@ -5,8 +5,8 @@ using UnityEngine;
 namespace ArkhamCombat.Combat
 {
     /// <summary>
-    /// A position in a chain: what plays here and where the chain may go next. Not an attack; the
-    /// attack is a separate asset, so the same jab can sit at three positions in three stances.
+    /// Not an attack; the attack is a separate asset, so the same jab can sit at three positions in
+    /// three stances.
     /// </summary>
     [Serializable]
     public sealed class ChainNode
@@ -51,10 +51,8 @@ namespace ArkhamCombat.Combat
 
         public bool IsUsingPool => attack == null;
 
-        /// <summary>True for a node with neither an attack nor a pool entry, such as a root that is only a position.</summary>
         public bool HasNothingToPlay => attack == null && (pool == null || pool.IsEmpty);
 
-        /// <summary>Null only when <see cref="HasNothingToPlay"/>.</summary>
         public AttackDefinition PickAttack(in VariantPickContext context) =>
             attack != null ? attack : pool?.Pick(context);
 
@@ -96,7 +94,6 @@ namespace ArkhamCombat.Combat
             return sorted;
         }
 
-        /// <summary>A missing edge sorts last.</summary>
         private static int PriorityOf(Edge edge) => edge != null ? edge.Priority : int.MaxValue;
     }
 }

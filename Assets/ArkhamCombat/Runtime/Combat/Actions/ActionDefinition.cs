@@ -4,10 +4,9 @@ using UnityEngine;
 namespace ArkhamCombat.Combat
 {
     /// <summary>
-    /// One move, as data: how long it lasts and what the body does while it plays. Knows nothing
-    /// about chains, so the same asset backs any number of chain nodes, and nothing about hits; the
-    /// <see cref="AttackDefinition"/> subclass adds those. Duration is the clock for the whole
-    /// system, which is what lets the demo run without a single authored animation.
+    /// Knows nothing about chains, so the same asset backs any number of chain nodes, and nothing
+    /// about hits; the <see cref="AttackDefinition"/> subclass adds those. Duration is the clock
+    /// for the whole system, which is what lets the demo run without a single authored animation.
     /// </summary>
     [CreateAssetMenu(menuName = "ArkhamCombat/Action", fileName = "Action")]
     public class ActionDefinition : ScriptableObject
@@ -27,7 +26,6 @@ namespace ArkhamCombat.Combat
 
         public bool HasTag(string tag) => tags.Contains(tag);
 
-        /// <summary>Sets the base fields from code. For tests and the fixture builder; assets are authored in the inspector.</summary>
         public void Configure(float duration, IEnumerable<PresentationCue> cues = null, IEnumerable<string> tags = null)
         {
             this.duration = duration;
@@ -35,7 +33,6 @@ namespace ArkhamCombat.Combat
             this.tags = tags != null ? new List<string>(tags) : new List<string>();
         }
 
-        /// <summary>Appends every problem to <paramref name="errors"/>. Returns true when there were none.</summary>
         public virtual bool Validate(List<string> errors)
         {
             int errorCountBefore = errors.Count;

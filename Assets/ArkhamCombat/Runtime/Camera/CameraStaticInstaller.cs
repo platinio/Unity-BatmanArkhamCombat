@@ -6,8 +6,8 @@ using Zenject;
 namespace ArkhamCombat.Cameras
 {
     /// <summary>
-    /// Scene-wide camera bindings: the one rig in the scene, and the movement frame built on its
-    /// pivot so the character's "forward" is whatever the camera is looking along.
+    /// The movement frame is built on the rig's pivot so the character's "forward" is whatever the
+    /// camera is looking along.
     /// </summary>
     [AutoAssetGeneration("Installers/Static", "CameraStaticInstaller")]
     [StaticInstaller(StaticInstallerExecutionOrder.Normal)]

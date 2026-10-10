@@ -7,9 +7,8 @@ namespace ArkhamCombat.Player
 {
     /// <summary>
     /// A range check at the hit window's start, standing in for spec 05's targeted land check:
-    /// within strike distance plus a margin the strike lands, anything else is a whiff. Either way it
-    /// tells the scene through a Hermes event that names the attacker; whoever keeps that character's
-    /// combo does the counting. Closing has nothing to do because the check is instantaneous.
+    /// within strike distance plus a margin the strike lands, anything else is a whiff. Closing has
+    /// nothing to do because the check is instantaneous.
     /// </summary>
     public sealed class DemoHitWindowListener : IHitWindowListener
     {

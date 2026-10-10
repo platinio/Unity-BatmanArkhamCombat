@@ -8,11 +8,8 @@ using Zenject;
 namespace ArkhamCombat.Player
 {
     /// <summary>
-    /// Keeps the character's state machine and its actions in step. It puts the state machine into
-    /// Attacking while an action plays, and it is the start gate that holds a press back while the
-    /// character is in the air or in a state that cannot attack. Entering Attacking is all it ever
-    /// does to the state machine; leaving it alone otherwise is what keeps Locomotion unaware that
-    /// combat exists.
+    /// Entering Attacking is all it ever does to the state machine; leaving it alone otherwise is
+    /// what keeps Locomotion unaware that combat exists.
     /// </summary>
     [RequireComponent(typeof(CharacterBrain))]
     public sealed class AttackingStateSwitch : CharacterComponent, IActionStartGate
@@ -29,7 +26,6 @@ namespace ArkhamCombat.Player
 
         private void Awake()
         {
-            // The brain and the motor on this object, not whichever ones the container found in the scene.
             characterBrain = GetComponent<CharacterBrain>();
             motor = GetComponent<CharacterMotor>();
         }

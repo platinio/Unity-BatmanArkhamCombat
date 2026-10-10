@@ -6,14 +6,9 @@ using UnityEngine;
 namespace ArkhamCombat.Combat
 {
     /// <summary>
-    /// Plays the character's actions one after another. Every frame it moves the current action's
-    /// clock forward, opens and closes the action's windows (warp, hit, combo), and checks whether a
-    /// queued press should start the next action: the next attack of the combo while the combo window
-    /// is open or nothing plays, an evade or a counter at any time. When the character stays idle for
-    /// the stance's reset time, the combo starts over. Each action asks the target picker once, when
-    /// it starts, and keeps that target until it ends. A character without a stance, like an enemy,
-    /// drives it through <see cref="PlayAction"/>. It tells its owner about every action that starts
-    /// and ends through plain events.
+    /// Each action asks the target picker once, when it starts, and keeps that target until it
+    /// ends. A character without a stance, like an enemy, drives it through
+    /// <see cref="PlayAction"/>.
     /// </summary>
     public sealed class ActionRunner
     {
@@ -101,7 +96,6 @@ namespace ArkhamCombat.Combat
         /// <summary>True when the current attack did not warp because the target was beyond its lunge limit.</summary>
         public bool WasWarpRefused { get; private set; }
 
-        /// <summary>Seconds since the last action ended. Once they reach the stance's reset time the combo starts over.</summary>
         public float IdleSeconds => idleSeconds;
 
         private bool HasValidTarget => CurrentActionTarget != null && CurrentActionTarget.IsValid;
@@ -135,7 +129,7 @@ namespace ArkhamCombat.Combat
             }
         }
 
-        /// <summary>Plays a node now, replacing whatever runs. For code that interrupts the combo, not for presses.</summary>
+        /// <summary>For code that interrupts the combo, not for presses.</summary>
         public void Interrupt(ChainNode node, Vector3 position)
         {
             if (node == null)

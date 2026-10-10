@@ -6,11 +6,8 @@ using UnityEngine;
 namespace ArkhamCombat.Player
 {
     /// <summary>
-    /// What every character's combat in the scene is tuned by: which kinds of press are the evade and
-    /// the counter, when the combo tier rises and how long a combo lasts, the facing turn time, and
-    /// the numbers the stand-in target and hit checks use until specs 04 and 05 replace them. The
-    /// stance is set on each character's CombatCharacterInstaller. One asset, bound by the combat
-    /// installer, so a different feel is a different asset.
+    /// One asset, bound by the combat installer, so a different feel is a different asset. The
+    /// stance is set on each character's CombatCharacterInstaller.
     /// </summary>
     [CreateAssetMenu(menuName = "ArkhamCombat/Combat Config", fileName = "CombatConfig")]
     public sealed class CombatConfig : ScriptableObject, IComboMeterSettings

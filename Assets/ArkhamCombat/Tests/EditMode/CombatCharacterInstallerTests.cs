@@ -75,9 +75,6 @@ namespace ArkhamCombat.Tests
             kinds.Destroy();
         }
 
-        // Hidden and never saved, so the open scene is left untouched.
-        private static GameObject HiddenObject(string name) => new GameObject(name) { hideFlags = HideFlags.HideAndDontSave };
-
         private Edge StrikeEdgeWithACondition(string destinationId)
         {
             Edge edge = new Edge(kinds.Strike, destinationId);

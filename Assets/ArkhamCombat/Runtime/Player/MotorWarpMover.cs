@@ -3,11 +3,7 @@ using UnityEngine;
 
 namespace ArkhamCombat.Player
 {
-    /// <summary>
-    /// Collects the runner's warp movement for the frame so the attacking state can hand it to the
-    /// motor as that frame's planar velocity. The runner never touches the motor; this is the only
-    /// bridge.
-    /// </summary>
+    /// <summary>The runner never touches the motor; this is the only bridge to it.</summary>
     public sealed class MotorWarpMover : IWarpMover
     {
         private Vector3 pendingMovement;

@@ -5,11 +5,6 @@ using UnityEngine;
 
 namespace ArkhamCombat.Editor
 {
-    /// <summary>
-    /// Draws a chain node id as a dropdown of the owning stance's node ids, so an edge destination
-    /// is picked rather than typed. Falls back to a text field when the field is not on a stance,
-    /// and shows an id that names no node so the typo is visible rather than silently kept.
-    /// </summary>
     [CustomPropertyDrawer(typeof(ChainNodeIdAttribute))]
     public sealed class ChainNodeIdDrawer : PropertyDrawer
     {

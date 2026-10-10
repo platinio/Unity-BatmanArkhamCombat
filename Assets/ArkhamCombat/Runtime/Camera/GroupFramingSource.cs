@@ -6,10 +6,6 @@ using UnityEngine;
 namespace ArkhamCombat.Cameras
 {
     /// <summary>
-    /// The combat framing: the config's combat set, with the pivot drifting toward the enemy
-    /// centroid and the distance following the group spread. Yaw target is the centroid bearing,
-    /// which the rig drifts toward while look input is idle.
-    ///
     /// Takes any list of transforms as the group. The encounter director's roster plugs in here
     /// once it exists; until then the demo hands it a few capsules.
     /// </summary>

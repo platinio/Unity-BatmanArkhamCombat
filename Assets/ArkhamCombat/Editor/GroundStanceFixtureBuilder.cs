@@ -10,8 +10,6 @@ using UnityEngine;
 namespace ArkhamCombat.Editor
 {
     /// <summary>
-    /// Builds the Ground stance fixture from spec 01 as assets: the four kinds of press, four attacks
-    /// with windows and cues, the stance, and a combat config naming the evade and counter kinds.
     /// Rebuilding updates the existing assets in place so references and GUIDs survive, the scene's
     /// reference to the stance on the character's installer among them. The GlideKick and Takedown
     /// edges wait for the Functions of T9 and are not authored here.
@@ -49,7 +47,6 @@ namespace ArkhamCombat.Editor
             Debug.Log($"{LogPrefix} Ground stance fixture built: {IntentsFolder}, {ActionsFolder}, {StancePath}, {CombatConfigPath}");
         }
 
-        /// <summary>An existing kind keeps its tuned seconds queued; only a missing one is created.</summary>
         private static IntentKind LoadOrCreateIntentKind(string name) => LoadOrCreate<IntentKind>($"{IntentsFolder}/{name}.asset");
 
         private static Stance BuildStance(IntentKind strike)

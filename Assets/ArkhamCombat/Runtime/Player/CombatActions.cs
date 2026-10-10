@@ -7,13 +7,9 @@ using Zenject;
 namespace ArkhamCombat.Player
 {
     /// <summary>
-    /// Plays this character's actions: each tick it runs the character's <see cref="ActionRunner"/>,
-    /// which starts an action from a press only while the character's start gate allows it. Every
-    /// action that starts or ends is announced through the Hermes events with this character, so a
-    /// listener can follow one fighter among many. The runner lives in the character's own context,
-    /// which the scene cannot see into, so this is also where a state or the overlay finds the runner
-    /// and the frame's warp movement. Without generated Hermes events the actions still play and
-    /// nothing is announced.
+    /// The runner lives in the character's own context, which the scene cannot see into, so this is
+    /// also where a state or the overlay finds the runner and the frame's warp movement. Without
+    /// generated Hermes events the actions still play and nothing is announced.
     /// </summary>
     public sealed class CombatActions : CharacterComponent
     {
@@ -54,7 +50,6 @@ namespace ArkhamCombat.Player
         public override void Tick(float deltaTime) =>
             runner.Tick(deltaTime, transform.position, startGate.CanStartFromIdle);
 
-        /// <summary>How far the runner's warp asked the character to move since this was last taken.</summary>
         public Vector3 TakePendingWarpMovement() => warpMover.TakePendingMovement();
 
 #if HERMES_EVENTS_GENERATED

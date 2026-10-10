@@ -3,10 +3,8 @@ using UnityEngine;
 namespace ArkhamCombat.Combat
 {
     /// <summary>
-    /// Ranks everyone in the fight for a character standing at a position and facing along a
-    /// direction, both in world space, and answers the best one, or null when nothing qualifies. It
-    /// knows nothing about the character or its actions. The spec 04 scorer replaces the stand-in
-    /// behind this without touching its callers.
+    /// Null when nothing qualifies. It knows nothing about the character or its actions. The spec
+    /// 04 scorer replaces the stand-in behind this without touching its callers.
     /// </summary>
     public interface ITargetScorer
     {

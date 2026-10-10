@@ -62,9 +62,6 @@ namespace ArkhamCombat.Tests
             Object.DestroyImmediate(attack);
         }
 
-        // Hidden and never saved, so the open scene is left untouched.
-        private static GameObject HiddenObject(string name) => new GameObject(name) { hideFlags = HideFlags.HideAndDontSave };
-
         private void StrikeLandsFor(GameObject attacker) => dispatcher.StrikeLandedGameEvent.Raise(attacker, attack, target);
 
         private void StrikeWhiffsFor(GameObject attacker) => dispatcher.StrikeWhiffedGameEvent.Raise(attacker, attack);

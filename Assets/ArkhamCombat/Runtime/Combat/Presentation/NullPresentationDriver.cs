@@ -1,9 +1,5 @@
 namespace ArkhamCombat.Combat
 {
-    /// <summary>
-    /// A driver that keeps time and shows nothing. For EditMode tests of the runner and for an agent
-    /// that has no body yet. Cues are scheduled and dropped on the floor.
-    /// </summary>
     public sealed class NullPresentationDriver : IPresentationDriver
     {
         private readonly ActionClock clock = new ActionClock();
