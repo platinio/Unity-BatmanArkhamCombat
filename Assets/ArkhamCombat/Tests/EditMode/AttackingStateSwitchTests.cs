@@ -13,7 +13,7 @@ namespace ArkhamCombat.Tests
 
         private static readonly ICharacterState Locomotion = new LocomotionState(null);
         private static readonly ICharacterState Airborne = new AirborneState(null);
-        private static readonly ICharacterState Attacking = new AttackingState(null, null);
+        private static readonly ICharacterState Attacking = new AttackingState(null, null, null);
 
         [Test]
         public void AnActionCanStart_OnTheGroundInLocomotion()

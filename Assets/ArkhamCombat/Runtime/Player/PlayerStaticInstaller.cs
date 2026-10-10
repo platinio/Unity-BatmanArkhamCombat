@@ -38,6 +38,7 @@ namespace ArkhamCombat.Player
 
             Container.Bind<CharacterBrain>().FromComponentInHierarchy().AsSingle();
             Container.Bind<CharacterMotor>().FromComponentInHierarchy().AsSingle();
+            Container.Bind<CombatActions>().FromComponentInHierarchy().AsSingle();
 
             Container.Bind(typeof(PlayerInputReader), typeof(ICharacterInput))
                 .To<PlayerInputReader>().AsSingle();
