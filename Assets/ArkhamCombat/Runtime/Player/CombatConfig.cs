@@ -1,17 +1,19 @@
+using System.Collections.Generic;
 using ArcaneOnyx.TPCharacterController.Inputs;
+using ArkhamCombat.Combat;
 using UnityEngine;
 
 namespace ArkhamCombat.Player
 {
     /// <summary>
     /// What every character's combat in the scene is tuned by: which kinds of press are the evade and
-    /// the counter, the facing turn time, and the numbers the stand-in target and hit checks use
-    /// until specs 04 and 05 replace them. The stance is set on each character's
-    /// CombatCharacterInstaller and the combo meter on its ComboTracker. One asset, bound by the
-    /// combat installer, so a different feel is a different asset.
+    /// the counter, when the combo tier rises and how long a combo lasts, the facing turn time, and
+    /// the numbers the stand-in target and hit checks use until specs 04 and 05 replace them. The
+    /// stance is set on each character's CombatCharacterInstaller. One asset, bound by the combat
+    /// installer, so a different feel is a different asset.
     /// </summary>
     [CreateAssetMenu(menuName = "ArkhamCombat/Combat Config", fileName = "CombatConfig")]
-    public sealed class CombatConfig : ScriptableObject
+    public sealed class CombatConfig : ScriptableObject, IComboMeterSettings
     {
         [Header("Interrupts")]
         [Tooltip("The kind of press that evades. Its global edges are taken only inside the current attack's evade window, or while idle.")]
@@ -19,6 +21,13 @@ namespace ArkhamCombat.Player
 
         [Tooltip("The kind of press that counters. Its global edges are taken only while a counterable attack is incoming.")]
         [SerializeField] private IntentKind counterKind;
+
+        [Header("Combo meter")]
+        [Tooltip("Combo counts at which the tier rises. The tier is the number of thresholds reached.")]
+        [SerializeField] private List<int> comboTierThresholds = new List<int> { 3, 5, 8 };
+
+        [Tooltip("Seconds without a new hit before the combo is lost. Tuned separately from the chain reset.")]
+        [SerializeField, Min(0f)] private float comboTimeoutSeconds = 2.5f;
 
         [Header("Facing")]
         [Tooltip("SmoothDamp time for turning toward the target while an action plays. Small: the warp needs the character squared up.")]
@@ -45,5 +54,8 @@ namespace ArkhamCombat.Player
         public float MaxTargetDistance => maxTargetDistance;
         public float MaxTargetAngle => maxTargetAngle;
         public float HitRangeMargin => hitRangeMargin;
+
+        IReadOnlyList<int> IComboMeterSettings.TierThresholds => comboTierThresholds;
+        float IComboMeterSettings.MeterTimeoutSeconds => comboTimeoutSeconds;
     }
 }

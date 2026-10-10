@@ -15,7 +15,7 @@ namespace ArkhamCombat.Player
     [StaticInstaller(StaticInstallerExecutionOrder.Normal)]
     public sealed class CombatStaticInstaller : ScriptableObjectInstaller
     {
-        [Tooltip("The interrupt kinds and the stand-in tunables.")]
+        [Tooltip("The interrupt kinds, the combo meter settings and the stand-in tunables.")]
         [SerializeField] private CombatConfig config;
 
         public override void InstallBindings()
@@ -29,6 +29,7 @@ namespace ArkhamCombat.Player
         private void BindSettings()
         {
             Container.Bind<CombatConfig>().FromInstance(config);
+            Container.Bind<IComboMeterSettings>().FromInstance(config);
             Container.Bind<InterruptKinds>().FromResolveGetter<CombatConfig>(InterruptKindsOf).AsSingle();
         }
 

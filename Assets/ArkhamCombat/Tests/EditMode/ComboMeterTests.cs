@@ -1,6 +1,7 @@
 using System.Collections.Generic;
 using ArkhamCombat.Combat;
 using NUnit.Framework;
+using static ArkhamCombat.Tests.CombatTestDoubles;
 
 namespace ArkhamCombat.Tests
 {
@@ -15,7 +16,7 @@ namespace ArkhamCombat.Tests
         public void SetUp()
         {
             raisedEvents = new List<string>();
-            meter = new ComboMeter(new ComboMeterSettings(TimeoutSeconds, tierThresholds: new[] { 3, 5, 8 }));
+            meter = new ComboMeter(new FixedComboMeterSettings(TimeoutSeconds, 3, 5, 8));
             meter.ComboChanged += (count, tier) => raisedEvents.Add($"combo {count} tier {tier}");
             meter.ComboReset += reason => raisedEvents.Add($"reset {reason}");
         }

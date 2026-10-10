@@ -14,10 +14,8 @@ namespace ArkhamCombat.Player
     /// </summary>
     public sealed class ComboTracker : CharacterComponent
     {
-        [Tooltip("When the tier rises, and how long the combo lasts without a new hit.")]
-        [SerializeField] private ComboMeterSettings meterSettings = new ComboMeterSettings();
-
         private ISceneGameEvents sceneGameEvents;
+        private IComboMeterSettings meterSettings;
         private ComboMeter meter;
 
         public int Count => meter.Count;
@@ -26,7 +24,11 @@ namespace ArkhamCombat.Player
         public int Tier => meter.Tier;
 
         [Inject]
-        internal void Construct(ISceneGameEvents sceneGameEvents) => this.sceneGameEvents = sceneGameEvents;
+        internal void Construct(ISceneGameEvents sceneGameEvents, IComboMeterSettings meterSettings)
+        {
+            this.sceneGameEvents = sceneGameEvents;
+            this.meterSettings = meterSettings;
+        }
 
         private void Awake() => CreateMeter();
 
