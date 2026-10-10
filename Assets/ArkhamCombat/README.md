@@ -70,7 +70,7 @@ Attacking after an action ended (recovery), never from Airborne or a reaction.
 | `ArkhamCombat.Player` | `Runtime/Player` | The installer, the combat brain and its combat components, the `Attacking` state, the facts updater, the combo tracker, the Function evaluator, and the stand-ins behind the core's interfaces | Combat, Presentation, BH3 (fact writer), Zenject, Hermes (runtime and the two generated assemblies) |
 | `ArkhamCombat.Shell` | `Runtime/Shell` | The frame-data overlay and the camera demo | Combat, Camera, Player (the overlay reads the `ComboTracker`) |
 | `ArkhamCombat.Camera` | `Runtime/Camera` | Group framing math and the combat framing source | Character controller |
-| `ArkhamCombat.Editor` | `Editor` | The node id dropdown, the fixture builder, and the fix-up for Hermes's generated assembly definitions | |
+| `ArkhamCombat.Editor` | `Editor` | The node id dropdown and the fixture builder | |
 | `ArkhamCombat.Tests` | `Tests/EditMode` | EditMode tests for the core and the stand-ins | |
 
 The intent buffer lives in the character controller submodule (`ArcaneOnyx.TPCharacterController`,
@@ -172,7 +172,6 @@ The intent buffer lives in the character controller submodule (`ArcaneOnyx.TPCha
 | `FrameDataOverlay` | The spec 01 tuning strip, IMGUI: one bar per recent action with the warp (yellow), hit (red), combo (green) and evade (blue) bands, magenta cue marks, a white playhead, and a tick per press coloured by its fate (green spent, red expired, yellow queued). The header's combo is the scene's `ComboTracker`, zero without one |
 | `CombatCameraDemo`, `GroupFramingSource`, `GroupFraming` | The combat framing on the camera rig: pivot drifts toward the enemy centroid, distance follows the spread. Pure math in `GroupFraming` |
 | `ChainNodeIdDrawer` | The dropdown of node ids on edge destinations and the stance root |
-| `HermesGeneratedAssemblyReferences` | Hermes rewrites `Hermes.EventArgs.asmdef` and `Hermes.Events.asmdef` from its own templates on every Regenerate Events; this puts the `ArkhamCombat.Combat` reference back when they are imported, because the events carry `AttackDefinition` and `ComboResetReason` |
 | `GroundStanceFixtureBuilder` | **ArkhamCombat → Build Ground Stance Fixture**: the four intent kinds (existing ones keep their seconds queued), four attacks with windows and cues, the Ground stance, the combat config, rebuilt in place |
 
 ## Events
@@ -194,6 +193,10 @@ Onyx → Hermes**; **Regenerate Events** there writes the code to `Assets/Hermes
 `#if HERMES_EVENTS_GENERATED`, so the project still compiles without generated events; the combo then
 does not count and each `ComboTracker` says so once. The scene needs one object with `SceneGameEvents`
 and `GameEventDispatcher`; Hermes's installer binds it as `ISceneGameEvents`.
+
+The events carry `AttackDefinition` and `ComboResetReason`, so `ArkhamCombat.Combat` is listed under
+**Extra Assembly References** in the Hermes settings (`Assets/Editor/HermesSettings.asset`), which makes
+both generated assemblies reference it.
 
 ## Authoring
 

@@ -15,3 +15,5 @@ MonoBehaviour:
   argumentsModulePath: Assets/Hermes.Generated/Arguments
   eventsModulePath: Assets/Hermes.Generated/Events
   useVisualScripting: 0
+  extraAssemblyReferences:
+  - {fileID: 5897886265953266890, guid: 6f1170de31882f7448b8ae47f1784b80, type: 3}
