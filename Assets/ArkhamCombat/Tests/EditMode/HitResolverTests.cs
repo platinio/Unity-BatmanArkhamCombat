@@ -82,6 +82,16 @@ namespace ArkhamCombat.Tests
         }
 
         [Test]
+        public void TheFacingIsMeasuredOnTheGround_HoweverSteeplyTheAttackerLooksDown()
+        {
+            StrikeOrigin lookingDownAndAhead = new StrikeOrigin(Vector3.zero, new Vector3(0f, -0.9f, 0.4f).normalized);
+
+            bool hasLanded = resolver.TryLand(jab, lookingDownAndAhead, Vector3.forward * StrikeDistance, out _);
+
+            Assert.IsTrue(hasLanded);
+        }
+
+        [Test]
         public void AnAttackerStandingOnItsTarget_Hits_WhicheverWayItFaces()
         {
             StrikeOrigin facingAway = new StrikeOrigin(Vector3.zero, Vector3.back);

@@ -3,7 +3,6 @@ using UnityEngine;
 
 namespace ArkhamCombat.Combat
 {
-    /// <summary>One character's health, and what each hit does to it.</summary>
     public sealed class HitReceiver
     {
         private readonly HitReceiverProfile profile;
