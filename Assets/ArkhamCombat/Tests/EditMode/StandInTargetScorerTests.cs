@@ -3,23 +3,12 @@ using ArkhamCombat.Combat;
 using ArkhamCombat.Player;
 using NUnit.Framework;
 using UnityEngine;
+using static ArkhamCombat.Tests.CombatTestDoubles;
 
 namespace ArkhamCombat.Tests
 {
     public class StandInTargetScorerTests
     {
-        private sealed class PointCombatTarget : ICombatTarget
-        {
-            public bool IsValid { get; set; } = true;
-            public Vector3 Position { get; set; }
-            public string State => "Idle";
-            public AttackDefinition LastReceived;
-
-            public PointCombatTarget(Vector3 position) => Position = position;
-
-            public void Receive(AttackDefinition attack) => LastReceived = attack;
-        }
-
         private sealed class ListRoster : ITargetRoster
         {
             public readonly List<ICombatTarget> Targets = new List<ICombatTarget>();

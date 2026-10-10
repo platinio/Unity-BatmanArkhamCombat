@@ -197,7 +197,7 @@ The ordered list of per-frame jobs is the controller's too: `CharacterComponent`
 | `StandInTargetScorer` | The `ITargetScorer` stand-in: the nearest roster target roughly along the direction, distance alone with no direction. Tuned through `ITargetingSettings`, which `CombatConfig` implements. Replaced by spec 04 |
 | `SceneTargetRoster` | Every `ICombatTarget` component in the scene, read on first use. Replaced by the encounter director |
 | `CombatDummy` | A thing to hit: a state string, a hit counter, a flash. Replaced by enemy status components |
-| `DemoHitWindowListener` | A range check at the hit window's start: in range the target receives the attack and `StrikeLanded` is raised, otherwise `StrikeWhiffed`; the attacker is the character's object, the target the target's. It does not know who counts combos. Its margin comes in as `IHitRangeSettings`. Replaced by spec 05's hit pipeline |
+| `DemoHitWindowListener` | A range check at the hit window's start, measured from where this tick's pending warp lands rather than from the transform, which the attacking state moves only after the components tick: in range the target receives the attack and `StrikeLanded` is raised, otherwise `StrikeWhiffed`; the attacker is the character's object, the target the target's. It does not know who counts combos. Its margin comes in as `IHitRangeSettings`. Replaced by spec 05's hit pipeline |
 
 ### Shell, Camera, Editor
 
@@ -294,7 +294,7 @@ Background is on.
 ## Tests
 
 `ArkhamCombat.Tests` runs in EditMode and needs no scene: windows, actions, stance validation, pool
-policies, the group framing math on plain vectors, the meter, the combo tracker on a dispatcher built by the test, the resolver, the clock, the runner with the null driver and recording test
+policies, the group framing math on plain vectors, the stand-in hit check against a target with and without a pending warp, the meter, the combo tracker on a dispatcher built by the test, the resolver, the clock, the runner with the null driver and recording test
 doubles, its started and ended events, the stand-in picker on test targets, the character brain listing the character components already on a character, the combat actions with a start gate that
 allows and refuses and their announcements on a dispatcher built by the test, the attacking state switch's rule, the character installer on containers built by the test (which
 condition evaluator a stance gets, the optional pieces and their do-nothing versions, a runner for a character with
