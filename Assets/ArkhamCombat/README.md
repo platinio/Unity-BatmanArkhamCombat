@@ -197,7 +197,7 @@ The ordered list of per-frame jobs is the controller's too: `CharacterComponent`
 | `StandInTargetScorer` | The `ITargetScorer` stand-in: the nearest roster target roughly along the direction, distance alone with no direction. Tuned through `ITargetingSettings`, which `CombatConfig` implements. Replaced by spec 04 |
 | `SceneTargetRoster` | Every `ICombatTarget` component in the scene, read on first use. Replaced by the encounter director |
 | `CombatDummy` | A thing to hit: a state string, a hit counter, a flash. Replaced by enemy status components |
-| `DemoHitWindowListener` | A range check at the hit window's start: in range the target receives the attack and `StrikeLanded` is raised, otherwise `StrikeWhiffed`; the attacker is the character's object, the target the target's. It does not know who counts combos. Replaced by spec 05's hit pipeline |
+| `DemoHitWindowListener` | A range check at the hit window's start: in range the target receives the attack and `StrikeLanded` is raised, otherwise `StrikeWhiffed`; the attacker is the character's object, the target the target's. It does not know who counts combos. Its margin comes in as `IHitRangeSettings`. Replaced by spec 05's hit pipeline |
 
 ### Shell, Camera, Editor
 

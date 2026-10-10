@@ -55,6 +55,7 @@ namespace ArkhamCombat.Tests
             sceneContainer = new DiContainer();
             sceneContainer.Bind<CombatConfig>().FromInstance(config);
             sceneContainer.Bind<ICombatFactsSettings>().FromInstance(config);
+            sceneContainer.Bind<IHitRangeSettings>().FromInstance(config);
             sceneContainer.Bind<InterruptKinds>().FromInstance(kinds.InterruptKinds);
             sceneContainer.Bind<ICharacterInput>().FromInstance(input);
             sceneContainer.Bind<IMovementFrame>().FromInstance(new WorldMovementFrame());

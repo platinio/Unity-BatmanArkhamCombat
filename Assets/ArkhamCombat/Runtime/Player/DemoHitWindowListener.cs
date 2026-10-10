@@ -12,13 +12,13 @@ namespace ArkhamCombat.Player
     /// </summary>
     public sealed class DemoHitWindowListener : IHitWindowListener
     {
-        private readonly CombatConfig config;
+        private readonly IHitRangeSettings settings;
         private readonly Transform character;
         private readonly ISceneGameEvents sceneGameEvents;
 
-        public DemoHitWindowListener(CombatConfig config, CharacterMotor motor, ISceneGameEvents sceneGameEvents)
+        public DemoHitWindowListener(IHitRangeSettings settings, CharacterMotor motor, ISceneGameEvents sceneGameEvents)
         {
-            this.config = config;
+            this.settings = settings;
             this.sceneGameEvents = sceneGameEvents;
             character = motor.transform;
         }
@@ -42,7 +42,7 @@ namespace ArkhamCombat.Player
         {
             Vector3 toTarget = targetPosition - character.position;
             toTarget.y = 0f;
-            return toTarget.magnitude <= attack.StrikeDistance + config.HitRangeMargin;
+            return toTarget.magnitude <= attack.StrikeDistance + settings.HitRangeMargin;
         }
 
         private void AnnounceStrikeLanded(AttackDefinition attack, ICombatTarget victim)
