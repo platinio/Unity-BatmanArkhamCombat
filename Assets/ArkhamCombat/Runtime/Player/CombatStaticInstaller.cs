@@ -29,6 +29,8 @@ namespace ArkhamCombat.Player
             Container.Bind<CombatConfig>().FromInstance(config);
             Container.Bind<IComboMeterSettings>().FromInstance(config);
             Container.Bind<ITargetingSettings>().FromInstance(config);
+            Container.Bind<IFacingSettings>().FromInstance(config);
+            Container.Bind<ICombatFactsSettings>().FromInstance(config);
             Container.Bind<InterruptKinds>().FromResolveGetter<CombatConfig>(InterruptKindsOf).AsSingle();
         }
 

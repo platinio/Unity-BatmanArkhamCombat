@@ -16,7 +16,7 @@ namespace ArkhamCombat.Player
         private ActionRunner runner;
         private IActionTargetPicker targetPicker;
         private ComboTracker comboTracker;
-        private CombatConfig config;
+        private ICombatFactsSettings settings;
         private IMovementFrame frame;
         private CharacterBrain characterBrain;
         private Vector3 toTarget;
@@ -33,12 +33,12 @@ namespace ArkhamCombat.Player
         [Inject]
         private void Construct(
             ActionRunner runner,
-            CombatConfig config,
+            ICombatFactsSettings settings,
             IMovementFrame frame,
             IActionTargetPicker targetPicker)
         {
             this.runner = runner;
-            this.config = config;
+            this.settings = settings;
             this.frame = frame;
             this.targetPicker = targetPicker;
         }
@@ -122,13 +122,13 @@ namespace ArkhamCombat.Player
             forward.y = 0f;
 
             Facts.TargetDistance = toTarget.magnitude;
-            Facts.TargetSide = SideOf(forward, toTarget, config.DeadAheadAngle);
+            Facts.TargetSide = SideOf(forward, toTarget, settings.DeadAheadAngle);
             Facts.TargetState = target is ICombatTarget combatant ? combatant.State : string.Empty;
 
             // The same lunge rule the warp refuses by; the fact describes the next press's target, the warp the current action's.
             Facts.IsTargetBeyondLunge = currentAttack != null
                 ? currentAttack.IsBeyondLunge(transform.position, target.Position)
-                : Facts.TargetDistance > config.MaxLungeWhileIdle;
+                : Facts.TargetDistance > settings.MaxLungeWhileIdle;
         }
 
         private void DescribeNoTarget()
