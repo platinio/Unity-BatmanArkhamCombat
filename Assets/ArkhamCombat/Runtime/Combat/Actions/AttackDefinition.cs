@@ -18,7 +18,7 @@ namespace ArkhamCombat.Combat
     public sealed class AttackDefinition : ActionDefinition
     {
         /// <summary>Closer than this the character stands on the target and has no direction to back off along.</summary>
-        private const float StandingOnTargetSquaredDistance = 1e-6f;
+        private const float StandingOnTargetSqrDistance = 1e-6f;
 
         [Header("Windows (normalized time)")]
         [Tooltip("While open, this attack can hit.")]
@@ -93,7 +93,7 @@ namespace ArkhamCombat.Combat
             Vector3 awayFromTarget = position - targetPosition;
             awayFromTarget.y = 0f;
 
-            if (awayFromTarget.sqrMagnitude < StandingOnTargetSquaredDistance)
+            if (awayFromTarget.sqrMagnitude < StandingOnTargetSqrDistance)
             {
                 awayFromTarget = Vector3.back;
             }

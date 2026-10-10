@@ -12,8 +12,14 @@ namespace ArkhamCombat.Shell
     /// </summary>
     public sealed class CombatCameraDemo : MonoBehaviour
     {
+        private const float ReadoutWidth = 900f;
+        private const float ReadoutHeight = 60f;
+
         [Tooltip("Capsules standing in for the roster. Disabled ones are ignored.")]
         [SerializeField] private Transform[] enemies;
+
+        [Tooltip("Top-left corner of the readout.")]
+        [SerializeField] private Vector2 origin = new Vector2(12f, 12f);
 
         [Inject] private PlayerCameraRig rig;
 
@@ -47,7 +53,7 @@ namespace ArkhamCombat.Shell
             string bearing = group.HasYawTarget ? $"{group.CentroidYaw:0}" : "held";
 
             GUI.Label(
-                new Rect(12, 12, 900, 60),
+                new Rect(origin.x, origin.y, ReadoutWidth, ReadoutHeight),
                 $"Combat camera   enemies {(group.HasGroup ? "yes" : "none")}   target yaw {bearing}   yaw {rig.Yaw:0}   pitch {rig.Pitch:0}\n" +
                 $"distance {framing.Distance:0.00}   fov {framing.Fov:0}   pivot offset {framing.PivotOffset.x:0.00},{framing.PivotOffset.z:0.00}");
         }

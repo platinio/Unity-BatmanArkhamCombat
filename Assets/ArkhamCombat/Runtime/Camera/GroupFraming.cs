@@ -9,6 +9,8 @@ namespace ArkhamCombat.Cameras
     /// </summary>
     public static class GroupFraming
     {
+        private const float NegligibleSqrDistance = 1e-6f;
+
         public readonly struct Result
         {
             /// <summary>False when there were no enemies; every other field then holds the fallback.</summary>
@@ -82,7 +84,7 @@ namespace ArkhamCombat.Cameras
 
             float minYawDistance = Mathf.Max(0f, settings.YawMinCentroidDistance);
             bool hasYawTarget = toCentroid.sqrMagnitude > minYawDistance * minYawDistance
-                                && toCentroid.sqrMagnitude > 1e-6f;
+                                && toCentroid.sqrMagnitude > NegligibleSqrDistance;
 
             float yaw = hasYawTarget
                 ? Mathf.Atan2(toCentroid.x, toCentroid.z) * Mathf.Rad2Deg

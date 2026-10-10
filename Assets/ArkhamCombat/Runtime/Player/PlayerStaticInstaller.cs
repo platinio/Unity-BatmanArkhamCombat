@@ -28,24 +28,63 @@ namespace ArkhamCombat.Player
 
         public override void InstallBindings()
         {
+            ReportAuthoringErrors();
+
+            BindProfile();
+            BindPlayerParts();
+            BindInput();
+            BindStateMachine();
+            BindStates();
+        }
+
+        private void ReportAuthoringErrors()
+        {
             if (profile == null)
             {
                 Debug.LogError($"[{nameof(PlayerStaticInstaller)}] No CharacterProfile assigned on '{name}'.", this);
             }
 
-            Container.Bind<CharacterProfile>().FromInstance(profile);
-            Container.Bind<InputConfig>().FromResolveGetter<CharacterProfile>(p => p.Input);
+            if (states.Count == 0)
+            {
+                Debug.LogError($"[{nameof(PlayerStaticInstaller)}] No states listed on '{name}', so the character has nothing to be in.", this);
+            }
 
+            for (int i = 0; i < states.Count; i++)
+            {
+                if (states[i] == null)
+                {
+                    Debug.LogError($"[{nameof(PlayerStaticInstaller)}] State {i} on '{name}' is empty and binds nothing.", this);
+                }
+            }
+        }
+
+        private void BindProfile()
+        {
+            Container.Bind<CharacterProfile>().FromInstance(profile);
+            Container.Bind<InputConfig>().FromResolveGetter<CharacterProfile>(characterProfile => characterProfile.Input);
+        }
+
+        // Found once in the hierarchy: one player per scene.
+        private void BindPlayerParts()
+        {
             Container.Bind<CharacterBrain>().FromComponentInHierarchy().AsSingle();
             Container.Bind<CharacterMotor>().FromComponentInHierarchy().AsSingle();
             Container.Bind<CombatActions>().FromComponentInHierarchy().AsSingle();
+        }
 
-            Container.Bind(typeof(PlayerInputReader), typeof(ICharacterInput))
-                .To<PlayerInputReader>().AsSingle();
+        private void BindInput()
+        {
+            Container.Bind(typeof(PlayerInputReader), typeof(ICharacterInput)).To<PlayerInputReader>().AsSingle();
+        }
 
+        private void BindStateMachine()
+        {
             Container.Bind<CharacterStateMachine>().AsSingle();
             Container.Bind<CharacterContext>().AsSingle();
+        }
 
+        private void BindStates()
+        {
             foreach (ICharacterStateBinding binding in states)
             {
                 binding?.Install(Container);
