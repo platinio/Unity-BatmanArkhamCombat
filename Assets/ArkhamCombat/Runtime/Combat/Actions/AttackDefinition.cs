@@ -3,7 +3,7 @@ using UnityEngine;
 
 namespace ArkhamCombat.Combat
 {
-    /// <summary>What the hit pipeline does to the receiver. Handed through untouched; spec 05 owns the rules.</summary>
+    /// <summary>What an attack asks of its target. The target's profile may answer with less.</summary>
     public enum HitReaction
     {
         Flinch,

@@ -2001,6 +2001,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: ArkhamCombat.Player::ArkhamCombat.Player.CombatDummy
   state: Idle
+  profile: {fileID: 11400000, guid: 2d68a83f33bc8ca4c84dbdac3f570b53, type: 2}
   flashSeconds: 0.15
   flashColour: {r: 1, g: 1, b: 1, a: 1}
 --- !u!1 &2010000020
@@ -2131,6 +2132,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: ArkhamCombat.Player::ArkhamCombat.Player.CombatDummy
   state: Idle
+  profile: {fileID: 11400000, guid: 2d68a83f33bc8ca4c84dbdac3f570b53, type: 2}
   flashSeconds: 0.15
   flashColour: {r: 1, g: 1, b: 1, a: 1}
 --- !u!1 &2010000030
@@ -2261,6 +2263,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: ArkhamCombat.Player::ArkhamCombat.Player.CombatDummy
   state: Idle
+  profile: {fileID: 11400000, guid: 2d68a83f33bc8ca4c84dbdac3f570b53, type: 2}
   flashSeconds: 0.15
   flashColour: {r: 1, g: 1, b: 1, a: 1}
 --- !u!1 &2010000100

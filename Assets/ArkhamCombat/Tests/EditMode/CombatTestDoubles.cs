@@ -258,15 +258,17 @@ namespace ArkhamCombat.Tests
             public bool IsValid { get; set; } = true;
             public Vector3 Position { get; set; }
             public string State => "Idle";
-            public AttackDefinition LastReceived;
+            public HitResult ResultToGive = HitResult.Landed(AppliedReaction.Flinch);
+            public HitInfo LastReceived;
             public int HitsTaken;
 
             public PointCombatTarget(Vector3 position) => Position = position;
 
-            public void Receive(AttackDefinition attack)
+            public HitResult Receive(HitInfo hit)
             {
-                LastReceived = attack;
+                LastReceived = hit;
                 HitsTaken++;
+                return ResultToGive;
             }
         }
 
