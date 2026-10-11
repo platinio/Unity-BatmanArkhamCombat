@@ -9,6 +9,8 @@ namespace ArkhamCombat.Editor
     /// </summary>
     internal static class FixtureAssets
     {
+        public const string LogPrefix = "[Fixture]";
+
         public static T LoadOrCreate<T>(string path) where T : ScriptableObject
         {
             T asset = AssetDatabase.LoadAssetAtPath<T>(path);
