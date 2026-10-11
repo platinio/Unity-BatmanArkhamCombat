@@ -25,3 +25,14 @@ MonoBehaviour:
   stickPushedMagnitude: 0.1
   hitRangeMargin: 0.6
   hitAngle: 60
+  encounter:
+    maxMeleeTokens: 1
+    maxRangedTokens: 1
+    maxTokenHoldSeconds: 3
+    reacquireCooldownSeconds: 1.5
+    slotCount: 8
+    slotRadius: 3
+    slotReassignIntervalSeconds: 1
+    slotSampleRadius: 1
+    attackerAvoidancePriority: 20
+    defaultAvoidancePriority: 50

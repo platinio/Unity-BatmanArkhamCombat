@@ -9,6 +9,7 @@ namespace ArkhamCombat.Encounter
     {
         public override void InstallBindings()
         {
+            Container.Bind<ISlotValidator>().To<NavMeshSlotValidator>().AsSingle();
             Container.Bind<EncounterDirector>().AsSingle();
             Container.Bind<EncounterDirectorBehaviour>().FromComponentInHierarchy().AsSingle();
         }

@@ -1,3 +1,4 @@
+using System;
 using UnityEngine;
 using Zenject;
 
@@ -12,6 +13,9 @@ namespace ArkhamCombat.Encounter
 
         private EncounterDirectorBehaviour encounter;
         private bool hasJoined;
+
+        public event Action TokenGranted;
+        public event Action TokenReleased;
 
         public Vector3 Position => transform.position;
         public Transform Target => hasJoined ? encounter.Target : null;
@@ -42,6 +46,8 @@ namespace ArkhamCombat.Encounter
                 return;
             }
 
+            Director.TokenGranted += RaiseTokenGrantedWhenItIsMine;
+            Director.TokenReleased += RaiseTokenReleasedWhenItIsMine;
             Director.Register(this, tokenType);
             hasJoined = true;
         }
@@ -54,7 +60,25 @@ namespace ArkhamCombat.Encounter
             }
 
             Director.Unregister(this);
+            Director.TokenGranted -= RaiseTokenGrantedWhenItIsMine;
+            Director.TokenReleased -= RaiseTokenReleasedWhenItIsMine;
             hasJoined = false;
+        }
+
+        private void RaiseTokenGrantedWhenItIsMine(IEncounterAgent holder)
+        {
+            if (ReferenceEquals(holder, this))
+            {
+                TokenGranted?.Invoke();
+            }
+        }
+
+        private void RaiseTokenReleasedWhenItIsMine(IEncounterAgent formerHolder)
+        {
+            if (ReferenceEquals(formerHolder, this))
+            {
+                TokenReleased?.Invoke();
+            }
         }
     }
 }

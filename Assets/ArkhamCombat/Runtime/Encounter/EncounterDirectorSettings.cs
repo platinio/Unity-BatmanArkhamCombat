@@ -27,6 +27,15 @@ namespace ArkhamCombat.Encounter
         [Tooltip("Seconds between re-spreading agents across the ring.")]
         [SerializeField] private float slotReassignIntervalSeconds = 1.0f;
 
+        [Tooltip("How far from its place on the ring a slot may be moved to reach walkable ground. A slot with none that close is left empty.")]
+        [SerializeField] private float slotSampleRadius = 1.0f;
+
+        [Tooltip("NavMeshAgent avoidance priority of an agent holding a token. Lower numbers are steered around by higher ones.")]
+        [SerializeField, Range(0, 99)] private int attackerAvoidancePriority = 20;
+
+        [Tooltip("NavMeshAgent avoidance priority of an agent without a token.")]
+        [SerializeField, Range(0, 99)] private int defaultAvoidancePriority = 50;
+
         public int MaxMeleeTokens => Mathf.Max(0, maxMeleeTokens);
         public int MaxRangedTokens => Mathf.Max(0, maxRangedTokens);
         public float MaxTokenHoldSeconds => Mathf.Max(0.0f, maxTokenHoldSeconds);
@@ -34,6 +43,9 @@ namespace ArkhamCombat.Encounter
         public int SlotCount => Mathf.Max(1, slotCount);
         public float SlotRadius => Mathf.Max(0.0f, slotRadius);
         public float SlotReassignIntervalSeconds => Mathf.Max(0.0f, slotReassignIntervalSeconds);
+        public float SlotSampleRadius => Mathf.Max(0.0f, slotSampleRadius);
+        public int AttackerAvoidancePriority => attackerAvoidancePriority;
+        public int DefaultAvoidancePriority => defaultAvoidancePriority;
 
         public EncounterDirectorSettings()
         {
@@ -46,7 +58,10 @@ namespace ArkhamCombat.Encounter
             float reacquireCooldownSeconds = 1.5f,
             int slotCount = 8,
             float slotRadius = 4.0f,
-            float slotReassignIntervalSeconds = 1.0f)
+            float slotReassignIntervalSeconds = 1.0f,
+            float slotSampleRadius = 1.0f,
+            int attackerAvoidancePriority = 20,
+            int defaultAvoidancePriority = 50)
         {
             this.maxMeleeTokens = maxMeleeTokens;
             this.maxRangedTokens = maxRangedTokens;
@@ -55,6 +70,9 @@ namespace ArkhamCombat.Encounter
             this.slotCount = slotCount;
             this.slotRadius = slotRadius;
             this.slotReassignIntervalSeconds = slotReassignIntervalSeconds;
+            this.slotSampleRadius = slotSampleRadius;
+            this.attackerAvoidancePriority = attackerAvoidancePriority;
+            this.defaultAvoidancePriority = defaultAvoidancePriority;
         }
     }
 }
