@@ -1,5 +1,6 @@
 using System.Collections.Generic;
 using ArkhamCombat.Combat;
+using ArkhamCombat.Enemies;
 using ArkhamCombat.Player;
 using NUnit.Framework;
 using UnityEngine;
@@ -101,16 +102,16 @@ namespace ArkhamCombat.Tests
         {
             GameObject firstObject = new GameObject("a");
             GameObject secondObject = new GameObject("b");
-            CombatDummy firstDummy = firstObject.AddComponent<CombatDummy>();
-            CombatDummy secondDummy = secondObject.AddComponent<CombatDummy>();
+            EnemyStatus firstEnemy = firstObject.AddComponent<EnemyStatus>();
+            EnemyStatus secondEnemy = secondObject.AddComponent<EnemyStatus>();
 
             try
             {
                 SceneTargetRoster roster = new SceneTargetRoster();
                 IReadOnlyList<ICombatTarget> targets = roster.Targets;
 
-                CollectionAssert.Contains(targets, firstDummy);
-                CollectionAssert.Contains(targets, secondDummy);
+                CollectionAssert.Contains(targets, firstEnemy);
+                CollectionAssert.Contains(targets, secondEnemy);
             }
             finally
             {
