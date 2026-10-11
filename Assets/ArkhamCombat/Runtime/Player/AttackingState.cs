@@ -1,6 +1,7 @@
 using System;
 using ArcaneOnyx.TPCharacterController.Motor;
 using ArcaneOnyx.TPCharacterController.States;
+using ArkhamCombat.Characters;
 using ArkhamCombat.Combat;
 using UnityEngine;
 using Zenject;

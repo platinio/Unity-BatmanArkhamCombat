@@ -4,12 +4,14 @@ using ArkhamCombat.Combat;
 using UnityEngine;
 using Zenject;
 
-namespace ArkhamCombat.Player
+namespace ArkhamCombat.Characters
 {
     /// <summary>
     /// The runner lives in the character's own context, which the scene cannot see into, so this is
-    /// also where a state or the overlay finds the runner and the frame's warp movement. Without
-    /// generated Hermes events the actions still play and nothing is announced.
+    /// also where a state or the overlay finds the runner and the frame's warp movement. A character
+    /// with a <see cref="CharacterBrain"/> is ticked by it in the order of its list; one without, an
+    /// enemy, ticks itself. Without generated Hermes events the actions still play and nothing is
+    /// announced.
     /// </summary>
     public sealed class CombatActions : CharacterComponent
     {
@@ -17,6 +19,7 @@ namespace ArkhamCombat.Player
         private MotorWarpMover warpMover;
         private IActionStartGate startGate;
         private ISceneGameEvents sceneGameEvents;
+        private bool isTickedByABrain;
 
         public ActionRunner Runner => runner;
 
@@ -35,15 +38,25 @@ namespace ArkhamCombat.Player
 
         private void Awake()
         {
+            isTickedByABrain = TryGetComponent(out CharacterBrain _);
+
             if (runner == null)
             {
                 Debug.LogError(
                     $"[{nameof(CombatActions)}] Nothing was injected on '{name}'. The character needs a " +
-                    $"GameObjectContext with a {nameof(CombatCharacterInstaller)}, and the scene a SceneContext.", this);
+                    $"GameObjectContext with an installer that binds its {nameof(ActionRunner)}, and the scene a SceneContext.", this);
             }
         }
 
         private void Start() => StartListeningToTheRunner();
+
+        private void Update()
+        {
+            if (!isTickedByABrain)
+            {
+                Tick(Time.deltaTime);
+            }
+        }
 
         private void OnDestroy()
         {

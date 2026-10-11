@@ -5,6 +5,7 @@ using NUnit.Framework;
 using UnityEditor;
 using UnityEngine;
 using static ArkhamCombat.Tests.CombatTestDoubles;
+using ArkhamCombat.Characters;
 
 namespace ArkhamCombat.Tests
 {

@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using ArcaneOnyx.GameEventGenerator;
 using ArcaneOnyx.TPCharacterController.Inputs;
+using ArkhamCombat.Characters;
 using ArkhamCombat.Combat;
 using ArkhamCombat.Player;
 using NUnit.Framework;

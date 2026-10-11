@@ -1,5 +1,6 @@
 using ArcaneOnyx.GameEventGenerator;
 using ArcaneOnyx.TPCharacterController.Motor;
+using ArkhamCombat.Characters;
 using ArkhamCombat.Combat;
 using UnityEngine;
 

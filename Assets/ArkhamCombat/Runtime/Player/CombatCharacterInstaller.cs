@@ -2,6 +2,7 @@ using System.Collections.Generic;
 using ArcaneOnyx.TPCharacterController;
 using ArcaneOnyx.TPCharacterController.Inputs;
 using ArcaneOnyx.TPCharacterController.Motor;
+using ArkhamCombat.Characters;
 using ArkhamCombat.Combat;
 using UnityEngine;
 using Zenject;

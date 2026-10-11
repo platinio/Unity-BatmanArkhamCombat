@@ -1,0 +1,21 @@
+{
+    "name": "ArkhamCombat.Characters",
+    "rootNamespace": "ArkhamCombat.Characters",
+    "references": [
+        "ArcaneOnyx.TPCharacterController",
+        "ArkhamCombat.Combat",
+        "Hermes.EventArgs",
+        "Hermes.Events",
+        "Hermes.Runtime",
+        "Zenject"
+    ],
+    "includePlatforms": [],
+    "excludePlatforms": [],
+    "allowUnsafeCode": false,
+    "overrideReferences": false,
+    "precompiledReferences": [],
+    "autoReferenced": true,
+    "defineConstraints": [],
+    "versionDefines": [],
+    "noEngineReferences": false
+}

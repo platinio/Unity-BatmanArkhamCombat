@@ -2,6 +2,7 @@
     "name": "ArkhamCombat.Player",
     "rootNamespace": "ArkhamCombat.Player",
     "references": [
+        "ArkhamCombat.Characters",
         "ArcaneOnyx.TPCharacterController",
         "ArcaneOnyx.UnityExtensions.Runtime",
         "ArcaneOnyx.BehaviorTree",
