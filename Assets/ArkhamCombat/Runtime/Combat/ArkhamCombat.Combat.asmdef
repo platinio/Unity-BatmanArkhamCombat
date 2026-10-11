@@ -3,6 +3,7 @@
     "rootNamespace": "ArkhamCombat.Combat",
     "references": [
         "ArcaneOnyx.TPCharacterController",
+        "ArcaneOnyx.ScriptableObjectDatabase",
         "ArcaneOnyx.VisualScriptingExtension.Runtime",
         "MackySoft.SerializeReferenceExtensions",
         "Unity.VisualScripting.Core",

@@ -14,7 +14,8 @@
         "Unity.VisualScripting.Flow",
         "UnityEditor.TestRunner",
         "UnityEngine.TestRunner",
-        "Zenject"
+        "Zenject",
+        "ArcaneOnyx.ScriptableObjectDatabase"
     ],
     "includePlatforms": [
         "Editor"

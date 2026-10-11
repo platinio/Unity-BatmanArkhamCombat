@@ -5,7 +5,8 @@
         "ArcaneOnyx.TPCharacterController",
         "ArkhamCombat.Combat",
         "ArkhamCombat.Presentation",
-        "ArkhamCombat.Player"
+        "ArkhamCombat.Player",
+        "ArcaneOnyx.ScriptableObjectDatabase"
     ],
     "includePlatforms": [
         "Editor"
