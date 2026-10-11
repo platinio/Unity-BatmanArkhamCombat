@@ -21,7 +21,7 @@ namespace ArkhamCombat.Tests
         [SetUp]
         public void SetUp()
         {
-            director = new EncounterDirector(new EncounterDirectorSettings(maxMeleeTokens: 1));
+            director = new EncounterDirector(new EncounterDirectorSettings(maxMeleeTokens: 1, maxRangedTokens: 0));
 
             encounterObject = HiddenObject("Encounter");
             encounter = encounterObject.AddComponent<EncounterDirectorBehaviour>();
@@ -101,12 +101,89 @@ namespace ArkhamCombat.Tests
         public void ReleasingItsToken_GivesTheTurnBack()
         {
             JoinTheEncounter();
-            agent.TryAcquireToken();
+            Assert.IsTrue(agent.TryAcquireToken(), "sanity: it draws from the melee pool, the only one with a token");
 
             agent.ReleaseToken();
 
             Assert.IsFalse(agent.HasToken);
             Assert.AreEqual(0, director.HeldTokenCount(AttackTokenType.Melee));
+        }
+
+        [Test]
+        public void WhoeverHearsItJoin_CanAlreadyAskItForItsTarget()
+        {
+            Transform targetWhenAnnounced = null;
+            director.AgentRegistered += _ => targetWhenAnnounced = agent.Target;
+
+            JoinTheEncounter();
+
+            Assert.AreSame(target.transform, targetWhenAnnounced);
+        }
+
+        [Test]
+        public void ItAnnouncesItsOwnToken_AndNobodyElses()
+        {
+            EncounterDirector twoTokens = new EncounterDirector(new EncounterDirectorSettings(maxMeleeTokens: 2));
+            encounter.Construct(twoTokens);
+            JoinTheEncounter();
+            EncounterAgent otherAgent = AnotherAgentInTheEncounter();
+            int granted = 0;
+            int released = 0;
+            agent.TokenGranted += () => granted++;
+            agent.TokenReleased += () => released++;
+
+            otherAgent.TryAcquireToken();
+            otherAgent.ReleaseToken();
+            Assert.AreEqual(0, granted + released, "another agent's token");
+
+            agent.TryAcquireToken();
+            agent.ReleaseToken();
+            Assert.AreEqual(1, granted);
+            Assert.AreEqual(1, released);
+        }
+
+        [Test]
+        public void JoiningAgainAfterLeaving_ItAnnouncesItsTokenOnce()
+        {
+            JoinTheEncounter();
+            agent.OnDisable();
+            agent.OnEnable();
+            int granted = 0;
+            agent.TokenGranted += () => granted++;
+
+            agent.TryAcquireToken();
+
+            Assert.AreEqual(1, granted);
+        }
+
+        [Test]
+        public void WithAHostThatWasGivenNoDirector_ItWarns_AndJoinsNothing()
+        {
+            GameObject hostWithoutADirector = HiddenObject("Host without a director");
+            LogAssert.Expect(LogType.Warning, new Regex("found no encounter director"));
+
+            try
+            {
+                agent.Construct(hostWithoutADirector.AddComponent<EncounterDirectorBehaviour>());
+                agent.OnEnable();
+
+                Assert.IsFalse(agent.TryAcquireToken());
+                Assert.IsNull(agent.Target);
+            }
+            finally
+            {
+                Object.DestroyImmediate(hostWithoutADirector);
+            }
+        }
+
+        [Test]
+        public void NeverInjected_ItSaysThat_RatherThanBlamingTheScene()
+        {
+            LogAssert.Expect(LogType.Warning, new Regex("was never injected"));
+
+            agent.OnEnable();
+
+            Assert.IsFalse(agent.TryAcquireToken());
         }
 
         [Test]

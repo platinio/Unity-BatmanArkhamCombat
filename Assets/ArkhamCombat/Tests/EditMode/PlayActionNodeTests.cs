@@ -1,6 +1,5 @@
 using System.Text.RegularExpressions;
 using ArcaneOnyx.BehaviorTree;
-using ArcaneOnyx.BehaviorTree.Authoring;
 using ArcaneOnyx.GraphCore;
 using ArkhamCombat.Characters;
 using ArkhamCombat.Combat;
@@ -12,7 +11,6 @@ using static ArkhamCombat.Tests.CombatTestDoubles;
 
 namespace ArkhamCombat.Tests
 {
-    // The machine is never woken: it only gives the nodes their agent, and each test ticks the graph by hand.
     public class PlayActionNodeTests
     {
         private const float ActionSeconds = 1f;
@@ -31,7 +29,7 @@ namespace ArkhamCombat.Tests
             flinch = Action("Flinch", ActionSeconds);
             stagger = Action("Stagger", ActionSeconds);
             agent = AgentWithARunner("Agent", out combatActions);
-            graph = TreeOfOnePlayAction(agent, out playAction);
+            graph = TreeOfOne(agent, out playAction);
         }
 
         [TearDown]
@@ -53,23 +51,6 @@ namespace ArkhamCombat.Tests
             combatActions = agent.AddComponent<CombatActions>();
             combatActions.Construct(runner, warpMover, new AlwaysOpenActionStartGate(), null);
             return agent;
-        }
-
-        private static BehaviorTreeGraph TreeOfOnePlayAction(GameObject agent, out PlayActionNode playAction)
-        {
-            BehaviorTreeGraph graph = new BehaviorTreeGraph();
-            playAction = BehaviorTreeAuthoring.AddNode<PlayActionNode>(graph, 0f, 100f);
-            BehaviorTreeAuthoring.Connect(graph, graph.EntryNode, playAction);
-            BehaviorTreeMachine machine = agent.GetComponent<BehaviorTreeMachine>();
-            graph.SetMachine(machine);
-            foreach (BehaviorTreeNode node in graph.Nodes)
-            {
-                node.SetMachine(machine);
-            }
-
-            graph.OnAwake();
-            graph.OnEnter();
-            return graph;
         }
 
         private void FeedTheAction(ActionDefinition action) => playAction.Action.SetDefaultValue(action);
@@ -159,7 +140,7 @@ namespace ArkhamCombat.Tests
         {
             GameObject bareAgent = HiddenObject("Bare agent");
             bareAgent.AddComponent<BehaviorTreeMachine>();
-            BehaviorTreeGraph bareGraph = TreeOfOnePlayAction(bareAgent, out PlayActionNode bareNode);
+            BehaviorTreeGraph bareGraph = TreeOfOne(bareAgent, out PlayActionNode bareNode);
             bareNode.Action.SetDefaultValue(flinch);
             LogAssert.Expect(LogType.Error, new Regex("has no CombatActions"));
 

@@ -1,5 +1,4 @@
 using ArcaneOnyx.BehaviorTree;
-using ArcaneOnyx.BehaviorTree.Authoring;
 using ArcaneOnyx.GraphCore;
 using ArkhamCombat.Encounter;
 using NUnit.Framework;
@@ -8,9 +7,10 @@ using static ArkhamCombat.Tests.CombatTestDoubles;
 
 namespace ArkhamCombat.Tests
 {
-    // The machine is never woken: it only gives the nodes their agent, and each test ticks the graph by hand.
     public class EncounterNodeTests
     {
+        private const float AnyTick = 0.1f;
+
         private EncounterDirector director;
         private GameObject encounterObject;
         private EncounterDirectorBehaviour encounter;
@@ -60,27 +60,6 @@ namespace ArkhamCombat.Tests
             return encounterAgent;
         }
 
-        private static BehaviorTreeGraph TreeOfOne<TNode>(GameObject agentObject, out TNode node) where TNode : BehaviorTreeNode, new()
-        {
-            BehaviorTreeGraph graph = new BehaviorTreeGraph();
-            node = BehaviorTreeAuthoring.AddNode<TNode>(graph, 0f, 100f);
-            if (node.CanBeUsedAsTransitionDestination)
-            {
-                BehaviorTreeAuthoring.Connect(graph, graph.EntryNode, node);
-            }
-
-            BehaviorTreeMachine machine = agentObject.GetComponent<BehaviorTreeMachine>();
-            graph.SetMachine(machine);
-            foreach (BehaviorTreeNode graphNode in graph.Nodes)
-            {
-                graphNode.SetMachine(machine);
-            }
-
-            graph.OnAwake();
-            graph.OnEnter();
-            return graph;
-        }
-
         private static TValue ValueOf<TValue>(ValueOutput output) => (TValue)output.GetPortValue();
 
         [Test]
@@ -104,7 +83,7 @@ namespace ArkhamCombat.Tests
         }
 
         [Test]
-        public void RequestAttackToken_Fails_OnAnAgentThatIsInNoEncounter()
+        public void RequestAttackToken_Fails_OnAnObjectWithoutAnEncounterAgent()
         {
             BehaviorTreeGraph graph = TreeOfOne(loner, out RequestAttackToken _);
 
@@ -112,9 +91,9 @@ namespace ArkhamCombat.Tests
         }
 
         [Test]
-        public void ReleaseAttackToken_GivesTheTurnBack_AndSucceeds()
+        public void ReleaseAttackToken_GivesTheTurnBack()
         {
-            agent.TryAcquireToken();
+            Assert.IsTrue(agent.TryAcquireToken(), "sanity: it holds the token before the node runs");
             BehaviorTreeGraph graph = TreeOfOne(thug, out ReleaseAttackToken _);
 
             Assert.AreEqual(ExecutionStatus.Success, graph.OnUpdate());
@@ -122,7 +101,7 @@ namespace ArkhamCombat.Tests
         }
 
         [Test]
-        public void ReleaseAttackToken_Succeeds_OnAnAgentThatIsInNoEncounter()
+        public void ReleaseAttackToken_Succeeds_OnAnObjectWithoutAnEncounterAgent()
         {
             BehaviorTreeGraph graph = TreeOfOne(loner, out ReleaseAttackToken _);
 
@@ -141,7 +120,7 @@ namespace ArkhamCombat.Tests
         }
 
         [Test]
-        public void HasAttackToken_IsFalse_OnAnAgentThatIsInNoEncounter()
+        public void HasAttackToken_IsFalse_OnAnObjectWithoutAnEncounterAgent()
         {
             TreeOfOne(loner, out HasAttackToken hasAttackToken);
 
@@ -153,14 +132,14 @@ namespace ArkhamCombat.Tests
         {
             thug.transform.position = new Vector3(0f, 0f, 9f);
             director.SetTargetPosition(Vector3.zero);
-            director.Tick(0.1f);
+            director.Tick(AnyTick);
             TreeOfOne(thug, out GetSlotPosition getSlotPosition);
 
             Assert.AreEqual(director.GetSlotPosition(agent), ValueOf<Vector3>(getSlotPosition.Output));
         }
 
         [Test]
-        public void GetSlotPosition_OutputsWhereTheAgentStands_WhenItIsInNoEncounter()
+        public void GetSlotPosition_OutputsWhereTheAgentStands_OnAnObjectWithoutAnEncounterAgent()
         {
             loner.transform.position = new Vector3(3f, 0f, -2f);
             TreeOfOne(loner, out GetSlotPosition getSlotPosition);
@@ -177,7 +156,7 @@ namespace ArkhamCombat.Tests
         }
 
         [Test]
-        public void GetEncounterTarget_OutputsNothing_OnAnAgentThatIsInNoEncounter()
+        public void GetEncounterTarget_OutputsNothing_OnAnObjectWithoutAnEncounterAgent()
         {
             TreeOfOne(loner, out GetEncounterTarget getEncounterTarget);
 

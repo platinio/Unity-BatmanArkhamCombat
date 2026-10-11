@@ -47,7 +47,6 @@ namespace ArkhamCombat.Encounter
             wasHoldingToken = isHoldingToken;
         }
 
-        // A property block tints this one body without giving it a material of its own, which would break batching.
         private void Tint(Color color)
         {
             if (tintedRenderer == null)

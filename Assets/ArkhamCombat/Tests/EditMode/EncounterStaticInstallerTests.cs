@@ -1,5 +1,4 @@
 using ArkhamCombat.Encounter;
-using ArkhamCombat.Player;
 using NUnit.Framework;
 using UnityEngine;
 using Zenject;
@@ -10,13 +9,18 @@ namespace ArkhamCombat.Tests
     {
         private EncounterStaticInstaller installer;
         private DiContainer container;
+        private EncounterDirectorSettings settings;
 
         [SetUp]
         public void SetUp()
         {
             container = new DiContainer();
+            settings = new EncounterDirectorSettings(slotCount: 5);
+            container.Bind<EncounterDirectorSettings>().FromInstance(settings);
+
             installer = ScriptableObject.CreateInstance<EncounterStaticInstaller>();
             container.Inject(installer);
+            installer.InstallBindings();
         }
 
         [TearDown]
@@ -28,43 +32,19 @@ namespace ArkhamCombat.Tests
         [Test]
         public void TheDirector_IsBuiltWithTheSettingsTheGameBound()
         {
-            EncounterDirectorSettings settings = new EncounterDirectorSettings(slotCount: 5);
-            container.Bind<EncounterDirectorSettings>().FromInstance(settings);
-
-            installer.InstallBindings();
-
             Assert.AreSame(settings, container.Resolve<EncounterDirector>().Settings);
         }
 
         [Test]
         public void TheSceneHasOneDirector()
         {
-            container.Bind<EncounterDirectorSettings>().FromInstance(new EncounterDirectorSettings());
-
-            installer.InstallBindings();
-
             Assert.AreSame(container.Resolve<EncounterDirector>(), container.Resolve<EncounterDirector>());
         }
 
         [Test]
-        public void TheGamesSettings_AreTheOnesOnTheCombatConfig()
+        public void SlotsAreValidatedAgainstTheNavMesh()
         {
-            CombatConfig config = ScriptableObject.CreateInstance<CombatConfig>();
-
-            try
-            {
-                Assert.AreSame(config.Encounter, CombatStaticInstaller.EncounterSettingsOf(config));
-            }
-            finally
-            {
-                Object.DestroyImmediate(config);
-            }
-        }
-
-        [Test]
-        public void WithoutACombatConfig_TheDirectorStillGetsSettings()
-        {
-            Assert.IsNotNull(CombatStaticInstaller.EncounterSettingsOf(null));
+            Assert.IsInstanceOf<NavMeshSlotValidator>(container.Resolve<ISlotValidator>());
         }
     }
 }

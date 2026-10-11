@@ -20,6 +20,6 @@ namespace ArkhamCombat.Encounter
             }
         }
 
-        protected bool IsInAnEncounter => EncounterAgent != null;
+        protected bool HasEncounterAgent => EncounterAgent != null;
     }
 }

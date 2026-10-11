@@ -9,10 +9,7 @@ namespace ArkhamCombat.Tests
     {
         private const float MaxTokenHoldSeconds = 3f;
 
-        private sealed class StandingAgent : IEncounterAgent
-        {
-            public Vector3 Position => Vector3.zero;
-        }
+        private const float AnyTick = 0.1f;
 
         private EncounterDirector director;
         private GameObject encounterObject;
@@ -42,7 +39,7 @@ namespace ArkhamCombat.Tests
             encounter.SetTarget(target.transform);
             target.transform.position = new Vector3(10f, 0f, -4f);
 
-            encounter.Tick(0.1f);
+            encounter.Tick(AnyTick);
 
             Assert.AreEqual(target.transform.position, director.TargetPosition);
         }
@@ -53,7 +50,7 @@ namespace ArkhamCombat.Tests
             encounter.Construct(director);
             StandingAgent agent = new StandingAgent();
             director.Register(agent, AttackTokenType.Melee);
-            director.TryAcquireToken(agent);
+            Assert.IsTrue(director.TryAcquireToken(agent), "sanity: it holds the token before time passes");
 
             encounter.Tick(MaxTokenHoldSeconds);
 
@@ -66,7 +63,7 @@ namespace ArkhamCombat.Tests
             encounter.Construct(director);
             director.SetTargetPosition(new Vector3(2f, 0f, 2f));
 
-            encounter.Tick(0.1f);
+            encounter.Tick(AnyTick);
 
             Assert.AreEqual(new Vector3(2f, 0f, 2f), director.TargetPosition);
         }
@@ -74,7 +71,7 @@ namespace ArkhamCombat.Tests
         [Test]
         public void WithoutADirector_ATickDoesNothing()
         {
-            Assert.DoesNotThrow(() => encounter.Tick(0.1f));
+            Assert.DoesNotThrow(() => encounter.Tick(AnyTick));
         }
     }
 }

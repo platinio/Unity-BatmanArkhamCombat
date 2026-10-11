@@ -12,8 +12,8 @@ namespace ArkhamCombat.Encounter
 
         public override ExecutionStatus OnUpdate()
         {
-            bool mayAttack = IsInAnEncounter && EncounterAgent.TryAcquireToken();
-            return mayAttack ? ExecutionStatus.Success : ExecutionStatus.Failure;
+            bool canAttack = HasEncounterAgent && EncounterAgent.TryAcquireToken();
+            return canAttack ? ExecutionStatus.Success : ExecutionStatus.Failure;
         }
     }
 }

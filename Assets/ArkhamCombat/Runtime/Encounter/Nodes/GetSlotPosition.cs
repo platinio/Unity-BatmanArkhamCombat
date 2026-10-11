@@ -20,7 +20,7 @@ namespace ArkhamCombat.Encounter
         {
             base.Definition();
 
-            Output = ValueOutput<Vector3>(nameof(Output), () => IsInAnEncounter ? EncounterAgent.SlotPosition : transform.position);
+            Output = ValueOutput<Vector3>(nameof(Output), () => HasEncounterAgent ? EncounterAgent.SlotPosition : transform.position);
         }
     }
 }
