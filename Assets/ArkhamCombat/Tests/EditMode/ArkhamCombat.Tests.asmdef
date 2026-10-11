@@ -16,7 +16,11 @@
         "UnityEditor.TestRunner",
         "UnityEngine.TestRunner",
         "Zenject",
-        "ArcaneOnyx.ScriptableObjectDatabase"
+        "ArcaneOnyx.ScriptableObjectDatabase",
+        "ArkhamCombat.Enemies",
+        "ArcaneOnyx.BehaviorTree",
+        "ArcaneOnyx.GraphCore",
+        "ArcaneOnyx.BehaviorTree.Editor"
     ],
     "includePlatforms": [
         "Editor"

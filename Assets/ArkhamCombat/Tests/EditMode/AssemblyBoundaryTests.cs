@@ -2,6 +2,7 @@ using System;
 using System.Linq;
 using System.Reflection;
 using ArkhamCombat.Combat;
+using ArkhamCombat.Enemies;
 using ArkhamCombat.Presentation;
 using NUnit.Framework;
 
@@ -17,6 +18,7 @@ namespace ArkhamCombat.Tests
     {
         private static readonly Assembly CombatCore = typeof(ActionRunner).Assembly;
         private static readonly Assembly PresentationAssembly = typeof(ProceduralPresentationDriver).Assembly;
+        private static readonly Assembly EnemiesAssembly = typeof(EnemyStatus).Assembly;
 
         private static readonly string[] GameplayAssemblies =
         {
@@ -60,6 +62,12 @@ namespace ArkhamCombat.Tests
                     Assert.IsFalse(isInjected, $"{type.Name}.{member.Name} carries [Inject]; the core takes collaborators through constructors.");
                 }
             }
+        }
+
+        [Test]
+        public void TheEnemies_DoNotReferenceThePlayer()
+        {
+            Assert.IsFalse(HasReferenceTo(EnemiesAssembly, "ArkhamCombat.Player"), "what both sides share lives in ArkhamCombat.Characters");
         }
 
         [Test]

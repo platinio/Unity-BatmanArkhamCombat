@@ -1,0 +1,24 @@
+{
+    "name": "ArkhamCombat.Enemies",
+    "rootNamespace": "ArkhamCombat.Enemies",
+    "references": [
+        "ArcaneOnyx.BehaviorTree",
+        "ArcaneOnyx.GraphCore",
+        "ArcaneOnyx.TPCharacterController",
+        "ArcaneOnyx.ScriptableObjectDatabase",
+        "ArkhamCombat.Characters",
+        "ArkhamCombat.Combat",
+        "Unity.VisualScripting.Core",
+        "Unity.VisualScripting.Flow",
+        "Zenject"
+    ],
+    "includePlatforms": [],
+    "excludePlatforms": [],
+    "allowUnsafeCode": false,
+    "overrideReferences": false,
+    "precompiledReferences": [],
+    "autoReferenced": true,
+    "defineConstraints": [],
+    "versionDefines": [],
+    "noEngineReferences": false
+}
