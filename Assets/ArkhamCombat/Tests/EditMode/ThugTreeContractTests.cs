@@ -1,7 +1,6 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Reflection;
 using ArcaneOnyx.BehaviorTree;
 using ArcaneOnyx.VisualScriptingExtension;
 using ArkhamCombat.Combat;
@@ -12,16 +11,16 @@ using UnityEditor;
 
 namespace ArkhamCombat.Tests
 {
-    // The status and the facts updater publish under names the trees repeat on their canvases.
-    // Nothing compiles the two together, so these read the authored assets.
+    // The code and the canvases agree on names, on order and on which step runs what, and nothing
+    // compiles the two together. So these read the authored assets.
     public class ThugTreeContractTests
     {
         private const string RootPath = "Assets/ArkhamCombat/Trees/Roots/ThugRoot.asset";
         private const string SubTreesFolder = "Assets/ArkhamCombat/Trees/SubTrees/";
         private const string KindOfReactionAskedAbout = "kind";
         private const string HasTargetInCombatRangePath = "Assets/ArkhamCombat/Trees/Functions/HasTargetInCombatRange.asset";
-
-        private static readonly string[] SubTreesThatReadAParameter = { "Flinch", "Stagger", "KnockedDown", "Death", "Idle", "FaceTarget", "Approach" };
+        private const string TreesFolder = "Assets/ArkhamCombat/Trees";
+        private const string SwitchedOnOrOff = "enabled";
 
         private static BehaviorTreeGraphAsset Tree(string path)
         {
@@ -124,38 +123,101 @@ namespace ArkhamCombat.Tests
         public void AReactionThatCanInterruptAnAttack_GivesTheTokenBack_ThenStopsTheWalk_BeforeItPlays(string subTree)
         {
             List<BehaviorTreeNode> steps = StepsOf(subTree);
-            int release = steps.FindIndex(step => step is ReleaseAttackToken);
-            int stop = steps.FindIndex(step => step is StopNavAgent);
-            int play = steps.FindIndex(step => step is PlayActionNode);
+            int releaseIndex = steps.FindIndex(step => step is ReleaseAttackToken);
+            int stopIndex = steps.FindIndex(step => step is StopNavAgent);
+            int playIndex = steps.FindIndex(step => step is PlayActionNode);
 
-            Assert.AreEqual(0, release, "the token goes back first");
-            Assert.Less(release, stop);
-            Assert.Less(stop, play);
+            Assert.AreEqual(0, releaseIndex, "the token goes back first");
+            Assert.Less(releaseIndex, stopIndex);
+            Assert.Less(stopIndex, playIndex);
         }
 
         [Test]
-        public void AFlinch_StopsTheWalk_AndKeepsTheToken()
+        public void AFlinch_StopsTheWalkFirst()
         {
-            List<BehaviorTreeNode> steps = StepsOf("Flinch");
-
-            Assert.IsInstanceOf<StopNavAgent>(steps[0]);
-            Assert.IsFalse(steps.Any(step => step is ReleaseAttackToken), "chip damage must not cost an enemy its turn");
+            Assert.IsInstanceOf<StopNavAgent>(StepsOf("Flinch")[0]);
         }
 
         [Test]
-        public void EveryParameterASubTreeReads_SaysWhichVariablesItReadsFrom()
+        public void AFlinch_KeepsTheToken()
         {
-            FieldInfo variableKind = typeof(GetVariable).GetField("VariableKind", BindingFlags.NonPublic | BindingFlags.Instance);
-            Assert.IsNotNull(variableKind, "BH3 renamed the field this test reads");
+            Assert.IsFalse(StepsOf("Flinch").Any(step => step is ReleaseAttackToken), "chip damage must not cost an enemy its turn");
+        }
 
-            foreach (string subTree in SubTreesThatReadAParameter)
+        private static FunctionGraphAsset FunctionRunBy(BehaviorTreeNode step) =>
+            ((VisualScriptingNode)step).LifecycleGraphs.Select(graph => graph.Function).FirstOrDefault(function => function != null);
+
+        private static Type[] WhatItSwitches(FunctionGraphAsset function) =>
+            function.graph.units.OfType<Unity.VisualScripting.SetMember>()
+                .Where(switchedMember => switchedMember.member.name == SwitchedOnOrOff)
+                .Select(switchedMember => switchedMember.member.targetType)
+                .ToArray();
+
+        [Test]
+        public void ADyingThug_LeavesTheEncounter_BeforeItsDeathPlays()
+        {
+            List<BehaviorTreeNode> steps = StepsOf("Death");
+            int leaveIndex = steps.FindIndex(step => step is VisualScriptingNode && FunctionRunBy(step).name == "LeaveTheEncounter");
+            int playIndex = steps.FindIndex(step => step is PlayActionNode);
+
+            Assert.GreaterOrEqual(leaveIndex, 0, "no step of Death runs LeaveTheEncounter");
+            Assert.Less(leaveIndex, playIndex);
+            CollectionAssert.AreEquivalent(new[] { typeof(EncounterAgent) }, WhatItSwitches(FunctionRunBy(steps[leaveIndex])));
+        }
+
+        [Test]
+        public void ADeadThug_StopsBlockingTheWay_AfterItsDeathPlayed()
+        {
+            List<BehaviorTreeNode> steps = StepsOf("Death");
+            int stopBlockingIndex = steps.FindIndex(step => step is VisualScriptingNode && FunctionRunBy(step).name == "StopBlockingTheWay");
+            int playIndex = steps.FindIndex(step => step is PlayActionNode);
+
+            Assert.Greater(stopBlockingIndex, playIndex);
+            CollectionAssert.AreEquivalent(
+                new[] { typeof(UnityEngine.Collider), typeof(UnityEngine.AI.NavMeshAgent) }, WhatItSwitches(FunctionRunBy(steps[stopBlockingIndex])));
+        }
+
+        [TestCase("Death", true)]
+        [TestCase("KnockedDown", false)]
+        [TestCase("Stagger", true)]
+        [TestCase("Flinch", true)]
+        [TestCase("HoldSlot", true)]
+        [TestCase("Approach", true)]
+        public void EveryGuardedBranch_TakesOverWhatIsBelowIt(string subTree, bool shouldAlsoStopItself)
+        {
+            ReactiveGuard guard = Tree(RootPath).graph.Nodes.OfType<ReactiveGuard>().Single(candidate => SubTreeRunBy(candidate.Owner) == subTree);
+
+            Assert.IsTrue(guard.TakesOverLowerPriority);
+            Assert.AreEqual(shouldAlsoStopItself, guard.StopsItsOwnBranch);
+        }
+
+        [Test]
+        public void Idle_IsTheOnlyBranchWithoutAGuard()
+        {
+            string[] guardedSubTrees = Tree(RootPath).graph.Nodes.OfType<ConditionalExecution>().Select(guard => SubTreeRunBy(guard.Owner)).ToArray();
+
+            CollectionAssert.AreEquivalent(new[] { "Death", "KnockedDown", "Stagger", "Flinch", "HoldSlot", "Approach" }, guardedSubTrees);
+        }
+
+        [Test]
+        public void EveryVariableReadInEveryTree_IsCompleteEnoughToRun()
+        {
+            int readsChecked = 0;
+
+            foreach (string guid in AssetDatabase.FindAssets("t:BehaviorTreeGraphAsset", new[] { TreesFolder }))
             {
-                foreach (GetVariable read in Tree(SubTreesFolder + subTree + ".asset").graph.Nodes.OfType<GetVariable>())
+                string path = AssetDatabase.GUIDToAssetPath(guid);
+                foreach (GetVariable read in Tree(path).graph.Nodes.OfType<GetVariable>())
                 {
-                    Assert.AreNotEqual(BehaviorTreeVariableKind.None, variableKind.GetValue(read),
-                        $"a Get Variable in {subTree} has no variable kind, so it throws every tick and bt_verify does not report it");
+                    List<NodeProblem> problems = new List<NodeProblem>();
+                    read.CollectProblems(problems);
+
+                    Assert.IsEmpty(problems, $"a Get Variable in {path} would throw on every tick, and bt_verify does not report it");
+                    readsChecked++;
                 }
             }
+
+            Assert.Greater(readsChecked, 0, $"found no Get Variable under {TreesFolder} to check");
         }
     }
 }
