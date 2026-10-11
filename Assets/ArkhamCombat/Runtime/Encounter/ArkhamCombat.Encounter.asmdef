@@ -1,7 +1,13 @@
 {
     "name": "ArkhamCombat.Encounter",
     "rootNamespace": "ArkhamCombat.Encounter",
-    "references": [],
+    "references": [
+        "ArcaneOnyx.BehaviorTree",
+        "ArcaneOnyx.GraphCore",
+        "ArcaneOnyx.UnityExtensions.Runtime",
+        "Unity.VisualScripting.Core",
+        "Zenject"
+    ],
     "includePlatforms": [],
     "excludePlatforms": [],
     "allowUnsafeCode": false,

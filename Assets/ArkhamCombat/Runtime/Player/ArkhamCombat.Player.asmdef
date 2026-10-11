@@ -8,6 +8,7 @@
         "ArcaneOnyx.BehaviorTree",
         "ArcaneOnyx.VisualScriptingExtension.Runtime",
         "ArkhamCombat.Combat",
+        "ArkhamCombat.Encounter",
         "ArkhamCombat.Presentation",
         "Hermes.EventArgs",
         "Hermes.Events",
