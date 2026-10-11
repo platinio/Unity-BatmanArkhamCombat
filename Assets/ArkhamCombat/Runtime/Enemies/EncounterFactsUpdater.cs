@@ -13,8 +13,6 @@ namespace ArkhamCombat.Enemies
         private EncounterAgent encounterAgent;
         private AgentVariableWriter agentVariables;
 
-        private float CombatRange => archetype != null ? archetype.CombatRange : 0f;
-
         [Inject]
         internal void Construct([InjectOptional] EnemyArchetype archetype) => this.archetype = archetype;
 
@@ -22,9 +20,14 @@ namespace ArkhamCombat.Enemies
         {
             encounterAgent = GetComponent<EncounterAgent>();
             agentVariables = GetComponent<AgentVariableWriter>();
+
+            // The tree may ask before the first tick: the machine enters its root in Start.
+            PublishFacts();
         }
 
-        public override void Tick(float deltaTime)
+        public override void Tick(float deltaTime) => PublishFacts();
+
+        private void PublishFacts()
         {
             Transform target = encounterAgent.Target;
             bool hasTarget = target != null;
@@ -32,9 +35,11 @@ namespace ArkhamCombat.Enemies
 
             Write(EnemyVariableNames.HasTarget, hasTarget);
             Write(EnemyVariableNames.TargetDistance, targetDistance);
-            Write(EnemyVariableNames.InCombatRange, hasTarget && targetDistance <= CombatRange);
+            Write(EnemyVariableNames.InCombatRange, hasTarget && IsWithinCombatRange(targetDistance));
             Write(EnemyVariableNames.HasToken, encounterAgent.HasToken);
         }
+
+        private bool IsWithinCombatRange(float distance) => archetype != null && distance <= archetype.CombatRange;
 
         private float DistanceOnTheGroundTo(Vector3 position)
         {

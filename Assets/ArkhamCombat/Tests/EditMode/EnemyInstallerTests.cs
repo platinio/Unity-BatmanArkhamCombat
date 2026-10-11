@@ -2,6 +2,7 @@ using System.Text.RegularExpressions;
 using ArcaneOnyx.GameEventGenerator;
 using ArkhamCombat.Characters;
 using ArkhamCombat.Combat;
+using ArkhamCombat.Encounter;
 using ArkhamCombat.Enemies;
 using NUnit.Framework;
 using Unity.VisualScripting;
@@ -184,6 +185,29 @@ namespace ArkhamCombat.Tests
             LogAssert.Expect(LogType.Error, new Regex("idleMax .* is below idleMin"));
 
             InstallTheEnemyWithItsArchetype();
+        }
+
+        [Test]
+        public void ACombatRangeThatDoesNotReachPastTheRing_IsReported()
+        {
+            EncounterDirectorSettings ringOutToFive = new EncounterDirectorSettings(slotRadius: 4f, slotSampleRadius: 1f);
+            sceneContainer.Bind<EncounterDirectorSettings>().FromInstance(ringOutToFive);
+            archetype.ConfigureMovement(combatRange: 5f, moveSpeed: 3f);
+            LogAssert.Expect(LogType.Error, new Regex("does not reach past the ring"));
+
+            InstallTheEnemyWithItsArchetype();
+        }
+
+        [Test]
+        public void ACombatRangeWiderThanTheRing_IsNotReported()
+        {
+            EncounterDirectorSettings ringOutToFour = new EncounterDirectorSettings(slotRadius: 3f, slotSampleRadius: 1f);
+            sceneContainer.Bind<EncounterDirectorSettings>().FromInstance(ringOutToFour);
+            archetype.ConfigureMovement(combatRange: 5f, moveSpeed: 3f);
+
+            InstallTheEnemyWithItsArchetype();
+
+            LogAssert.NoUnexpectedReceived();
         }
 
         [Test]

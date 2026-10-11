@@ -3,6 +3,7 @@ using ArcaneOnyx.ScriptableObjectDatabase;
 using ArcaneOnyx.TPCharacterController.Inputs;
 using ArkhamCombat.Characters;
 using ArkhamCombat.Combat;
+using ArkhamCombat.Encounter;
 using UnityEngine;
 using Zenject;
 
@@ -101,6 +102,27 @@ namespace ArkhamCombat.Enemies
             foreach (string error in errors)
             {
                 Debug.LogError($"[{nameof(EnemyInstaller)}] {error}", archetype);
+            }
+
+            ReportACombatRangeInsideTheRing();
+        }
+
+        // Inside the ring's reach the two would undo each other: holding its slot walks the enemy out of combat range, and closing in walks it back.
+        private void ReportACombatRangeInsideTheRing()
+        {
+            EncounterDirectorSettings encounter = Container.TryResolve<EncounterDirectorSettings>();
+            if (encounter == null)
+            {
+                return;
+            }
+
+            float farthestASlotCanBe = encounter.SlotRadius + encounter.SlotSampleRadius;
+            if (archetype.CombatRange <= farthestASlotCanBe)
+            {
+                Debug.LogError(
+                    $"[{nameof(EnemyInstaller)}] Archetype '{archetype.name}': combatRange ({archetype.CombatRange:0.00}) does not reach past the ring " +
+                    $"(slot radius plus sample radius, {farthestASlotCanBe:0.00}), so its enemies would walk in and out of range instead of holding a slot.",
+                    archetype);
             }
         }
     }
