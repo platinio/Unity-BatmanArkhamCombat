@@ -3,8 +3,11 @@ using System.Collections.Generic;
 #if HERMES_EVENTS_GENERATED
 using ArcaneOnyx.GameEventGenerator;
 #endif
+using ArcaneOnyx.BehaviorTree;
+using ArcaneOnyx.BehaviorTree.Authoring;
 using ArcaneOnyx.TPCharacterController.Inputs;
 using ArkhamCombat.Combat;
+using ArkhamCombat.Encounter;
 using ArkhamCombat.Player;
 using UnityEngine;
 
@@ -14,6 +17,39 @@ namespace ArkhamCombat.Tests
     {
         // Hidden and never saved, so the open scene is left untouched.
         public static GameObject HiddenObject(string name) => new GameObject(name) { hideFlags = HideFlags.HideAndDontSave };
+
+        // The machine on the agent is never woken: it only gives the node its agent, and the test ticks the graph by hand.
+        public static BehaviorTreeGraph TreeOfOne<TNode>(GameObject agent, out TNode node) where TNode : BehaviorTreeNode, new()
+        {
+            BehaviorTreeGraph graph = new BehaviorTreeGraph();
+            node = BehaviorTreeAuthoring.AddNode<TNode>(graph, 0f, 0f);
+            if (node.CanBeUsedAsTransitionDestination)
+            {
+                BehaviorTreeAuthoring.Connect(graph, graph.EntryNode, node);
+            }
+
+            BehaviorTreeMachine machine = agent.GetComponent<BehaviorTreeMachine>();
+            graph.SetMachine(machine);
+            foreach (BehaviorTreeNode graphNode in graph.Nodes)
+            {
+                graphNode.SetMachine(machine);
+            }
+
+            graph.OnAwake();
+            graph.OnEnter();
+            return graph;
+        }
+
+        public sealed class StandingAgent : IEncounterAgent
+        {
+            public Vector3 Position { get; set; }
+
+            public StandingAgent()
+            {
+            }
+
+            public StandingAgent(Vector3 position) => Position = position;
+        }
 
         public static AttackDefinition Attack(
             string name,
