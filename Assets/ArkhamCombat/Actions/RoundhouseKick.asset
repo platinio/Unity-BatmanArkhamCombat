@@ -16,8 +16,8 @@ MonoBehaviour:
   cues:
   - firesAt: 0
     kind:
-      rid: 3135146534942277821
-    duration: 0.25
+      rid: 3135146618665566288
+    duration: 0.15
     strength: -10
     ease:
       serializedVersion: 2
@@ -46,7 +46,7 @@ MonoBehaviour:
     colour: {r: 1, g: 1, b: 1, a: 1}
   - firesAt: 0.2
     kind:
-      rid: 3135146534942277822
+      rid: 3135146618665566289
     duration: 0.5
     strength: 1
     ease:
@@ -76,7 +76,7 @@ MonoBehaviour:
     colour: {r: 1, g: 1, b: 1, a: 1}
   - firesAt: 0.55
     kind:
-      rid: 3135146534942277823
+      rid: 3135146618665566290
     duration: 0.2
     strength: 0.2
     ease:
@@ -120,19 +120,19 @@ MonoBehaviour:
   strikeDistance: 1.4
   maxLunge: 4.5
   damage: 10
-  reaction: 0
+  reaction: 2
   isCounterable: 1
   isUnblockable: 0
   references:
     version: 2
     RefIds:
-    - rid: 3135146534942277821
+    - rid: 3135146618665566288
       type: {class: LeanCue, ns: ArkhamCombat.Presentation, asm: ArkhamCombat.Presentation}
       data: 
-    - rid: 3135146534942277822
+    - rid: 3135146618665566289
       type: {class: SpinCue, ns: ArkhamCombat.Presentation, asm: ArkhamCombat.Presentation}
       data:
         turns: 1
-    - rid: 3135146534942277823
+    - rid: 3135146618665566290
       type: {class: SquashCue, ns: ArkhamCombat.Presentation, asm: ArkhamCombat.Presentation}
       data: 
