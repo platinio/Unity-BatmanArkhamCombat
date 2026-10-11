@@ -1,6 +1,5 @@
 using System.Text.RegularExpressions;
 using ArcaneOnyx.BehaviorTree;
-using ArcaneOnyx.BehaviorTree.Authoring;
 using ArcaneOnyx.GraphCore;
 using ArkhamCombat.Enemies;
 using NUnit.Framework;
@@ -11,12 +10,14 @@ using static ArkhamCombat.Tests.CombatTestDoubles;
 
 namespace ArkhamCombat.Tests
 {
-    // The machine is never woken: it only gives the node its agent, and each test ticks the graph by hand.
-    // No NavMesh exists here, so what is covered is every way the node ends without walking.
+    // No NavMesh exists here, so no test reaches the node walking: Running, the countdown and the stop on exit are checked in play mode.
     public class MoveToStrikeDistanceNodeTests
     {
         private const float StrikeDistance = 1.5f;
+        private const float JustInside = StrikeDistance - 0.1f;
+        private const float WellOutside = StrikeDistance * 10f;
         private const float PlentyOfTime = 30f;
+        private const float NoTimeLeft = 0f;
 
         private static readonly Vector3 FarFromAnyNavMesh = new Vector3(5000f, 0f, 5000f);
 
@@ -34,11 +35,9 @@ namespace ArkhamCombat.Tests
             agent = HiddenObject("Agent");
             agent.AddComponent<BehaviorTreeMachine>();
             agent.AddComponent<NavMeshAgent>();
-            graph = TreeOfOneMoveToStrikeDistance(agent, out moveToStrikeDistance);
+            graph = TreeOfOne(agent, out moveToStrikeDistance);
 
-            moveToStrikeDistance.Target.SetDefaultValue(target.transform);
-            moveToStrikeDistance.StrikeDistance.SetDefaultValue(StrikeDistance);
-            moveToStrikeDistance.Timeout.SetDefaultValue(PlentyOfTime);
+            Feed(moveToStrikeDistance, target.transform, PlentyOfTime);
         }
 
         [TearDown]
@@ -48,21 +47,11 @@ namespace ArkhamCombat.Tests
             Object.DestroyImmediate(target);
         }
 
-        private static BehaviorTreeGraph TreeOfOneMoveToStrikeDistance(GameObject agentObject, out MoveToStrikeDistanceNode node)
+        private static void Feed(MoveToStrikeDistanceNode node, Transform targetToFeed, float timeout)
         {
-            BehaviorTreeGraph graph = new BehaviorTreeGraph();
-            node = BehaviorTreeAuthoring.AddNode<MoveToStrikeDistanceNode>(graph, 0f, 100f);
-            BehaviorTreeAuthoring.Connect(graph, graph.EntryNode, node);
-            BehaviorTreeMachine machine = agentObject.GetComponent<BehaviorTreeMachine>();
-            graph.SetMachine(machine);
-            foreach (BehaviorTreeNode graphNode in graph.Nodes)
-            {
-                graphNode.SetMachine(machine);
-            }
-
-            graph.OnAwake();
-            graph.OnEnter();
-            return graph;
+            node.Target.SetDefaultValue(targetToFeed);
+            node.StrikeDistance.SetDefaultValue(StrikeDistance);
+            node.Timeout.SetDefaultValue(timeout);
         }
 
         private void StandThisFarFromTheTarget(float metres) => agent.transform.position = target.transform.position + Vector3.right * metres;
@@ -70,7 +59,7 @@ namespace ArkhamCombat.Tests
         [Test]
         public void AlreadyWithinTheStrikeDistance_ItSucceeds()
         {
-            StandThisFarFromTheTarget(StrikeDistance - 0.1f);
+            StandThisFarFromTheTarget(JustInside);
 
             Assert.AreEqual(ExecutionStatus.Success, graph.OnUpdate());
         }
@@ -78,8 +67,8 @@ namespace ArkhamCombat.Tests
         [Test]
         public void TheDistance_IsMeasuredOnTheGround()
         {
-            StandThisFarFromTheTarget(StrikeDistance - 0.1f);
-            agent.transform.position += Vector3.up * (StrikeDistance * 4f);
+            StandThisFarFromTheTarget(JustInside);
+            agent.transform.position += Vector3.up * WellOutside;
 
             Assert.AreEqual(ExecutionStatus.Success, graph.OnUpdate(), "the agent's origin sits higher than its target's");
         }
@@ -87,8 +76,8 @@ namespace ArkhamCombat.Tests
         [Test]
         public void OutOfTime_ItFails()
         {
-            StandThisFarFromTheTarget(StrikeDistance * 10f);
-            moveToStrikeDistance.Timeout.SetDefaultValue(0f);
+            StandThisFarFromTheTarget(WellOutside);
+            moveToStrikeDistance.Timeout.SetDefaultValue(NoTimeLeft);
 
             Assert.AreEqual(ExecutionStatus.Failure, graph.OnUpdate());
         }
@@ -96,17 +85,17 @@ namespace ArkhamCombat.Tests
         [Test]
         public void OutOfTime_ButAlreadyWithinTheStrikeDistance_ItStillSucceeds()
         {
-            StandThisFarFromTheTarget(StrikeDistance - 0.1f);
-            moveToStrikeDistance.Timeout.SetDefaultValue(0f);
+            StandThisFarFromTheTarget(JustInside);
+            moveToStrikeDistance.Timeout.SetDefaultValue(NoTimeLeft);
 
             Assert.AreEqual(ExecutionStatus.Success, graph.OnUpdate());
         }
 
         [Test]
-        public void HandedNoTarget_ItFails_AndSaysSo()
+        public void WithNoTarget_ItFails_AndSaysSo()
         {
             moveToStrikeDistance.Target.SetDefaultValue(null);
-            LogAssert.Expect(LogType.Error, new Regex("handed no target"));
+            LogAssert.Expect(LogType.Error, new Regex("has no target"));
 
             Assert.AreEqual(ExecutionStatus.Failure, graph.OnUpdate());
         }
@@ -114,8 +103,8 @@ namespace ArkhamCombat.Tests
         [Test]
         public void StandingOnNoNavMesh_ItFails_AndSaysSo()
         {
-            StandThisFarFromTheTarget(StrikeDistance * 10f);
-            LogAssert.Expect(LogType.Error, new Regex("cannot walk to its target"));
+            StandThisFarFromTheTarget(WellOutside);
+            LogAssert.Expect(LogType.Error, new Regex("is not standing on a NavMesh"));
 
             Assert.AreEqual(ExecutionStatus.Failure, graph.OnUpdate());
         }
@@ -125,10 +114,10 @@ namespace ArkhamCombat.Tests
         {
             GameObject bareAgent = HiddenObject("Bare agent");
             bareAgent.AddComponent<BehaviorTreeMachine>();
-            BehaviorTreeGraph bareGraph = TreeOfOneMoveToStrikeDistance(bareAgent, out MoveToStrikeDistanceNode bareNode);
-            bareNode.Target.SetDefaultValue(target.transform);
-            bareNode.StrikeDistance.SetDefaultValue(StrikeDistance);
-            LogAssert.Expect(LogType.Error, new Regex("cannot walk to its target"));
+            bareAgent.transform.position = target.transform.position + Vector3.right * WellOutside;
+            BehaviorTreeGraph bareGraph = TreeOfOne(bareAgent, out MoveToStrikeDistanceNode bareNode);
+            Feed(bareNode, target.transform, PlentyOfTime);
+            LogAssert.Expect(LogType.Error, new Regex("has no NavMeshAgent"));
 
             try
             {
@@ -141,10 +130,10 @@ namespace ArkhamCombat.Tests
         }
 
         [Test]
-        public void EnteredAgainAfterFailing_ItSaysWhyOnlyOnce()
+        public void FailingAgainForTheSameReason_ItSaysWhyOnlyOnce()
         {
-            StandThisFarFromTheTarget(StrikeDistance * 10f);
-            LogAssert.Expect(LogType.Error, new Regex("cannot walk to its target"));
+            StandThisFarFromTheTarget(WellOutside);
+            LogAssert.Expect(LogType.Error, new Regex("is not standing on a NavMesh"));
 
             graph.OnUpdate();
             graph.OnUpdate();
@@ -153,12 +142,17 @@ namespace ArkhamCombat.Tests
         }
 
         [Test]
-        public void LeavingEarly_OnAnAgentThatCannotWalk_DoesNotThrow()
+        public void FailingForADifferentReason_ItSaysTheNewOne()
         {
-            StandThisFarFromTheTarget(StrikeDistance - 0.1f);
+            moveToStrikeDistance.Target.SetDefaultValue(null);
+            LogAssert.Expect(LogType.Error, new Regex("has no target"));
             graph.OnUpdate();
 
-            Assert.DoesNotThrow(() => graph.OnExit());
+            moveToStrikeDistance.Target.SetDefaultValue(target.transform);
+            StandThisFarFromTheTarget(WellOutside);
+            LogAssert.Expect(LogType.Error, new Regex("is not standing on a NavMesh"));
+
+            Assert.AreEqual(ExecutionStatus.Failure, graph.OnUpdate());
         }
     }
 }

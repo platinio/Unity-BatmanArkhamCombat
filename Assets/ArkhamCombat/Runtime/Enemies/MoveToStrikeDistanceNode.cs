@@ -9,8 +9,6 @@ namespace ArkhamCombat.Enemies
     [GraphCreateMenu("ArkhamCombat/Move To Strike Distance")]
     public sealed class MoveToStrikeDistanceNode : GameplayNode
     {
-        private const float DefaultTimeoutSeconds = 3f;
-
         [Unity.VisualScripting.DoNotSerialize]
         public ValueInput Target { get; private set; }
 
@@ -31,7 +29,7 @@ namespace ArkhamCombat.Enemies
             public Transform Target;
             public float StrikeDistance;
             public float SecondsLeft;
-            public bool HasReportedWhyItCannotMove;
+            public string LastReasonReported;
         }
 
         protected override void Definition()
@@ -40,7 +38,7 @@ namespace ArkhamCombat.Enemies
 
             Target = ValueInput<Transform>(nameof(Target));
             StrikeDistance = ValueInput<float>(nameof(StrikeDistance));
-            Timeout = ValueInput<float>(nameof(Timeout), DefaultTimeoutSeconds);
+            Timeout = ValueInput<float>(nameof(Timeout));
         }
 
         public override void OnEnter(BTContext ctx)
@@ -58,7 +56,8 @@ namespace ArkhamCombat.Enemies
 
             if (memory.Target == null)
             {
-                return FailBecause("was handed no target to move to", ctx, memory);
+                ReportOnceWhyItCannotMove("has no target to move to", ctx, memory);
+                return ExecutionStatus.Failure;
             }
 
             if (IsWithinStrikeDistance(ctx, memory))
@@ -75,7 +74,8 @@ namespace ArkhamCombat.Enemies
 
             if (!CanWalk(memory))
             {
-                return FailBecause($"has no {nameof(NavMeshAgent)} standing on a NavMesh, so it cannot walk to its target", ctx, memory);
+                ReportOnceWhyItCannotMove(WhyItCannotWalk(memory), ctx, memory);
+                return ExecutionStatus.Failure;
             }
 
             WalkTowardTheTarget(memory);
@@ -99,7 +99,6 @@ namespace ArkhamCombat.Enemies
             return toTarget.magnitude <= memory.StrikeDistance;
         }
 
-
         private static bool CanWalk(Memory memory) => memory.NavMeshAgent != null && memory.NavMeshAgent.isOnNavMesh;
 
         private static void WalkTowardTheTarget(Memory memory)
@@ -108,16 +107,20 @@ namespace ArkhamCombat.Enemies
             memory.NavMeshAgent.SetDestination(memory.Target.position);
         }
 
-        // A branch that fails is entered again on the next tick, so the reason is logged once per agent.
-        private ExecutionStatus FailBecause(string reason, BTContext ctx, Memory memory)
+        private static string WhyItCannotWalk(Memory memory) =>
+            memory.NavMeshAgent == null
+                ? $"has no {nameof(NavMeshAgent)}, so it cannot walk to its target"
+                : "is not standing on a NavMesh, so it cannot walk to its target";
+
+        private void ReportOnceWhyItCannotMove(string reason, BTContext ctx, Memory memory)
         {
-            if (!memory.HasReportedWhyItCannotMove)
+            if (memory.LastReasonReported == reason)
             {
-                memory.HasReportedWhyItCannotMove = true;
-                Debug.LogError($"[{NodeName}] '{ctx.gameObject.name}' {reason}.", ctx.gameObject);
+                return;
             }
 
-            return ExecutionStatus.Failure;
+            memory.LastReasonReported = reason;
+            Debug.LogError($"[{NodeName}] '{ctx.gameObject.name}' {reason}.", ctx.gameObject);
         }
     }
 }
