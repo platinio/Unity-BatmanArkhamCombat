@@ -747,6 +747,66 @@ MonoBehaviour:
   m_ShadowLayerMask: 1
   m_RenderingLayers: 1
   m_ShadowRenderingLayers: 1
+--- !u!1 &560265206
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 560265209}
+  - component: {fileID: 560265208}
+  - component: {fileID: 560265207}
+  m_Layer: 0
+  m_Name: VisualScripting SceneVariables
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!114 &560265207
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 560265206}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 765181c9ef4b24d32a4f7cbd2ef370dc, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Unity.VisualScripting.Core::Unity.VisualScripting.SceneVariables
+--- !u!114 &560265208
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 560265206}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: e741851cba3ad425c91ecf922cc6b379, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Unity.VisualScripting.Core::Unity.VisualScripting.Variables
+  _data:
+    _json: '{"declarations":{"Kind":"Scene","collection":{"$content":[],"$version":"A"},"$version":"A"}}'
+    _objectReferences: []
+--- !u!4 &560265209
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 560265206}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 0}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &727989597
 GameObject:
   m_ObjectHideFlags: 0
@@ -1448,6 +1508,7 @@ GameObject:
   - component: {fileID: 1426181062}
   - component: {fileID: 1426181061}
   - component: {fileID: 1426181060}
+  - component: {fileID: 1426181072}
   - component: {fileID: 1426181059}
   - component: {fileID: 1426181064}
   - component: {fileID: 1426181065}
@@ -1476,11 +1537,6 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 3c5df45bc591ee548a2f2956059842e3, type: 3}
   m_Name: 
   m_EditorClassIdentifier: ArcaneOnyx.TPCharacterController::ArcaneOnyx.TPCharacterController.CharacterBrain
-  characterComponents:
-  - {fileID: 1426181065}
-  - {fileID: 1426181067}
-  - {fileID: 1426181069}
-  - {fileID: 1426181068}
 --- !u!114 &1426181060
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -1643,6 +1699,23 @@ MonoBehaviour:
   _installerPrefabs: []
   _autoRun: 1
   _kernel: {fileID: 0}
+--- !u!114 &1426181072
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1426181058}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 15b3dad1220b6044d9523c6706582597, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: ArcaneOnyx.TPCharacterController::ArcaneOnyx.TPCharacterController.CharacterComponentUpdater
+  characterComponents:
+  - {fileID: 1426181065}
+  - {fileID: 1426181067}
+  - {fileID: 1426181069}
+  - {fileID: 1426181068}
 --- !u!1 &1454199925
 GameObject:
   m_ObjectHideFlags: 0
@@ -2263,3 +2336,4 @@ SceneRoots:
   - {fileID: 1850291381}
   - {fileID: 2109480530}
   - {fileID: 727989600}
+  - {fileID: 560265209}
