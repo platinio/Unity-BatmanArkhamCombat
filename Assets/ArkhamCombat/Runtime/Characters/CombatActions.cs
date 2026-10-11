@@ -19,7 +19,6 @@ namespace ArkhamCombat.Characters
         private MotorWarpMover warpMover;
         private IActionStartGate startGate;
         private ISceneGameEvents sceneGameEvents;
-        private bool isTickedByABrain;
 
         public ActionRunner Runner => runner;
 
@@ -38,7 +37,6 @@ namespace ArkhamCombat.Characters
 
         private void Awake()
         {
-            isTickedByABrain = TryGetComponent(out CharacterBrain _);
 
             if (runner == null)
             {
@@ -49,14 +47,6 @@ namespace ArkhamCombat.Characters
         }
 
         private void Start() => StartListeningToTheRunner();
-
-        private void Update()
-        {
-            if (!isTickedByABrain)
-            {
-                Tick(Time.deltaTime);
-            }
-        }
 
         private void OnDestroy()
         {
