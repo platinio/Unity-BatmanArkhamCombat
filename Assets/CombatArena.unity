@@ -1508,7 +1508,6 @@ GameObject:
   - component: {fileID: 1426181062}
   - component: {fileID: 1426181061}
   - component: {fileID: 1426181060}
-  - component: {fileID: 1426181072}
   - component: {fileID: 1426181059}
   - component: {fileID: 1426181064}
   - component: {fileID: 1426181065}
@@ -1537,6 +1536,11 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 3c5df45bc591ee548a2f2956059842e3, type: 3}
   m_Name: 
   m_EditorClassIdentifier: ArcaneOnyx.TPCharacterController::ArcaneOnyx.TPCharacterController.CharacterBrain
+  characterComponents:
+  - {fileID: 1426181065}
+  - {fileID: 1426181067}
+  - {fileID: 1426181069}
+  - {fileID: 1426181068}
 --- !u!114 &1426181060
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -1699,23 +1703,6 @@ MonoBehaviour:
   _installerPrefabs: []
   _autoRun: 1
   _kernel: {fileID: 0}
---- !u!114 &1426181072
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1426181058}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 15b3dad1220b6044d9523c6706582597, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: ArcaneOnyx.TPCharacterController::ArcaneOnyx.TPCharacterController.CharacterComponentUpdater
-  characterComponents:
-  - {fileID: 1426181065}
-  - {fileID: 1426181067}
-  - {fileID: 1426181069}
-  - {fileID: 1426181068}
 --- !u!1 &1454199925
 GameObject:
   m_ObjectHideFlags: 0
