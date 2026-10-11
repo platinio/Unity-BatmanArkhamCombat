@@ -8,8 +8,8 @@ using ValueInput = ArcaneOnyx.BehaviorTree.ValueInput;
 namespace ArkhamCombat.Enemies
 {
     /// <summary>
-    /// Running until the action ends, however it ends. Leaving early, as a guard abort does, cancels
-    /// the action so nothing of it stays open behind the tree.
+    /// Leaving early, as a guard abort does, cancels the action so nothing of it stays open behind
+    /// the tree.
     /// </summary>
     [GraphCreateMenu("ArkhamCombat/Play Action")]
     public sealed class PlayActionNode : GameplayNode
@@ -23,7 +23,8 @@ namespace ArkhamCombat.Enemies
         private sealed class Memory
         {
             public ActionRunner Runner;
-            public ActionDefinition Action;
+            public ActionDefinition ActionToPlay;
+            public bool HasReportedWhyItCannotPlay;
         }
 
         protected override void Definition()
@@ -36,22 +37,23 @@ namespace ArkhamCombat.Enemies
         public override void OnEnter(BTContext ctx)
         {
             Memory memory = ctx.Memory<Memory>();
-            memory.Action = ctx.GetValue<ActionDefinition>(Action);
+            memory.ActionToPlay = ctx.GetValue<ActionDefinition>(Action);
             memory.Runner = RunnerOf(ctx);
 
-            if (memory.Action == null)
+            if (CanPlay(memory))
             {
-                Debug.LogError($"[{NodeName}] '{ctx.gameObject.name}' was handed no action to play.", ctx.gameObject);
-                return;
+                memory.Runner.PlayAction(memory.ActionToPlay, ctx.transform.position);
             }
-
-            memory.Runner?.PlayAction(memory.Action, ctx.transform.position);
+            else
+            {
+                ReportWhyItCannotPlayOnce(ctx, memory);
+            }
         }
 
         public override ExecutionStatus OnUpdate(BTContext ctx)
         {
             Memory memory = ctx.Memory<Memory>();
-            if (memory.Runner == null || memory.Action == null)
+            if (!CanPlay(memory))
             {
                 return ExecutionStatus.Failure;
             }
@@ -62,25 +64,38 @@ namespace ArkhamCombat.Enemies
         public override void OnExit(BTContext ctx)
         {
             Memory memory = ctx.Memory<Memory>();
-            if (memory.Runner != null && IsStillPlaying(memory))
+            if (CanPlay(memory) && IsStillPlaying(memory))
             {
                 memory.Runner.Cancel();
             }
         }
 
-        private static bool IsStillPlaying(Memory memory) =>
-            memory.Runner.IsPlaying && memory.Runner.CurrentAction == memory.Action;
+        private static bool CanPlay(Memory memory) => memory.Runner != null && memory.ActionToPlay != null;
 
-        private ActionRunner RunnerOf(BTContext ctx)
+        // The runner may by now be playing an action something else started. That one is not this node's to wait for or to cancel.
+        private static bool IsStillPlaying(Memory memory) =>
+            memory.Runner.IsPlaying && memory.Runner.CurrentAction == memory.ActionToPlay;
+
+        private static ActionRunner RunnerOf(BTContext ctx)
         {
             CombatActions combatActions = ctx.GetComponent<CombatActions>();
-            if (combatActions == null)
+            return combatActions != null ? combatActions.Runner : null;
+        }
+
+        // A branch that fails is entered again on the next tick, so the reason is logged once per agent.
+        private void ReportWhyItCannotPlayOnce(BTContext ctx, Memory memory)
+        {
+            if (memory.HasReportedWhyItCannotPlay)
             {
-                Debug.LogError($"[{NodeName}] '{ctx.gameObject.name}' has no {nameof(CombatActions)}, so it cannot play an action.", ctx.gameObject);
-                return null;
+                return;
             }
 
-            return combatActions.Runner;
+            memory.HasReportedWhyItCannotPlay = true;
+
+            string reason = memory.Runner == null
+                ? $"has no {nameof(CombatActions)}, so it cannot play an action"
+                : "was handed no action to play";
+            Debug.LogError($"[{NodeName}] '{ctx.gameObject.name}' {reason}.", ctx.gameObject);
         }
     }
 }

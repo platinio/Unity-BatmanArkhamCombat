@@ -5,8 +5,7 @@ using Zenject;
 namespace ArkhamCombat.Enemies
 {
     /// <summary>
-    /// Copies the archetype's tunables onto the agent's variables as the enemy wakes, so its tree
-    /// reads them by key and never sees the asset.
+    /// The tree reads the tunables by key from the agent's variables and never sees the asset.
     /// </summary>
     public sealed class EnemyArchetypeWriter : MonoBehaviour
     {
@@ -15,7 +14,7 @@ namespace ArkhamCombat.Enemies
         private EnemyArchetype archetype;
 
         [Inject]
-        internal void Construct(EnemyArchetype archetype) => this.archetype = archetype;
+        internal void Construct([InjectOptional] EnemyArchetype archetype) => this.archetype = archetype;
 
         private void Awake() => WriteTunables();
 

@@ -4,6 +4,7 @@ using ArkhamCombat.Characters;
 using ArkhamCombat.Combat;
 using ArkhamCombat.Enemies;
 using NUnit.Framework;
+using Unity.VisualScripting;
 using UnityEditor;
 using UnityEngine;
 using UnityEngine.TestTools;
@@ -15,6 +16,9 @@ namespace ArkhamCombat.Tests
     public class EnemyInstallerTests
     {
         private const float PressLifetimeSeconds = 10f;
+        private const float IdleMin = 0.3f;
+        private const float IdleMax = 0.9f;
+        private const float Tolerance = 1e-5f;
 
         private TestIntentKinds kinds;
         private HitReceiverProfile profile;
@@ -30,7 +34,8 @@ namespace ArkhamCombat.Tests
             kinds = new TestIntentKinds(PressLifetimeSeconds);
             profile = ReceiverProfile();
             archetype = ScriptableObject.CreateInstance<EnemyArchetype>();
-            archetype.Configure(profile);
+            archetype.name = "TestArchetype";
+            archetype.Configure(profile, IdleMin, IdleMax);
 
             enemy = HiddenObject("Enemy");
             installer = enemy.AddComponent<EnemyInstaller>();
@@ -65,11 +70,23 @@ namespace ArkhamCombat.Tests
             installer.InstallBindings();
         }
 
-        [Test]
-        public void BindsARunnerWithoutAStance()
+        private void InstallTheEnemyWithItsArchetype()
         {
             GiveTheEnemyItsArchetype();
             InstallTheEnemy();
+        }
+
+        private T AddToTheEnemyAndInject<T>() where T : Component
+        {
+            T component = enemy.AddComponent<T>();
+            enemyContainer.Inject(component);
+            return component;
+        }
+
+        [Test]
+        public void BindsARunnerWithoutAStance()
+        {
+            InstallTheEnemyWithItsArchetype();
 
             ActionRunner runner = enemyContainer.Resolve<ActionRunner>();
 
@@ -79,50 +96,94 @@ namespace ArkhamCombat.Tests
         }
 
         [Test]
-        public void TheStartGateIsAlwaysOpen()
+        public void AnEnemyWithNothingOptional_GetsTheVersionsThatDoNothing()
         {
-            GiveTheEnemyItsArchetype();
-            InstallTheEnemy();
+            InstallTheEnemyWithItsArchetype();
 
             Assert.IsTrue(enemyContainer.Resolve<IActionStartGate>().CanStartFromIdle);
+            Assert.IsInstanceOf<NullPresentationDriver>(enemyContainer.Resolve<IPresentationDriver>());
+            Assert.IsInstanceOf<NullActionTargetPicker>(enemyContainer.Resolve<IActionTargetPicker>());
+            Assert.IsInstanceOf<NullHitWindowListener>(enemyContainer.Resolve<IHitWindowListener>());
         }
 
         [Test]
         public void BindsTheArchetypeAndItsProfile()
         {
-            GiveTheEnemyItsArchetype();
-            InstallTheEnemy();
+            InstallTheEnemyWithItsArchetype();
 
             Assert.AreSame(archetype, enemyContainer.Resolve<EnemyArchetype>());
             Assert.AreSame(profile, enemyContainer.Resolve<HitReceiverProfile>());
         }
 
         [Test]
-        public void AnEnemyWithoutABody_GetsTheDriverThatDoesNothing()
-        {
-            GiveTheEnemyItsArchetype();
-            InstallTheEnemy();
-
-            Assert.IsInstanceOf<NullPresentationDriver>(enemyContainer.Resolve<IPresentationDriver>());
-        }
-
-        [Test]
         public void TheWarpMoverIsOneObjectUnderBothNames()
         {
-            GiveTheEnemyItsArchetype();
-            InstallTheEnemy();
+            InstallTheEnemyWithItsArchetype();
 
             Assert.AreSame(enemyContainer.Resolve<MotorWarpMover>(), enemyContainer.Resolve<IWarpMover>());
         }
 
         [Test]
-        public void WithoutAnArchetype_LogsAnError_AndBindsNothing()
+        public void TheEnemysCombatActions_GetTheEnemysRunner()
+        {
+            InstallTheEnemyWithItsArchetype();
+
+            CombatActions combatActions = AddToTheEnemyAndInject<CombatActions>();
+
+            Assert.AreSame(enemyContainer.Resolve<ActionRunner>(), combatActions.Runner);
+        }
+
+        [Test]
+        public void TheEnemysStatus_GetsTheArchetypesProfile_AndCanBeHit()
+        {
+            InstallTheEnemyWithItsArchetype();
+
+            EnemyStatus status = AddToTheEnemyAndInject<EnemyStatus>();
+            status.Awake();
+
+            Assert.IsTrue(status.IsValid);
+        }
+
+        [Test]
+        public void TheEnemysArchetypeWriter_WritesTheArchetypesIdleRange()
+        {
+            InstallTheEnemyWithItsArchetype();
+            enemy.AddComponent<Variables>();
+
+            AddToTheEnemyAndInject<EnemyArchetypeWriter>().WriteTunables();
+
+            Assert.AreEqual(IdleMin, (float)Variables.Object(enemy).Get(EnemyVariableNames.IdleMin), Tolerance);
+        }
+
+        [Test]
+        public void WithoutAnArchetype_ItSaysSo_AndTheEnemyIsStillBuilt()
         {
             LogAssert.Expect(LogType.Error, new Regex("No archetype assigned"));
 
             InstallTheEnemy();
 
-            Assert.IsFalse(enemyContainer.HasBinding<ActionRunner>());
+            Assert.IsNotNull(enemyContainer.Resolve<ActionRunner>());
+            Assert.DoesNotThrow(() => AddToTheEnemyAndInject<EnemyArchetypeWriter>(), "what needs the archetype goes without it");
+        }
+
+        [Test]
+        public void AnArchetypeWithoutAProfile_IsReported()
+        {
+            archetype.Configure(null, IdleMin, IdleMax);
+            LogAssert.Expect(LogType.Error, new Regex("names no hit receiver profile"));
+
+            InstallTheEnemyWithItsArchetype();
+
+            Assert.IsFalse(enemyContainer.HasBinding<HitReceiverProfile>());
+        }
+
+        [Test]
+        public void AnIdleRangeTheWrongWayRound_IsReported()
+        {
+            archetype.Configure(profile, idleMin: IdleMax, idleMax: IdleMin);
+            LogAssert.Expect(LogType.Error, new Regex("idleMax .* is below idleMin"));
+
+            InstallTheEnemyWithItsArchetype();
         }
     }
 }
