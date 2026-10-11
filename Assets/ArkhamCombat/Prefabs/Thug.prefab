@@ -20,6 +20,10 @@ GameObject:
   - component: {fileID: 8529916029380179715}
   - component: {fileID: 5969757038148826283}
   - component: {fileID: 5935790637885893314}
+  - component: {fileID: 5112275863604194374}
+  - component: {fileID: 5714672956776223283}
+  - component: {fileID: 1843358124852920154}
+  - component: {fileID: 721430270210715259}
   m_Layer: 0
   m_Name: Thug
   m_TagString: Untagged
@@ -153,6 +157,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: ArcaneOnyx.TPCharacterController::ArcaneOnyx.TPCharacterController.CharacterComponentUpdater
   characterComponents:
+  - {fileID: 1843358124852920154}
   - {fileID: 6457208113203780478}
 --- !u!114 &6457208113203780478
 MonoBehaviour:
@@ -206,6 +211,65 @@ MonoBehaviour:
   fist: {fileID: 0}
   bodyRenderer: {fileID: 7464247115813174226}
   restBlendSeconds: 0.12
+--- !u!195 &5112275863604194374
+NavMeshAgent:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1801664893403502907}
+  m_Enabled: 1
+  m_AgentTypeID: 0
+  m_Radius: 0.5
+  m_Speed: 3.5
+  m_Acceleration: 8
+  avoidancePriority: 50
+  m_AngularSpeed: 0
+  m_StoppingDistance: 0.1
+  m_AutoTraverseOffMeshLink: 1
+  m_AutoBraking: 1
+  m_AutoRepath: 1
+  m_Height: 2
+  m_BaseOffset: 1
+  m_WalkableMask: 4294967295
+  m_ObstacleAvoidanceType: 4
+--- !u!114 &5714672956776223283
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1801664893403502907}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 87c6c2a8c71b1ba4ebf9ea9700aa7047, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: ArkhamCombat.Encounter::ArkhamCombat.Encounter.EncounterAgent
+  tokenType: 0
+--- !u!114 &1843358124852920154
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1801664893403502907}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 1676558f76e8ab04f958e78d3621f648, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: ArkhamCombat.Enemies::ArkhamCombat.Enemies.EncounterFactsUpdater
+--- !u!114 &721430270210715259
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1801664893403502907}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 1d66261ad918dd44590709cb4006a3e5, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: ArkhamCombat.Encounter::ArkhamCombat.Encounter.AttackerLane
 --- !u!1 &4915860763269778321
 GameObject:
   m_ObjectHideFlags: 0

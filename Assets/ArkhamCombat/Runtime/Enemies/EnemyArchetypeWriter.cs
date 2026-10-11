@@ -1,5 +1,6 @@
 using ArcaneOnyx.BehaviorTree;
 using UnityEngine;
+using UnityEngine.AI;
 using Zenject;
 
 namespace ArkhamCombat.Enemies
@@ -16,7 +17,11 @@ namespace ArkhamCombat.Enemies
         [Inject]
         internal void Construct([InjectOptional] EnemyArchetype archetype) => this.archetype = archetype;
 
-        private void Awake() => WriteTunables();
+        private void Awake()
+        {
+            WriteTunables();
+            ApplyMoveSpeed();
+        }
 
         internal void WriteTunables()
         {
@@ -27,6 +32,15 @@ namespace ArkhamCombat.Enemies
 
             Write(EnemyVariableNames.IdleMin, archetype.IdleMin);
             Write(EnemyVariableNames.IdleMax, archetype.IdleMax);
+            Write(EnemyVariableNames.CombatRange, archetype.CombatRange);
+        }
+
+        internal void ApplyMoveSpeed()
+        {
+            if (archetype != null && TryGetComponent(out NavMeshAgent navMeshAgent))
+            {
+                navMeshAgent.speed = archetype.MoveSpeed;
+            }
         }
 
         private void Write(string key, object value) => AgentVariableWriter.SetOn(gameObject, key, value, Source);

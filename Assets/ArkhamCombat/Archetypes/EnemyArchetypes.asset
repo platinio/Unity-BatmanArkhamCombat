@@ -18,6 +18,8 @@ MonoBehaviour:
   hitReceiverProfile: {fileID: 817436336140980666, guid: e1d889d01db7699409079ff9f9515ac3, type: 2}
   idleMin: 0.2
   idleMax: 0.5
+  combatRange: 5
+  moveSpeed: 3.5
 --- !u!114 &11400000
 MonoBehaviour:
   m_ObjectHideFlags: 0
