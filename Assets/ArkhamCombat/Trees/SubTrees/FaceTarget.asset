@@ -1,0 +1,38 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 6aefa9c7ad4a4d3a9fb7ae5666f9b0b2, type: 3}
+  m_Name: FaceTarget
+  m_EditorClassIdentifier: ArcaneOnyx.BehaviorTree::ArcaneOnyx.BehaviorTree.BehaviorTreeGraphAsset
+  _data:
+    _json: '{"declarations":{"Kind":"Graph","collection":{"$content":[],"$version":"A"},"$version":"A"},"requiredDeclarations":{"Kind":"Graph","collection":{"$content":[],"$version":"A"},"$version":"A"},"optionalDeclarations":{"Kind":"Graph","collection":{"$content":[{"name":"turnSpeed","value":{"$content":540.0,"$type":"System.Single"},"typeHandle":{"Identification":null,"$version":"A"},"$version":"A"}],"$version":"A"},"$version":"A"},"graph":{"controlInputDefinitions":[],"controlOutputDefinitions":[],"valueInputDefinitions":[],"valueOutputDefinitions":[],"entryNode":{"relations":{"$content":[],"$type":"Unity.VisualScripting.ConnectionCollection`3[[ArcaneOnyx.BehaviorTree.IPortRelation,
+      ArcaneOnyx.BehaviorTree, Version=0.0.0.0, Culture=neutral, PublicKeyToken=null],[ArcaneOnyx.BehaviorTree.IPort,
+      ArcaneOnyx.BehaviorTree, Version=0.0.0.0, Culture=neutral, PublicKeyToken=null],[ArcaneOnyx.BehaviorTree.IPort,
+      ArcaneOnyx.BehaviorTree, Version=0.0.0.0, Culture=neutral, PublicKeyToken=null]]"},"position":{"x":0.0,"y":0.0},"defaultValues":{},"LastExecutionStatus":"None","runtimeException":null,"positionRect":{"xMin":-96.0,"yMin":-15.0,"xMax":54.0,"yMax":85.0},"guid":"7f0f570b-2e92-4cc5-b64d-7078510ef27e","$id":"13"},"title":null,"summary":null,"pan":{"x":0.0,"y":0.0},"zoom":1.0,"elements":[{"PlaceHolderNodes":null,"source":{"$ref":"13"},"destination":{"relations":{"$content":[],"$type":"Unity.VisualScripting.ConnectionCollection`3[[ArcaneOnyx.BehaviorTree.IPortRelation,
+      ArcaneOnyx.BehaviorTree, Version=0.0.0.0, Culture=neutral, PublicKeyToken=null],[ArcaneOnyx.BehaviorTree.IPort,
+      ArcaneOnyx.BehaviorTree, Version=0.0.0.0, Culture=neutral, PublicKeyToken=null],[ArcaneOnyx.BehaviorTree.IPort,
+      ArcaneOnyx.BehaviorTree, Version=0.0.0.0, Culture=neutral, PublicKeyToken=null]]"},"position":{"x":0.0,"y":0.0},"defaultValues":{},"LastExecutionStatus":"None","runtimeException":null,"positionRect":{"xMin":0.0,"yMin":160.0,"xMax":150.0,"yMax":260.0},"guid":"53f5b135-7a8b-49fe-b0ac-c3b64edb0bd2","$type":"ArcaneOnyx.BehaviorTree.FaceTarget","$id":"18"},"Position":{"xMin":0.0,"yMin":0.0,"xMax":0.0,"yMax":0.0},"transitionIndex":0,"guid":"27ce2e05-e9b5-4e0f-94c1-5bbc6657d509","$type":"ArcaneOnyx.BehaviorTree.BehaviorTreeTransition"},{"position":{"xMin":-420.0,"yMin":-160.0,"xMax":0.0,"yMax":-30.0},"title":"Facing","body":"Turns
+      the agent toward the encounter''s target at turnSpeed degrees a second and
+      succeeds once it faces it. Acceptable Rotation is how closely: 0.95 is within
+      about 18 degrees.","colorTheme":"Classic","guid":"04712cca-c845-4a4d-bf1c-af302b7f62c9","$type":"ArcaneOnyx.GraphCore.StickyNote"},{"$ref":"13"},{"$ref":"18"},{"relations":{"$content":[],"$type":"Unity.VisualScripting.ConnectionCollection`3[[ArcaneOnyx.BehaviorTree.IPortRelation,
+      ArcaneOnyx.BehaviorTree, Version=0.0.0.0, Culture=neutral, PublicKeyToken=null],[ArcaneOnyx.BehaviorTree.IPort,
+      ArcaneOnyx.BehaviorTree, Version=0.0.0.0, Culture=neutral, PublicKeyToken=null],[ArcaneOnyx.BehaviorTree.IPort,
+      ArcaneOnyx.BehaviorTree, Version=0.0.0.0, Culture=neutral, PublicKeyToken=null]]"},"position":{"x":0.0,"y":0.0},"defaultValues":{},"LastExecutionStatus":"None","runtimeException":null,"positionRect":{"xMin":-420.0,"yMin":360.0,"xMax":-270.0,"yMax":460.0},"guid":"967adabf-e40f-41c0-9d2f-bdf3ca8368a2","$type":"ArkhamCombat.Encounter.GetEncounterTarget","$id":"22"},{"value":{"x":0.0,"y":0.0,"z":0.0},"NodeComment":null,"relations":{"$content":[],"$type":"Unity.VisualScripting.ConnectionCollection`3[[ArcaneOnyx.BehaviorTree.IPortRelation,
+      ArcaneOnyx.BehaviorTree, Version=0.0.0.0, Culture=neutral, PublicKeyToken=null],[ArcaneOnyx.BehaviorTree.IPort,
+      ArcaneOnyx.BehaviorTree, Version=0.0.0.0, Culture=neutral, PublicKeyToken=null],[ArcaneOnyx.BehaviorTree.IPort,
+      ArcaneOnyx.BehaviorTree, Version=0.0.0.0, Culture=neutral, PublicKeyToken=null]]"},"position":{"x":0.0,"y":0.0},"defaultValues":{},"LastExecutionStatus":"None","runtimeException":null,"positionRect":{"xMin":-140.0,"yMin":360.0,"xMax":10.0,"yMax":460.0},"guid":"9fdfc0e3-e045-4c50-8b6c-6f9b22cacb67","$type":"ArcaneOnyx.BehaviorTree.Vector3Literal","$id":"25"},{"VariableKind":"Graph","NodeComment":null,"relations":{"$content":[],"$type":"Unity.VisualScripting.ConnectionCollection`3[[ArcaneOnyx.BehaviorTree.IPortRelation,
+      ArcaneOnyx.BehaviorTree, Version=0.0.0.0, Culture=neutral, PublicKeyToken=null],[ArcaneOnyx.BehaviorTree.IPort,
+      ArcaneOnyx.BehaviorTree, Version=0.0.0.0, Culture=neutral, PublicKeyToken=null],[ArcaneOnyx.BehaviorTree.IPort,
+      ArcaneOnyx.BehaviorTree, Version=0.0.0.0, Culture=neutral, PublicKeyToken=null]]"},"position":{"x":0.0,"y":0.0},"defaultValues":{"Key":{"$content":"turnSpeed","$type":"System.String"}},"LastExecutionStatus":"None","runtimeException":null,"positionRect":{"xMin":140.0,"yMin":360.0,"xMax":290.0,"yMax":460.0},"guid":"7dd5b272-443c-4197-b899-6375384ec465","$type":"ArcaneOnyx.BehaviorTree.GetVariable","$id":"28"},{"value":0.95,"NodeComment":null,"relations":{"$content":[],"$type":"Unity.VisualScripting.ConnectionCollection`3[[ArcaneOnyx.BehaviorTree.IPortRelation,
+      ArcaneOnyx.BehaviorTree, Version=0.0.0.0, Culture=neutral, PublicKeyToken=null],[ArcaneOnyx.BehaviorTree.IPort,
+      ArcaneOnyx.BehaviorTree, Version=0.0.0.0, Culture=neutral, PublicKeyToken=null],[ArcaneOnyx.BehaviorTree.IPort,
+      ArcaneOnyx.BehaviorTree, Version=0.0.0.0, Culture=neutral, PublicKeyToken=null]]"},"position":{"x":0.0,"y":0.0},"defaultValues":{},"LastExecutionStatus":"None","runtimeException":null,"positionRect":{"xMin":420.0,"yMin":360.0,"xMax":570.0,"yMax":460.0},"guid":"6c58160a-65c2-4b6b-b87a-e44c12e6657a","$type":"ArcaneOnyx.BehaviorTree.FloatLiteral","$id":"31"},{"sourceUnit":{"$ref":"22"},"sourceKey":"Output","destinationUnit":{"$ref":"18"},"destinationKey":"TransformTarget","guid":"883105d2-cce5-4ca1-aae7-2c687b960c95","$type":"ArcaneOnyx.BehaviorTree.PortValueConnection"},{"sourceUnit":{"$ref":"25"},"sourceKey":"Value","destinationUnit":{"$ref":"18"},"destinationKey":"RotationOffset","guid":"49c1a9ce-757c-48cc-a891-5d80a74f5d89","$type":"ArcaneOnyx.BehaviorTree.PortValueConnection"},{"sourceUnit":{"$ref":"28"},"sourceKey":"Value","destinationUnit":{"$ref":"18"},"destinationKey":"RotationSpeed","guid":"b9704070-010c-433e-a97c-72c65d0e5cea","$type":"ArcaneOnyx.BehaviorTree.PortValueConnection"},{"sourceUnit":{"$ref":"31"},"sourceKey":"Value","destinationUnit":{"$ref":"18"},"destinationKey":"AcceptableRotation","guid":"41a28b48-af10-4369-a9a2-f16fae74c2e7","$type":"ArcaneOnyx.BehaviorTree.PortValueConnection"}],"$version":"A"}}'
+    _objectReferences: []
