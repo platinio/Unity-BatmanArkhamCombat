@@ -97,7 +97,7 @@ character's context, before any `Awake`.
 | `ArkhamCombat.Enemies` | `Runtime/Enemies` | The enemy archetype and its database, the enemy installer, the components that publish an enemy's facts, and the one C# behaviour tree node, `Play Action` | Combat, Characters, BH3, GraphCore, the database module, Zenject. Never Player: a test asserts it |
 | `ArkhamCombat.Shell` | `Runtime/Shell` | The frame-data overlay and the camera demo | Combat, Camera, Characters, Player (the overlay reads the `CombatActions` and the `ComboTracker`) |
 | `ArkhamCombat.Camera` | `Runtime/Camera` | Group framing math and the combat framing source | Character controller |
-| `ArkhamCombat.Editor` | `Editor` | The node id dropdown, the two fixture builders, and the database windows and inspectors for hit receiver profiles and enemy archetypes | |
+| `ArkhamCombat.Editor` | `Editor` | The node id dropdown, and the database windows and inspectors for hit receiver profiles and enemy archetypes | |
 | `ArkhamCombat.Tests` | `Tests/EditMode` | EditMode tests for the core and the stand-ins | |
 
 The intent buffer lives in the character controller submodule (`ArcaneOnyx.TPCharacterController`,
@@ -255,8 +255,6 @@ source of truth and each carries sticky notes saying why it is shaped as it is.
 | `FrameDataOverlay` | The spec 01 tuning strip, IMGUI: one bar per recent action with the warp (yellow), hit (red), combo (green) and evade (blue) bands, magenta cue marks, a white playhead, and a tick per press coloured by its fate (green spent, red expired, yellow queued). Everything comes from the runner of the scene's `CombatActions`; without one it draws nothing. The header's combo is the scene's `ComboTracker`, zero without one |
 | `CombatCameraDemo`, `GroupFramingSource`, `GroupFraming` | The combat framing on the camera rig: pivot drifts toward the enemy centroid, distance follows the spread. Pure math in `GroupFraming` |
 | `ChainNodeIdDrawer` | The dropdown of node ids on edge destinations and the stance root |
-| `ReactionActionsFixtureBuilder` | **ArkhamCombat → Build Reaction Actions Fixture**: the five reaction actions in `Actions/Reactions` (Flinch, Stagger, Knockdown, GetUp, Death) with their cues, rebuilt in place |
-| `GroundStanceFixtureBuilder` | **ArkhamCombat → Build Ground Stance Fixture**: the four intent kinds (existing ones keep their seconds queued), four attacks with windows and cues (the Cross asks for a stagger and the kick for a knockdown), the Ground stance, and the evade and counter kinds on the combat config, rebuilt in place. The stance keeps its GUID, so the character's installer in the scene keeps pointing at it |
 
 ## Events
 
@@ -312,9 +310,9 @@ both generated assemblies reference it.
   `ProceduralPresentationDriver` with the body child, an optional fist and the body renderer gives it a
   body. Leaving out the facts updater, the combo tracker, the targeting, the driver or the state switch
   gives a character without that piece; `CombatActions` is what plays actions at all. The scene also needs the Hermes object described under Events.
-- **A reaction action**: **ArkhamCombat → Build Reaction Actions Fixture** rebuilds the five in
-  `Actions/Reactions`; a new one is Create → ArkhamCombat → Action with its cues. A knockdown's duration
-  is its time on the floor.
+- **A reaction action**: Create → ArkhamCombat → Action, with its duration and cues, beside the five in
+  `Actions/Reactions`. A knockdown's duration is its time on the floor: the body stays down until the
+  get-up stands it.
 - **A hit receiver profile or an enemy archetype**: an item in `HitProfiles/HitReceiverProfiles.asset`
   or `Archetypes/EnemyArchetypes.asset`, added in **Window → Arcane Onyx → Hit Receiver Profiles** or
   **Enemy Archetypes** and picked through the dropdown on the archetype or the enemy's installer. Never a
@@ -357,7 +355,7 @@ both generated assemblies reference it.
 Open `Assets/CombatArena.unity` and press Play. Left mouse or the gamepad's west button strikes; the
 chain is Jab (left or right by target side), Cross, Roundhouse, then back to the jab. Stand near a
 thug: beyond the lunge limit the warp refuses and the strike whiffs. A jab makes a thug flinch, the Cross
-staggers it, the Roundhouse knocks it down and it gets up; the sixth hit with the fixture's attacks kills it,
+staggers it, the Roundhouse knocks it down and it gets up; the sixth hit kills it (ten damage a strike against the Thug profile's sixty health),
 it stays down, and the next strike picks another one. Each thug's agent variables show in BH3's Variable
 Watch, and its flight recorder shows which branch ran and who wrote each fact. The overlay in the top left shows
 why anything happened. If the Editor window loses focus play mode stops advancing unless Run In
