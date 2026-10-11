@@ -7,6 +7,7 @@ using ArcaneOnyx.TPCharacterController.States;
 using ArcaneOnyx.UnityExtensions;
 using UnityEngine;
 using Zenject;
+using ArkhamCombat.Characters;
 
 namespace ArkhamCombat.Player
 {

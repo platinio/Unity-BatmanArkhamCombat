@@ -2,6 +2,7 @@
     "name": "ArkhamCombat.Shell",
     "rootNamespace": "ArkhamCombat.Shell",
     "references": [
+        "ArkhamCombat.Characters",
         "ArcaneOnyx.TPCharacterController",
         "ArkhamCombat.Camera",
         "ArkhamCombat.Combat",

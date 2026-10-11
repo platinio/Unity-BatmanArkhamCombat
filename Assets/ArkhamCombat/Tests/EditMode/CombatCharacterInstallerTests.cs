@@ -6,6 +6,7 @@ using ArcaneOnyx.TPCharacterController.Inputs;
 using ArcaneOnyx.TPCharacterController.Motor;
 using ArcaneOnyx.TPCharacterController.Movement;
 using ArcaneOnyx.VisualScriptingExtension;
+using ArkhamCombat.Characters;
 using ArkhamCombat.Combat;
 using ArkhamCombat.Player;
 using ArkhamCombat.Presentation;

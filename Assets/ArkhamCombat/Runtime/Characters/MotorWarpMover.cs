@@ -1,7 +1,7 @@
 using ArkhamCombat.Combat;
 using UnityEngine;
 
-namespace ArkhamCombat.Player
+namespace ArkhamCombat.Characters
 {
     /// <summary>
     /// The runner asks for movement here and never touches the motor. The attacking state hands

@@ -1,4 +1,5 @@
 using System.Collections.Generic;
+using ArkhamCombat.Characters;
 using ArkhamCombat.Combat;
 using ArkhamCombat.Player;
 using UnityEngine;

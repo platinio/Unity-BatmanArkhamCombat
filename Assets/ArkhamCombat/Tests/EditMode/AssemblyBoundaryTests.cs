@@ -20,7 +20,7 @@ namespace ArkhamCombat.Tests
 
         private static readonly string[] GameplayAssemblies =
         {
-            "ArkhamCombat.Combat", "ArkhamCombat.Player", "ArkhamCombat.Enemies", "ArkhamCombat.Camera", "ArkhamCombat.Shell"
+            "ArkhamCombat.Combat", "ArkhamCombat.Characters", "ArkhamCombat.Player", "ArkhamCombat.Enemies", "ArkhamCombat.Camera", "ArkhamCombat.Shell"
         };
 
         private static bool HasReferenceTo(Assembly assembly, string referencedName) =>
