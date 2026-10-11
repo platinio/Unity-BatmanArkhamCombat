@@ -1,11 +1,14 @@
 using System.Text.RegularExpressions;
+using ArcaneOnyx.TPCharacterController;
 using ArcaneOnyx.TPCharacterController.Configuration;
+using ArkhamCombat.Characters;
 using ArkhamCombat.Player;
 using NUnit.Framework;
 using UnityEditor;
 using UnityEngine;
 using UnityEngine.TestTools;
 using Zenject;
+using static ArkhamCombat.Tests.CombatTestDoubles;
 
 namespace ArkhamCombat.Tests
 {
@@ -50,6 +53,31 @@ namespace ArkhamCombat.Tests
             LogAssert.Expect(LogType.Error, new Regex("State 0 on .* is empty"));
 
             installer.InstallBindings();
+        }
+
+        [Test]
+        public void ThePlayersCombatActions_AreTheOnesBesideItsBrain_NotAnEnemys()
+        {
+            GameObject enemy = HiddenObject("Enemy");
+            enemy.AddComponent<CombatActions>();
+            GameObject player = HiddenObject("Player");
+            CharacterBrain playerBrain = player.AddComponent<CharacterBrain>();
+            CombatActions playerCombatActions = player.AddComponent<CombatActions>();
+
+            try
+            {
+                DiContainer container = new DiContainer();
+                container.Bind<CharacterBrain>().FromInstance(playerBrain);
+
+                PlayerStaticInstaller.BindCombatActionsBesideTheBrain(container);
+
+                Assert.AreSame(playerCombatActions, container.Resolve<CombatActions>());
+            }
+            finally
+            {
+                Object.DestroyImmediate(enemy);
+                Object.DestroyImmediate(player);
+            }
         }
     }
 }

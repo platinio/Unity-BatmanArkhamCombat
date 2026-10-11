@@ -1,4 +1,6 @@
+using System.Collections.Generic;
 using ArcaneOnyx.ScriptableObjectDatabase;
+using ArcaneOnyx.TPCharacterController.Inputs;
 using ArkhamCombat.Characters;
 using ArkhamCombat.Combat;
 using UnityEngine;
@@ -7,7 +9,8 @@ using Zenject;
 namespace ArkhamCombat.Enemies
 {
     /// <summary>
-    /// An enemy has no stance and no presses: its tree plays its actions.
+    /// An enemy has no stance and no presses: its tree plays its actions. An optional piece is
+    /// bound when its component is on the enemy and replaced by one that does nothing when it is not.
     /// </summary>
     public sealed class EnemyInstaller : MonoInstaller
     {
@@ -17,23 +20,37 @@ namespace ArkhamCombat.Enemies
 
         public override void InstallBindings()
         {
-            if (!ReportAuthoringErrors())
-            {
-                return;
-            }
+            ReportAuthoringErrors();
 
             BindArchetype();
+            BindFacts();
+            BindConditions();
             BindPresentation();
-            BindWarpMover();
+            BindWarpAndHits();
+            BindTargeting();
             BindStartGate();
             BindRunner();
         }
 
+        // Left unbound when missing: what depends on them takes them as optional and goes without.
         private void BindArchetype()
         {
-            Container.Bind<EnemyArchetype>().FromInstance(archetype);
-            Container.Bind<HitReceiverProfile>().FromInstance(archetype.HitReceiverProfile);
+            bool hasArchetype = archetype != null;
+            if (hasArchetype)
+            {
+                Container.Bind<EnemyArchetype>().FromInstance(archetype);
+            }
+
+            bool hasProfile = hasArchetype && archetype.HitReceiverProfile != null;
+            if (hasProfile)
+            {
+                Container.Bind<HitReceiverProfile>().FromInstance(archetype.HitReceiverProfile);
+            }
         }
+
+        private void BindFacts() => Container.Bind<CombatFacts>().FromInstance(new CombatFacts());
+
+        private void BindConditions() => Container.Bind<IConditionEvaluator>().To<AlwaysConditionEvaluator>().AsSingle();
 
         private void BindPresentation()
         {
@@ -43,44 +60,48 @@ namespace ArkhamCombat.Enemies
             Container.Bind<IPresentationDriver>().FromInstance(hasBody ? driverOnTheBody : new NullPresentationDriver());
         }
 
-        // Reactions do not warp, so the pending movement is never taken.
-        private void BindWarpMover() =>
-            Container.Bind(typeof(MotorWarpMover), typeof(IWarpMover)).To<MotorWarpMover>().AsSingle();
-
-        // No state machine to wait on: an enemy's tree may start an action at any time.
-        private void BindStartGate() => Container.Bind<IActionStartGate>().FromInstance(new AlwaysOpenActionStartGate());
-
-        private void BindRunner() => Container.Bind<ActionRunner>().FromMethod(RunnerWithoutAStance).AsSingle();
-
-        private static ActionRunner RunnerWithoutAStance(InjectContext context)
+        // CombatActions asks for the warp mover by its own type, so an enemy has one though nothing takes its movement yet.
+        private void BindWarpAndHits()
         {
-            DiContainer container = context.Container;
-            return new ActionRunner(
-                stance: null,
-                intents: null,
-                facts: new CombatFacts(),
-                conditions: new AlwaysConditionEvaluator(),
-                container.Resolve<InterruptKinds>(),
-                container.Resolve<IPresentationDriver>(),
-                container.Resolve<IWarpMover>(),
-                new NullHitWindowListener());
+            Container.Bind(typeof(MotorWarpMover), typeof(IWarpMover)).To<MotorWarpMover>().AsSingle();
+            Container.Bind<IHitWindowListener>().To<NullHitWindowListener>().AsSingle();
         }
 
-        private bool ReportAuthoringErrors()
+        private void BindTargeting()
+        {
+            bool hasTargeting = TryGetComponent(out IActionTargetPicker targetPickerOnTheEnemy);
+
+            Container.Bind<IActionTargetPicker>()
+                .FromInstance(hasTargeting ? targetPickerOnTheEnemy : new NullActionTargetPicker());
+        }
+
+        // Without a gate of its own nothing holds an enemy back: its tree may start an action at any time.
+        private void BindStartGate()
+        {
+            bool hasStartGate = TryGetComponent(out IActionStartGate startGateOnTheEnemy);
+
+            Container.Bind<IActionStartGate>()
+                .FromInstance(hasStartGate ? startGateOnTheEnemy : new AlwaysOpenActionStartGate());
+        }
+
+        private void BindRunner() =>
+            Container.Bind<ActionRunner>().AsSingle().WithArguments<Stance, IntentBuffer>(null, null);
+
+        private void ReportAuthoringErrors()
         {
             if (archetype == null)
             {
-                Debug.LogError($"[{nameof(EnemyInstaller)}] No archetype assigned on '{name}', so this enemy cannot be built.", this);
-                return false;
+                Debug.LogError($"[{nameof(EnemyInstaller)}] No archetype assigned on '{name}', so this enemy has no health and cannot be hit.", this);
+                return;
             }
 
-            if (archetype.HitReceiverProfile == null)
+            List<string> errors = new List<string>();
+            archetype.Validate(errors);
+
+            foreach (string error in errors)
             {
-                Debug.LogError($"[{nameof(EnemyInstaller)}] Archetype '{archetype.name}' names no hit receiver profile, so '{name}' cannot be hit.", archetype);
-                return false;
+                Debug.LogError($"[{nameof(EnemyInstaller)}] {error}", archetype);
             }
-
-            return true;
         }
     }
 }

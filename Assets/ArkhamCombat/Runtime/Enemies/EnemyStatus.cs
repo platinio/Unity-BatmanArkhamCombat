@@ -1,25 +1,26 @@
 using ArcaneOnyx.BehaviorTree;
 using ArkhamCombat.Combat;
-using Unity.VisualScripting;
 using UnityEngine;
 using Zenject;
 
 namespace ArkhamCombat.Enemies
 {
     /// <summary>
-    /// Publishes what each hit did as agent variables and never plays anything: the tree's reaction
-    /// branches do that.
+    /// It never plays anything: the tree's reaction branches do that, and clear the reaction when
+    /// they are done.
     /// </summary>
+    [RequireComponent(typeof(AgentVariableWriter))]
     public sealed class EnemyStatus : MonoBehaviour, ICombatTarget
     {
         private const string Source = nameof(EnemyStatus);
         private const string Dead = "Dead";
+        private const string NoReaction = nameof(AppliedReaction.None);
 
         private HitReceiverProfile profile;
         private HitReceiver receiver;
-        private Variables variables;
+        private AgentVariableWriter agentVariables;
 
-        public string State => IsAlive ? ReactionBeingPlayed : Dead;
+        public string State => IsAlive ? ReactionAsTheTreeLeftIt : Dead;
         public bool IsValid => this != null && isActiveAndEnabled && IsAlive;
         public Vector3 Position => transform.position;
 
@@ -27,21 +28,14 @@ namespace ArkhamCombat.Enemies
 
         private float ShareOfHealthLeft => receiver != null ? receiver.Health / profile.MaxHealth : 0f;
 
-        private string ReactionBeingPlayed
-        {
-            get
-            {
-                bool hasReaction = variables != null && variables.declarations.IsDefined(EnemyVariableNames.Reaction);
-                return hasReaction ? variables.declarations.Get<string>(EnemyVariableNames.Reaction) : AppliedReaction.None.ToString();
-            }
-        }
+        private string ReactionAsTheTreeLeftIt => agentVariables.Read(EnemyVariableNames.Reaction) as string ?? NoReaction;
 
         [Inject]
-        internal void Construct(HitReceiverProfile profile) => this.profile = profile;
+        internal void Construct([InjectOptional] HitReceiverProfile profile) => this.profile = profile;
 
         internal void Awake()
         {
-            TryGetComponent(out variables);
+            agentVariables = GetComponent<AgentVariableWriter>();
             CreateReceiver();
             PublishStartingFacts();
         }
@@ -60,7 +54,7 @@ namespace ArkhamCombat.Enemies
         private void PublishStartingFacts()
         {
             Write(EnemyVariableNames.IsAlive, IsAlive);
-            Write(EnemyVariableNames.Reaction, AppliedReaction.None.ToString());
+            Write(EnemyVariableNames.Reaction, NoReaction);
             Write(EnemyVariableNames.Health01, ShareOfHealthLeft);
         }
 

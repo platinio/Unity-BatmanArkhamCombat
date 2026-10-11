@@ -5,9 +5,9 @@ using ArcaneOnyx.TPCharacterController.Inputs;
 using ArcaneOnyx.TPCharacterController.Motor;
 using ArcaneOnyx.TPCharacterController.States;
 using ArcaneOnyx.UnityExtensions;
+using ArkhamCombat.Characters;
 using UnityEngine;
 using Zenject;
-using ArkhamCombat.Characters;
 
 namespace ArkhamCombat.Player
 {
@@ -70,8 +70,12 @@ namespace ArkhamCombat.Player
         {
             Container.Bind<CharacterBrain>().FromComponentInHierarchy().AsSingle();
             Container.Bind<CharacterMotor>().FromComponentInHierarchy().AsSingle();
-            Container.Bind<CombatActions>().FromComponentInHierarchy().AsSingle();
+            BindCombatActionsBesideTheBrain(Container);
         }
+
+        // Every fighting character has combat actions, so the first in the hierarchy may be an enemy's.
+        internal static void BindCombatActionsBesideTheBrain(DiContainer container) =>
+            container.Bind<CombatActions>().FromResolveGetter<CharacterBrain>(brain => brain.GetComponent<CombatActions>()).AsSingle();
 
         private void BindInput()
         {

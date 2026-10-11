@@ -2,10 +2,7 @@
     "name": "ArkhamCombat.Editor",
     "rootNamespace": "ArkhamCombat.Editor",
     "references": [
-        "ArcaneOnyx.TPCharacterController",
         "ArkhamCombat.Combat",
-        "ArkhamCombat.Presentation",
-        "ArkhamCombat.Player",
         "ArcaneOnyx.ScriptableObjectDatabase",
         "ArkhamCombat.Enemies",
         "ArcaneOnyx.ScriptableObjectDatabaseEditor"

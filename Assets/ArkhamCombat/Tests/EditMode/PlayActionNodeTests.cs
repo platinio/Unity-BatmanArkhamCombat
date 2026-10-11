@@ -19,6 +19,7 @@ namespace ArkhamCombat.Tests
         private const float TickSeconds = 0.1f;
 
         private ActionDefinition flinch;
+        private ActionDefinition stagger;
         private GameObject agent;
         private CombatActions combatActions;
         private BehaviorTreeGraph graph;
@@ -28,6 +29,7 @@ namespace ArkhamCombat.Tests
         public void SetUp()
         {
             flinch = Action("Flinch", ActionSeconds);
+            stagger = Action("Stagger", ActionSeconds);
             agent = AgentWithARunner("Agent", out combatActions);
             graph = TreeOfOnePlayAction(agent, out playAction);
         }
@@ -37,6 +39,7 @@ namespace ArkhamCombat.Tests
         {
             Object.DestroyImmediate(agent);
             Object.DestroyImmediate(flinch);
+            Object.DestroyImmediate(stagger);
         }
 
         private static GameObject AgentWithARunner(string name, out CombatActions combatActions)
@@ -114,6 +117,31 @@ namespace ArkhamCombat.Tests
             graph.OnExit();
 
             Assert.IsFalse(combatActions.Runner.IsPlaying, "an aborted branch leaves no action behind");
+        }
+
+        [Test]
+        public void WhenSomethingElseStartsAnotherAction_ItStopsWaiting_AndLeavesThatActionAlone()
+        {
+            FeedTheAction(flinch);
+            graph.OnUpdate();
+
+            combatActions.Runner.PlayAction(stagger, agent.transform.position);
+
+            Assert.AreEqual(ExecutionStatus.Success, graph.OnUpdate(), "the flinch is over, whoever ended it");
+            graph.OnExit();
+            Assert.AreSame(stagger, combatActions.Runner.CurrentAction, "the stagger is not this node to cancel");
+        }
+
+        [Test]
+        public void EnteredAgainAfterFailing_ItSaysWhyOnlyOnce()
+        {
+            FeedTheAction(null);
+            LogAssert.Expect(LogType.Error, new Regex("handed no action"));
+
+            graph.OnUpdate();
+            graph.OnUpdate();
+
+            LogAssert.NoUnexpectedReceived();
         }
 
         [Test]

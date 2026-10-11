@@ -17,7 +17,7 @@ MonoBehaviour:
   - firesAt: 0
     kind:
       rid: 3135146618665566288
-    duration: 0.15
+    duration: 0.25
     strength: -10
     ease:
       serializedVersion: 2

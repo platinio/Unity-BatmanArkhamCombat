@@ -15,6 +15,7 @@ GameObject:
   - component: {fileID: 8216485348477869500}
   - component: {fileID: 7891452821820046825}
   - component: {fileID: 1881130489121715380}
+  - component: {fileID: 8377596097722759030}
   - component: {fileID: 6457208113203780478}
   - component: {fileID: 8529916029380179715}
   - component: {fileID: 5969757038148826283}
@@ -139,6 +140,20 @@ MonoBehaviour:
     _json: '{"OriginalMacro":null,"FlightRecorder":null,"Variables":null,"nest":{"source":"Macro","macro":0,"embed":null}}'
     _objectReferences:
     - {fileID: 11400000, guid: 5eeb705b021cdff4baa23235de79e8e3, type: 2}
+--- !u!114 &8377596097722759030
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1801664893403502907}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 15b3dad1220b6044d9523c6706582597, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: ArcaneOnyx.TPCharacterController::ArcaneOnyx.TPCharacterController.CharacterComponentUpdater
+  characterComponents:
+  - {fileID: 6457208113203780478}
 --- !u!114 &6457208113203780478
 MonoBehaviour:
   m_ObjectHideFlags: 0

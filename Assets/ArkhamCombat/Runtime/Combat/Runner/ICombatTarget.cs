@@ -3,9 +3,8 @@ using System.Collections.Generic;
 namespace ArkhamCombat.Combat
 {
     /// <summary>
-    /// Something that can be picked, read and hit: a dummy today, an enemy's status component once
-    /// spec 02 lands. Everything player-side talks to this, so the arrival of real enemies changes
-    /// no caller. <see cref="Receive"/> is the direct gameplay call spec 05 keeps off the event bus.
+    /// Everything that strikes talks to this and never to the target's own component.
+    /// <see cref="Receive"/> is a direct call rather than an event: the striker needs the answer back.
     /// </summary>
     public interface ICombatTarget : IActionTarget
     {

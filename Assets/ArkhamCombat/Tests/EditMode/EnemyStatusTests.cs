@@ -1,4 +1,5 @@
 using System.Text.RegularExpressions;
+using ArcaneOnyx.BehaviorTree;
 using ArkhamCombat.Combat;
 using ArkhamCombat.Enemies;
 using NUnit.Framework;
@@ -9,7 +10,6 @@ using static ArkhamCombat.Tests.CombatTestDoubles;
 
 namespace ArkhamCombat.Tests
 {
-    // Edit mode runs no Awake, so each test wakes the status by hand once its profile is in place.
     public class EnemyStatusTests
     {
         private const float MaxHealth = 100f;
@@ -32,9 +32,8 @@ namespace ArkhamCombat.Tests
             cross = Attack("Cross", damage: Damage, reaction: HitReaction.Stagger);
 
             enemy = HiddenObject("Enemy");
-            enemy.AddComponent<Variables>();
-            facts = Variables.Object(enemy);
             status = enemy.AddComponent<EnemyStatus>();
+            facts = Variables.Object(enemy);
         }
 
         [TearDown]
@@ -52,7 +51,16 @@ namespace ArkhamCombat.Tests
             status.Awake();
         }
 
+        private void WakeWithHealthForOneHit()
+        {
+            profile.Configure(Damage);
+            WakeWith(profile);
+        }
+
         private HitResult Hit(AttackDefinition attack) => status.Receive(new HitInfo(attack, Vector3.forward));
+
+        private int ReactionFactVersion() =>
+            enemy.GetComponent<AgentVariableWriter>().VersionOf(EnemyVariableNames.Reaction);
 
         [Test]
         public void StartsAlive_WithNoReaction_AndFullHealth()
@@ -79,16 +87,24 @@ namespace ArkhamCombat.Tests
         [Test]
         public void AKillingHit_PublishesDeath_AndLeavesTheReactionAlone()
         {
-            profile.Configure(Damage);
-            WakeWith(profile);
+            WakeWithHealthForOneHit();
 
             Hit(jab);
 
             Assert.IsFalse((bool)facts.Get(EnemyVariableNames.IsAlive));
             Assert.AreEqual("None", facts.Get(EnemyVariableNames.Reaction), "death is not a reaction the tree clears");
             Assert.AreEqual(0f, (float)facts.Get(EnemyVariableNames.Health01), Tolerance);
+        }
+
+        [Test]
+        public void ADeadEnemy_IsNoLongerATarget()
+        {
+            WakeWithHealthForOneHit();
+
+            Hit(jab);
+
             Assert.AreEqual("Dead", status.State);
-            Assert.IsFalse(status.IsValid, "a dead enemy is no longer a target");
+            Assert.IsFalse(status.IsValid);
         }
 
         [Test]
@@ -118,8 +134,7 @@ namespace ArkhamCombat.Tests
         [Test]
         public void AHitOnADeadEnemy_IsIgnored_AndPublishesNothing()
         {
-            profile.Configure(Damage);
-            WakeWith(profile);
+            WakeWithHealthForOneHit();
             Hit(jab);
 
             HitResult secondHit = Hit(cross);
@@ -137,6 +152,33 @@ namespace ArkhamCombat.Tests
 
             Assert.IsFalse(Hit(jab).HasLanded);
             Assert.IsFalse(status.IsValid);
+        }
+
+        // A guard wakes when its fact's version moves, and only an agent with a machine keeps versions.
+        [Test]
+        public void OnAnAgent_ASecondHitOfTheSameKind_DoesNotMoveTheReactionFact()
+        {
+            enemy.AddComponent<BehaviorTreeMachine>();
+            WakeWith(profile);
+            Hit(jab);
+            int versionAfterTheFirstFlinch = ReactionFactVersion();
+
+            Hit(jab);
+
+            Assert.AreEqual(versionAfterTheFirstFlinch, ReactionFactVersion());
+        }
+
+        [Test]
+        public void OnAnAgent_AHitOfAnotherKind_MovesTheReactionFact()
+        {
+            enemy.AddComponent<BehaviorTreeMachine>();
+            WakeWith(profile);
+            Hit(jab);
+            int versionAfterTheFlinch = ReactionFactVersion();
+
+            Hit(cross);
+
+            Assert.Greater(ReactionFactVersion(), versionAfterTheFlinch);
         }
     }
 }
