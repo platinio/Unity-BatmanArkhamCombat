@@ -13,7 +13,8 @@
         "Hermes.Runtime",
         "MackySoft.SerializeReferenceExtensions",
         "Unity.VisualScripting.Core",
-        "Zenject"
+        "Zenject",
+        "ArcaneOnyx.ScriptableObjectDatabase"
     ],
     "includePlatforms": [],
     "excludePlatforms": [],
