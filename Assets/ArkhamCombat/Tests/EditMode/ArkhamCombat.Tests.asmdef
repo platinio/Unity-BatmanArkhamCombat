@@ -18,6 +18,7 @@
         "Zenject",
         "ArcaneOnyx.ScriptableObjectDatabase",
         "ArkhamCombat.Enemies",
+        "ArkhamCombat.Encounter",
         "ArcaneOnyx.BehaviorTree",
         "ArcaneOnyx.GraphCore",
         "ArcaneOnyx.BehaviorTree.Editor"
