@@ -38,13 +38,13 @@ namespace ArkhamCombat.Player
         [SerializeField, Range(0f, 90f)] private float deadAheadAngle = 6f;
 
         [Header("Stand-in target selection (spec 04 replaces this)")]
-        [Tooltip("Dummies farther than this are never picked.")]
+        [Tooltip("Targets farther than this are never picked.")]
         [SerializeField, Min(0f)] private float maxTargetDistance = 8f;
 
-        [Tooltip("Dummies more than this many degrees off the stick (or the facing, with no stick) are never picked.")]
+        [Tooltip("Targets more than this many degrees off the stick (or the facing, with no stick) are never picked.")]
         [SerializeField, Range(0f, 180f)] private float maxTargetAngle = 110f;
 
-        [Tooltip("A dummy this many degrees off the stick scores as if it were twice as far. Lower favours aim over distance.")]
+        [Tooltip("A target this many degrees off the stick scores as if it were twice as far. Lower favours aim over distance.")]
         [SerializeField, Min(1f)] private float angleCountingAsDoubleDistance = 90f;
 
         [Tooltip("A stick pushed less than this (0 to 1) is at rest; the target is then picked along the facing instead of the stick.")]

@@ -2164,9 +2164,9 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: ArkhamCombat.Shell::ArkhamCombat.Shell.CombatCameraDemo
   enemies:
-  - {fileID: 0}
-  - {fileID: 0}
-  - {fileID: 0}
+  - {fileID: 417724125}
+  - {fileID: 1166275412}
+  - {fileID: 1694508403}
   origin: {x: 12, y: 12}
 --- !u!1 &2020000001
 GameObject:
