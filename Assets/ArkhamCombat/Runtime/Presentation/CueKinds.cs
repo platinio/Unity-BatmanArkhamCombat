@@ -11,7 +11,7 @@ namespace ArkhamCombat.Presentation
     {
         public void Play(ICueTarget target, PresentationCue cue)
         {
-            Quaternion restRotation = target.RestLocalRotation;
+            Quaternion restRotation = target.RestPose.LocalRotation;
             Quaternion tiltedRotation = restRotation * Quaternion.Euler(cue.Strength, 0f, 0f);
             float halfDuration = cue.Duration * 0.5f;
 
@@ -32,7 +32,7 @@ namespace ArkhamCombat.Presentation
         {
             bool hasFist = target.Fist != null;
             Transform pushedPart = hasFist ? target.Fist : target.Body;
-            Vector3 restPosition = hasFist ? target.FistRestLocalPosition : target.RestLocalPosition;
+            Vector3 restPosition = hasFist ? target.FistRestLocalPosition : target.RestPose.LocalPosition;
             Vector3 extendedPosition = restPosition + Vector3.forward * cue.Strength;
             float extendDuration = cue.Duration * shareOfDurationExtending;
             float returnDuration = cue.Duration - extendDuration;
@@ -48,11 +48,11 @@ namespace ArkhamCombat.Presentation
     public sealed class SquashCue : ICueKind
     {
         // At 1 the body would flatten to nothing on one axis.
-        private const float MaxSquashFactor = 0.9f;
+        internal const float MaxSquashFactor = 0.9f;
 
         public void Play(ICueTarget target, PresentationCue cue)
         {
-            Vector3 restScale = target.RestLocalScale;
+            Vector3 restScale = target.RestPose.LocalScale;
             float squashFactor = Mathf.Clamp(cue.Strength, -MaxSquashFactor, MaxSquashFactor);
             Vector3 squashedScale = new Vector3(
                 restScale.x * (1f + squashFactor),
@@ -78,7 +78,7 @@ namespace ArkhamCombat.Presentation
         public void Play(ICueTarget target, PresentationCue cue)
         {
             Transform body = target.Body;
-            Quaternion restRotation = target.RestLocalRotation;
+            Quaternion restRotation = target.RestPose.LocalRotation;
             float spinDirection = Mathf.Sign(cue.Strength);
             Vector3 spunEulerAngles = restRotation.eulerAngles + new Vector3(0f, DegreesPerTurn * turns * spinDirection, 0f);
 
@@ -146,26 +146,22 @@ namespace ArkhamCombat.Presentation
         }
     }
 
-    /// <summary>
-    /// The lying pose becomes the rest pose, so the body stays down when the action ends. Strength is
-    /// the degrees to fall, backward when positive. The body is lowered by its half height less its
-    /// half width, so a capsule lies on the ground rather than floating at its standing centre.
-    /// </summary>
+    /// <summary>Lays the body down by the cue's strength in degrees, backward when positive, and makes lying its rest pose.</summary>
     [Serializable]
     public sealed class FallCue : ICueKind
     {
         public void Play(ICueTarget target, PresentationCue cue)
         {
-            Quaternion lyingRotation = target.StandingLocalRotation * Quaternion.Euler(-cue.Strength, 0f, 0f);
-            Vector3 lyingPosition = target.StandingLocalPosition + Vector3.down * HeightLostLyingDown(target);
+            BodyPose standing = target.StandingPose;
+            Quaternion lyingRotation = standing.LocalRotation * Quaternion.Euler(-cue.Strength, 0f, 0f);
+            Vector3 lyingPosition = standing.LocalPosition + Vector3.down * HeightLostFalling(target, cue.Strength);
 
-            target.RestAt(lyingPosition, lyingRotation);
-            DOTween.Sequence().SetId(target.TweenId)
-                .Join(target.Body.DOLocalRotateQuaternion(lyingRotation, cue.Duration).SetEase(cue.Ease))
-                .Join(target.Body.DOLocalMove(lyingPosition, cue.Duration).SetEase(cue.Ease));
+            HeldPose.Hold(target, cue, new BodyPose(lyingPosition, lyingRotation, standing.LocalScale));
         }
 
-        private static float HeightLostLyingDown(ICueTarget target)
+        // A body rotates about its centre, so a capsule lying flat would float at its standing height.
+        // The centre drops by what the body is taller than deep, scaled by how far it has turned.
+        internal static float HeightLostFalling(ICueTarget target, float fallDegrees)
         {
             Renderer renderer = target.BodyRenderer;
             if (renderer == null)
@@ -173,49 +169,54 @@ namespace ArkhamCombat.Presentation
                 return 0f;
             }
 
-            Bounds standingBounds = renderer.bounds;
-            return Mathf.Max(0f, standingBounds.extents.y - standingBounds.extents.x);
+            Vector3 standingScale = target.StandingPose.LocalScale;
+            Bounds meshBounds = renderer.localBounds;
+            float halfHeight = meshBounds.extents.y * standingScale.y;
+            float halfDepth = meshBounds.extents.z * standingScale.z;
+            float shareTurned = 1f - Mathf.Cos(fallDegrees * Mathf.Deg2Rad);
+
+            return Mathf.Max(0f, (halfHeight - halfDepth) * shareTurned);
         }
     }
 
-    /// <summary>Standing becomes the rest pose again, so the body stays up when the action ends.</summary>
+    /// <summary>Stands the body up and makes standing its rest pose again.</summary>
     [Serializable]
     public sealed class RiseCue : ICueKind
     {
-        public void Play(ICueTarget target, PresentationCue cue)
-        {
-            Vector3 standingPosition = target.StandingLocalPosition;
-            Quaternion standingRotation = target.StandingLocalRotation;
-
-            target.RestAt(standingPosition, standingRotation);
-            DOTween.Sequence().SetId(target.TweenId)
-                .Join(target.Body.DOLocalRotateQuaternion(standingRotation, cue.Duration).SetEase(cue.Ease))
-                .Join(target.Body.DOLocalMove(standingPosition, cue.Duration).SetEase(cue.Ease));
-        }
+        public void Play(ICueTarget target, PresentationCue cue) => HeldPose.Hold(target, cue, target.StandingPose);
     }
 
-    /// <summary>
-    /// Squashes the body by the cue's strength as a factor and tilts it forward, and leaves it there:
-    /// the body straightens when the action ends and the driver returns it to rest.
-    /// </summary>
+    /// <summary>Squashes the body by the cue's strength as a factor and tilts it forward. No return tween: Stop straightens it.</summary>
     [Serializable]
     public sealed class CrumpleCue : ICueKind
     {
-        private const float MaxSquashFactor = 0.9f;
-
         [Tooltip("How far forward the crumpled body tilts.")]
         [SerializeField] private float tiltDegrees = 25f;
 
         public void Play(ICueTarget target, PresentationCue cue)
         {
-            Vector3 restScale = target.RestLocalScale;
-            float squashFactor = Mathf.Clamp(cue.Strength, 0f, MaxSquashFactor);
-            Vector3 crumpledScale = new Vector3(restScale.x, restScale.y * (1f - squashFactor), restScale.z);
-            Quaternion crumpledRotation = target.RestLocalRotation * Quaternion.Euler(tiltDegrees, 0f, 0f);
+            BodyPose rest = target.RestPose;
+            float squashFactor = Mathf.Clamp(cue.Strength, 0f, SquashCue.MaxSquashFactor);
+            Vector3 crumpledScale = new Vector3(rest.LocalScale.x, rest.LocalScale.y * (1f - squashFactor), rest.LocalScale.z);
+            Quaternion crumpledRotation = rest.LocalRotation * Quaternion.Euler(tiltDegrees, 0f, 0f);
 
             DOTween.Sequence().SetId(target.TweenId)
                 .Join(target.Body.DOScale(crumpledScale, cue.Duration).SetEase(cue.Ease))
                 .Join(target.Body.DOLocalRotateQuaternion(crumpledRotation, cue.Duration).SetEase(cue.Ease));
+        }
+    }
+
+    internal static class HeldPose
+    {
+        // The rest pose moves before the tween starts, so an interrupted fall still ends lying down.
+        public static void Hold(ICueTarget target, PresentationCue cue, BodyPose pose)
+        {
+            target.RestAt(pose);
+
+            DOTween.Sequence().SetId(target.TweenId)
+                .Join(target.Body.DOLocalMove(pose.LocalPosition, cue.Duration).SetEase(cue.Ease))
+                .Join(target.Body.DOLocalRotateQuaternion(pose.LocalRotation, cue.Duration).SetEase(cue.Ease))
+                .Join(target.Body.DOScale(pose.LocalScale, cue.Duration).SetEase(cue.Ease));
         }
     }
 }

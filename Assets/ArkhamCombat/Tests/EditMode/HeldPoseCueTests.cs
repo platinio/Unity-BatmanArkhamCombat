@@ -43,8 +43,8 @@ namespace ArkhamCombat.Tests
         {
             new FallCue().Play(target, Cue(new FallCue(), FallDegrees));
 
-            AssertSameRotation(Quaternion.Euler(-FallDegrees, 0f, 0f), target.RestLocalRotation);
-            Assert.AreEqual(-(CapsuleHalfHeight - CapsuleHalfWidth), target.RestLocalPosition.y, Tolerance, "lowered so the capsule lies on the ground");
+            AssertSameRotation(Quaternion.Euler(-FallDegrees, 0f, 0f), target.RestPose.LocalRotation);
+            Assert.AreEqual(-(CapsuleHalfHeight - CapsuleHalfWidth), target.RestPose.LocalPosition.y, Tolerance, "lowered so the capsule lies on the ground");
         }
 
         [Test]
@@ -54,8 +54,8 @@ namespace ArkhamCombat.Tests
 
             new RiseCue().Play(target, Cue(new RiseCue(), 1f));
 
-            AssertSameRotation(target.StandingLocalRotation, target.RestLocalRotation);
-            Assert.AreEqual(target.StandingLocalPosition, target.RestLocalPosition);
+            AssertSameRotation(target.StandingPose.LocalRotation, target.RestPose.LocalRotation);
+            Assert.AreEqual(target.StandingPose.LocalPosition, target.RestPose.LocalPosition);
         }
 
         [Test]
@@ -63,8 +63,8 @@ namespace ArkhamCombat.Tests
         {
             new CrumpleCue().Play(target, Cue(new CrumpleCue(), 0.3f));
 
-            AssertSameRotation(target.StandingLocalRotation, target.RestLocalRotation);
-            Assert.AreEqual(target.StandingLocalPosition, target.RestLocalPosition);
+            AssertSameRotation(target.StandingPose.LocalRotation, target.RestPose.LocalRotation);
+            Assert.AreEqual(target.StandingPose.LocalPosition, target.RestPose.LocalPosition);
         }
 
         private sealed class RecordingCueTarget : ICueTarget
@@ -73,29 +73,19 @@ namespace ArkhamCombat.Tests
             {
                 Body = body;
                 BodyRenderer = bodyRenderer;
-                StandingLocalPosition = body.localPosition;
-                StandingLocalRotation = body.localRotation;
-                RestLocalPosition = StandingLocalPosition;
-                RestLocalRotation = StandingLocalRotation;
-                RestLocalScale = body.localScale;
+                StandingPose = BodyPose.Of(body);
+                RestPose = StandingPose;
             }
 
             public Transform Body { get; }
             public Transform Fist => null;
             public Renderer BodyRenderer { get; }
-            public Vector3 RestLocalPosition { get; private set; }
-            public Quaternion RestLocalRotation { get; private set; }
-            public Vector3 RestLocalScale { get; }
+            public BodyPose RestPose { get; private set; }
+            public BodyPose StandingPose { get; }
             public Vector3 FistRestLocalPosition => Vector3.zero;
-            public Vector3 StandingLocalPosition { get; }
-            public Quaternion StandingLocalRotation { get; }
             public object TweenId => this;
 
-            public void RestAt(Vector3 localPosition, Quaternion localRotation)
-            {
-                RestLocalPosition = localPosition;
-                RestLocalRotation = localRotation;
-            }
+            public void RestAt(BodyPose pose) => RestPose = pose;
         }
     }
 }
