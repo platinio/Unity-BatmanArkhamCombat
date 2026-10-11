@@ -1,0 +1,35 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &-4506345148178389099
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 0543b86f072271443adb3c8a0d70c9b5, type: 3}
+  m_Name: Thug
+  m_EditorClassIdentifier: ArkhamCombat.Enemies::ArkhamCombat.Enemies.EnemyArchetype
+  Name: Thug
+  icon: {fileID: 0}
+  id: e6bad4264868d24438e21f8006a89738_0
+  hitReceiverProfile: {fileID: 817436336140980666, guid: e1d889d01db7699409079ff9f9515ac3, type: 2}
+  idleMin: 0.2
+  idleMax: 0.5
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: d19748ddfb21ad04db0f1aa19507725e, type: 3}
+  m_Name: EnemyArchetypes
+  m_EditorClassIdentifier: ArkhamCombat.Enemies::ArkhamCombat.Enemies.EnemyArchetypeDatabase
+  items:
+  - {fileID: -4506345148178389099}
+  id: 1
