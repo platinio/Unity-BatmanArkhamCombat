@@ -8,10 +8,8 @@ namespace ArkhamCombat.Characters
 {
     /// <summary>
     /// The runner lives in the character's own context, which the scene cannot see into, so this is
-    /// also where a state or the overlay finds the runner and the frame's warp movement. A character
-    /// with a <see cref="CharacterBrain"/> is ticked by it in the order of its list; one without, an
-    /// enemy, ticks itself. Without generated Hermes events the actions still play and nothing is
-    /// announced.
+    /// also where a state or the overlay finds the runner and the frame's warp movement. Without
+    /// generated Hermes events the actions still play and nothing is announced.
     /// </summary>
     public sealed class CombatActions : CharacterComponent
     {
@@ -37,7 +35,6 @@ namespace ArkhamCombat.Characters
 
         private void Awake()
         {
-
             if (runner == null)
             {
                 Debug.LogError(

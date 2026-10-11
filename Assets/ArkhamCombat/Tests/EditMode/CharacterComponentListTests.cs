@@ -1,11 +1,11 @@
 using System.Collections.Generic;
 using ArcaneOnyx.TPCharacterController;
+using ArkhamCombat.Characters;
 using ArkhamCombat.Player;
 using NUnit.Framework;
 using UnityEditor;
 using UnityEngine;
 using static ArkhamCombat.Tests.CombatTestDoubles;
-using ArkhamCombat.Characters;
 
 namespace ArkhamCombat.Tests
 {
