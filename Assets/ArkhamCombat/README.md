@@ -74,6 +74,7 @@ combat is bound for that character alone and two characters never share a runner
 | Bound | Where | What |
 |---|---|---|
 | Per character | `CombatCharacterInstaller`, on the character | Its stance, its presses (`IntentBuffer`), its `ActionRunner`, its `CombatFacts`, condition evaluator, presentation driver, warp mover, hit window listener, target picker, start gate and `CharacterMotor` |
+| Per enemy | `EnemyInstaller`, on the enemy | Its archetype and the archetype's `HitReceiverProfile`, an `ActionRunner` with no stance and no presses, the presentation driver under it, the warp mover and an always-open start gate. Its tree plays its actions |
 | Shared | `CombatStaticInstaller`, scene-wide | `IComboMeterSettings`, `ITargetingSettings`, `IFacingSettings`, `ICombatFactsSettings`, `IHitCheckSettings`, `InterruptKinds`, `ITargetRoster`, `ITargetScorer`; the `CombatConfig` asset itself stays on the installer |
 | Shared for now | `PlayerStaticInstaller`, scene-wide | The character controller: profile, input reader, context, state machine and states; the player's `CharacterBrain`, `CharacterMotor` and `CombatActions`, found in the hierarchy |
 
@@ -91,8 +92,10 @@ character's context, before any `Awake`.
 |---|---|---|---|
 | `ArkhamCombat.Combat` | `Runtime/Combat` | The core: actions and windows, the chain, the resolver, the meter, the runner, the clock, the hit rules, the interfaces the runner talks through | The character controller (intent types), VisualScriptingExtension (`FunctionCall<bool>` on edges). Never DOTween, never Zenject (a test asserts both), never Hermes: the generated event assemblies reference this one |
 | `ArkhamCombat.Presentation` | `Runtime/Presentation` | The DOTween driver and the cue kinds | Combat, DOTween |
-| `ArkhamCombat.Player` | `Runtime/Player` | The scene installer and the character installer, the character components that run combat each frame (facts updater, combo tracker, combat actions, attacking state switch), the `Attacking` state, the Function evaluator, and the stand-ins behind the core's interfaces | Combat, Presentation, BH3 (fact writer), Zenject, Hermes (runtime and the two generated assemblies) |
-| `ArkhamCombat.Shell` | `Runtime/Shell` | The frame-data overlay and the camera demo | Combat, Camera, Player (the overlay reads the `CombatActions` and the `ComboTracker`) |
+| `ArkhamCombat.Characters` | `Runtime/Characters` | What every fighting character has whoever drives it: `CombatActions`, which owns and ticks the character's runner, and `MotorWarpMover` | Combat, the character controller, Zenject, Hermes |
+| `ArkhamCombat.Player` | `Runtime/Player` | The scene installer and the character installer, the player's character components (facts updater, combo tracker, attacking state switch), the `Attacking` state, the Function evaluator, and the stand-ins behind the core's interfaces | Combat, Characters, Presentation, BH3 (fact writer), Zenject, Hermes (runtime and the two generated assemblies) |
+| `ArkhamCombat.Enemies` | `Runtime/Enemies` | The enemy archetype and its database, the enemy installer, the components that publish an enemy's facts, and the one C# behaviour tree node, `Play Action` | Combat, Characters, BH3, GraphCore, the database module, Zenject. Never Player: a test asserts it |
+| `ArkhamCombat.Shell` | `Runtime/Shell` | The frame-data overlay and the camera demo | Combat, Camera, Characters, Player (the overlay reads the `CombatActions` and the `ComboTracker`) |
 | `ArkhamCombat.Camera` | `Runtime/Camera` | Group framing math and the combat framing source | Character controller |
 | `ArkhamCombat.Editor` | `Editor` | The node id dropdown and the fixture builder | |
 | `ArkhamCombat.Tests` | `Tests/EditMode` | EditMode tests for the core and the stand-ins | |
@@ -183,15 +186,23 @@ The ordered list of per-frame jobs is the controller's too: `CharacterComponent`
 | `HitReceiver` | One character's health and what each hit does to it: takes the attack's damage, asks `ReactionRules` and returns the `HitResult`. The dead take nothing |
 | `ReactionRules` | The attacker asks for a reaction and the receiver's profile decides the one that plays. No health left is death, whatever was asked. Armor turns a flinch into nothing and a stagger into a flinch, and damage still applies. A knockdown knocks down, through armor too, unless the profile cannot be knocked down, and then it staggers |
 | `HitResult`, `AppliedReaction` | Whether the hit landed and what the target does: nothing, flinch, stagger, knockdown or death. `HitReaction` on the attack is what was asked for; this is what happened |
-| `HitReceiverProfile` | The asset a character that can be hit points at: `maxHealth`, `isArmored`, `canBeKnockedDown` |
+| `HitReceiverProfile`, `HitReceiverProfileDatabase` | What a character that can be hit is made of: `maxHealth`, `isArmored`, `canBeKnockedDown`. A database item, picked through the database dropdown; the database asset is `HitProfiles/HitReceiverProfiles.asset` and the window **ArcaneOnyx → Database** edits it |
 | `IHitCheckSettings` | The two values the land check is tuned by: `HitRangeMargin` and `HitAngle`. The core only declares it; `CombatConfig` provides it |
 
 ### Presentation (`Runtime/Presentation`)
 
 | Type | Responsibility |
 |---|---|
-| `ProceduralPresentationDriver` | The demo's driver: the `ActionClock` plus DOTween cues on a body child. Every tween a cue starts carries the driver as its id, so `Play` and `Stop` kill them as a group and `Speed` zero pauses them. `Stop` blends the body back to its rest pose. Never moves the root |
+| `ProceduralPresentationDriver` | The demo's driver: the `ActionClock` plus DOTween cues on a body child. Every tween a cue starts carries the driver as its id, so `Play` and `Stop` kill them as a group and `Speed` zero pauses them. `Stop` blends the body back to its rest pose, which is the standing pose it remembered at `Awake` until a cue moves it with `RestAt`. Never moves the root |
 | `LeanCue`, `PunchCue`, `SquashCue`, `SpinCue`, `FlashCue` | The cue kinds. One class each; a new kind is one file and appears in the dropdown on every action |
+| `FallCue`, `RiseCue`, `CrumpleCue` | The reactions' cues. Fall lays the body down and makes lying the rest pose, so a knocked-down or dead body stays down when its action ends; Rise stands it up and makes standing the rest pose again; Crumple squashes and tilts and is released by `Stop` like any other cue |
+
+### Characters (`Runtime/Characters`)
+
+| Type | Responsibility |
+|---|---|
+| `CombatActions` | A character component that plays the character's actions: its tick runs the character's `ActionRunner` from the character's position, with the start gate's answer. It is also how code outside the character's context reaches the runner (`Runner`) and the frame's warp movement (`TakePendingWarpMovement`). On the player it goes after the facts updater and the combo tracker in the `CharacterBrain`'s list, so the runner resolves against this frame's facts; on a character without a brain, an enemy, its own `Update` ticks it. Listens to its runner from `Start` to `OnDestroy` and raises `ActionStarted` and `ActionEnded` with its own object whenever an action starts or ends. Without generated Hermes events the actions still play and nothing is announced; without the Hermes scene object it logs an error |
+| `MotorWarpMover` | Collects the warp movement for the frame; the attacking state takes it once, through `CombatActions` |
 
 ### Player (`Runtime/Player`)
 
@@ -200,18 +211,42 @@ The ordered list of per-frame jobs is the controller's too: `CharacterComponent`
 | `CombatConfig` | The asset every character shares: which kinds are the evade and the counter (`evadeKind`, `counterKind`), the combo meter's tier thresholds and timeout (`comboTierThresholds`, `comboTimeoutSeconds`, handed out as `IComboMeterSettings`), the facing turn time (`faceTargetSmoothTime`, as `IFacingSettings`), the angle that still counts as dead ahead for the `targetSide` fact (`deadAheadAngle`, with `maxLungeWhileIdle` as `ICombatFactsSettings`), how far past its strike distance and how far off the attacker's facing a strike still lands (`hitRangeMargin`, `hitAngle`, as `IHitCheckSettings`), and the tunables the stand-ins use, among them how much aim outweighs distance when a target is picked (`angleCountingAsDoubleDistance`). The stance is not here but on each character's `CombatCharacterInstaller` |
 | `CombatStaticInstaller` | Binds scene-wide what every character shares: the config, the config again as `IComboMeterSettings`, the `InterruptKinds` from the config, the roster and the target scorer. Validates the config's evade and counter kinds at scene load and logs each problem |
 | `CombatCharacterInstaller` | A `MonoInstaller` on the character, listed in its `GameObjectContext`, that binds one character's combat: its stance (set on the installer), its presses (the intent buffer of its input), its own `CharacterMotor`, the warp mover and the hit window listener, and its `ActionRunner`. The optional pieces are bound when their component is on the character and replaced by one that does nothing when it is not: the target picker (`CombatTargeting`, otherwise the runner and the facts have no target), the `CombatFactsUpdater` and its facts (otherwise an empty set, so the counter rule sees false and the target-side pool falls back), the presentation driver on the character or under it (otherwise the clock alone), the start gate (`AttackingStateSwitch`, otherwise a press may always start an action). The `FunctionConditionEvaluator` is bound only when the stance has an edge with a condition, so a character without conditions never touches Visual Scripting. Validates the stance and every attack as the character's context is built and logs each problem |
-| `CombatActions` | A character component that plays the character's actions: its tick runs the character's `ActionRunner` from the character's position, with the start gate's answer. It is also how code outside the character's context reaches the runner (`Runner`) and the frame's warp movement (`TakePendingWarpMovement`). Goes after the facts updater and the combo tracker in the `CharacterBrain`'s list, so the runner resolves against this frame's facts. Listens to its runner from `Start` to `OnDestroy` and raises `ActionStarted` and `ActionEnded` with its own object whenever an action starts or ends. Without generated Hermes events the actions still play and nothing is announced; without the Hermes scene object it logs an error |
 | `AttackingStateSwitch` | A character component that keeps the state machine and the actions in step, and the character's `IActionStartGate`. Its tick puts the state machine into `Attacking` while an action plays, so it goes after `CombatActions` in the `CharacterBrain`'s list and the state machine ticks `Attacking` in the frame the action starts. `CanStartFromIdle` is true on the ground in Locomotion, or in Attacking (recovery, so a queued press continues the combo without a frame in Locomotion). A character without it never enters `Attacking` |
 | `AttackingState` | The character while an action plays: the pending warp movement becomes the frame's planar velocity, the character turns toward the runner's `CurrentActionTarget`, gravity is held during the warp. Hands back to Locomotion when the runner goes idle. A follow-up is not a state change. Built by the scene with the player's `CombatActions` injected, which hands it the runner and the warp movement |
-| `MotorWarpMover` | Collects the warp movement for the frame; the attacking state takes it once, through `CombatActions` |
 | `CombatFactsUpdater` | A character component that owns its character's `CombatFacts` (`Facts`). Each tick measures the combo (read from the `ComboTracker` on the same object, zero without one), the target the next press would get (asks the target picker with the stick as it is now), its side and state, beyond-lunge and incoming counterable, and mirrors them onto the agent's variables through BH3's writer, writing only what changed, so Functions and Variable Watch see the same facts. Updates the per-press stick angle right before a condition runs. A character that needs no facts leaves it off |
 | `ComboTracker` | A character component that owns its character's `ComboMeter`, built from the injected `IComboMeterSettings`, so every character's meter is tuned in `CombatConfig`. Listens to the Hermes `StrikeLanded` and `StrikeWhiffed` events from `Start` to `OnDestroy` and ignores every attacker but its own object: a landed strike increments, a whiff resets. Its tick runs the meter's timeout, so it goes after the facts updater in the `CharacterBrain`'s list. Raises `ComboChanged` and `ComboReset` with its own object whenever the meter changes. `Count` and `Tier` are what the facts updater and the overlay read. Without generated Hermes events it warns once and stays at zero; without the Hermes scene object it logs an error |
 | `FunctionConditionEvaluator` | Runs an edge's Function against the character's agent. Empty condition is true; a Function that cannot run is reported once and treated as false. Checks every authored condition returns a bool when it is built. Without a facts updater on the character the stick angle is not measured. Bound only for a stance that has a condition |
 | `CombatTargeting` | The character's `IActionTargetPicker`, a plain component (not a character component: it stores nothing and has nothing to tick). Turns the direction into world space with the injected movement frame, the same one the facts use, falls back to the facing when the stick is pushed less than `stickPushedMagnitude`, and asks the `ITargetScorer` |
 | `StandInTargetScorer` | The `ITargetScorer` stand-in: the nearest roster target roughly along the direction, distance alone with no direction. Tuned through `ITargetingSettings`, which `CombatConfig` implements. Replaced by spec 04 |
 | `SceneTargetRoster` | Every `ICombatTarget` component in the scene, read on first use. Replaced by the encounter director |
-| `CombatDummy` | A thing to hit: a state string, a hit counter, a flash, and a `HitReceiver` built from the `HitReceiverProfile` set on it, so it loses health and dies. Dead, it lies down along the hit, switches its collider off and stops being a valid target, so it is never picked again; it stays dead until the scene reloads. Without a profile it logs an error and can be neither targeted nor hit. Replaced by enemy status components |
 | `TargetedHitWindowListener` | The character's `IHitWindowListener`. As the hit window opens it asks the `HitResolver` whether the strike lands on the action's target, measured from where this tick's pending warp lands rather than from the transform, which the attacking state moves only after the components tick. A strike that lands is handed to the target, and `StrikeLanded` is raised when the target took it; a strike out of reach, at an invalid target, or at a target that ignores it (the dead) raises `StrikeWhiffed`. The attacker is the character's object, the target the target's. It does not know who counts combos. Tuned through `IHitCheckSettings` |
+
+### Enemies (`Runtime/Enemies`)
+
+| Type | Responsibility |
+|---|---|
+| `EnemyArchetype`, `EnemyArchetypeDatabase` | One kind of enemy, as a database item: which `HitReceiverProfile` it has and how long it idles (`idleMin`, `idleMax`). The database asset is `Archetypes/EnemyArchetypes.asset`. An Elite is another item, not another prefab |
+| `EnemyInstaller` | The `MonoInstaller` on the enemy's `GameObjectContext`: holds the archetype (database dropdown) and binds it, the archetype's profile, an `ActionRunner` with no stance and no presses, the presentation driver found under the enemy or the one that does nothing, the warp mover, and an always-open start gate. Without an archetype it logs an error and binds nothing |
+| `EnemyArchetypeWriter` | Copies the archetype's tunables onto the agent's variables at `Awake`, under the keys in `EnemyVariableNames`, so the tree reads them by port and never sees the asset |
+| `EnemyStatus` | The enemy's `ICombatTarget`: a `HitReceiver` built from the injected profile. At `Awake` it publishes `isAlive` true, `reaction` "None" and `health01` 1; on each landed hit it publishes `health01` and one of: `reaction` as the applied reaction's name (Flinch, Stagger, Knockdown), `isAlive` false for a death, nothing for a hit armor shrugged off. Every write goes through BH3's `AgentVariableWriter` with its name as the source, so the why-inspector attributes it. Dead, it is no longer a valid target. `State` is the `reaction` fact as the tree leaves it, or "Dead". It never plays anything |
+| `EnemyVariableNames` | The keys: `isAlive`, `reaction`, `health01`, `idleMin`, `idleMax` |
+| `PlayActionNode` | The one C# tree node, **ArkhamCombat → Play Action**: one `Action` port. On enter it hands the action to the agent's `CombatActions` runner; it returns Running while that action plays and Success once it ended, however it ended; on exit, which a guard abort reaches, it cancels an action still playing. No `CombatActions` on the agent or no action fed is a Failure with one logged error |
+
+### Trees (`Trees/`)
+
+Authored in the Editor through BH3's authoring API and verified with `bt_verify`; the assets are the
+source of truth and each carries sticky notes saying why it is shaped as it is.
+
+| Asset | What it is |
+|---|---|
+| `Functions/IsReacting` | A Function with one input, `kind`: whether the agent's `reaction` fact equals it. Pure, watching `reaction`, so a guard on it wakes only when the fact moves. One asset, three call sites |
+| `Functions/StopBlockingTheWay` | A Function with no result that switches the agent's collider off; the Death branch runs it on a Script Graph node's `OnEnter` |
+| `Roots/Functions/ThugRoot.*Read` | The variable reads behind the Death guard and Idle's ports, generated beside the root |
+| `SubTrees/Flinch`, `SubTrees/Stagger` | Optional parameter `action`, defaulting to the reaction asset. Play Action, then Set Variable `reaction` = None |
+| `SubTrees/KnockedDown` | Optional `knockdownAction` and `getUpAction`. Play Action, Play Action, Set Variable `reaction` = None. The time on the floor is the Knockdown action's duration |
+| `SubTrees/Death` | Optional `action`. Play Action, Script Graph (`StopBlockingTheWay`), then a Repeater over a Wait so the branch never returns and the root cannot replay the death |
+| `SubTrees/Idle` | Optional `idleMin` and `idleMax`, read by a Wait Range |
+| `Roots/ThugRoot` | Repeater, Selector, then in priority order Death (reactive guard on `isAlive` false), KnockedDown, Stagger, Flinch (reactive guards on `IsReacting` with a literal `kind` each) and Idle (no guard, its ports fed from the agent's `idleMin` and `idleMax`). Every reactive guard takes over lower priority. KnockedDown alone has Stops Its Own Branch off: once down, the thug gets up before anything lighter is heard, and the branch's clear swallows the hit. A heavier hit cuts a flinch or a stagger short because its guard goes false |
 
 ### Shell, Camera, Editor
 
@@ -220,7 +255,8 @@ The ordered list of per-frame jobs is the controller's too: `CharacterComponent`
 | `FrameDataOverlay` | The spec 01 tuning strip, IMGUI: one bar per recent action with the warp (yellow), hit (red), combo (green) and evade (blue) bands, magenta cue marks, a white playhead, and a tick per press coloured by its fate (green spent, red expired, yellow queued). Everything comes from the runner of the scene's `CombatActions`; without one it draws nothing. The header's combo is the scene's `ComboTracker`, zero without one |
 | `CombatCameraDemo`, `GroupFramingSource`, `GroupFraming` | The combat framing on the camera rig: pivot drifts toward the enemy centroid, distance follows the spread. Pure math in `GroupFraming` |
 | `ChainNodeIdDrawer` | The dropdown of node ids on edge destinations and the stance root |
-| `GroundStanceFixtureBuilder` | **ArkhamCombat → Build Ground Stance Fixture**: the four intent kinds (existing ones keep their seconds queued), four attacks with windows and cues, the Ground stance, and the evade and counter kinds on the combat config, rebuilt in place. The stance keeps its GUID, so the character's installer in the scene keeps pointing at it |
+| `ReactionActionsFixtureBuilder` | **ArkhamCombat → Build Reaction Actions Fixture**: the five reaction actions in `Actions/Reactions` (Flinch, Stagger, Knockdown, GetUp, Death) with their cues, rebuilt in place |
+| `GroundStanceFixtureBuilder` | **ArkhamCombat → Build Ground Stance Fixture**: the four intent kinds (existing ones keep their seconds queued), four attacks with windows and cues (the Cross asks for a stagger and the kick for a knockdown), the Ground stance, and the evade and counter kinds on the combat config, rebuilt in place. The stance keeps its GUID, so the character's installer in the scene keeps pointing at it |
 
 ## Events
 
@@ -275,8 +311,22 @@ both generated assemblies reference it.
   `ComboTracker`, `CombatActions`, `AttackingStateSwitch`. `CombatTargeting` gives it targets, and a
   `ProceduralPresentationDriver` with the body child, an optional fist and the body renderer gives it a
   body. Leaving out the facts updater, the combo tracker, the targeting, the driver or the state switch
-  gives a character without that piece; `CombatActions` is what plays actions at all. Dummies are any
-  object with `CombatDummy` and a `HitReceiverProfile` set on it (`HitProfiles/Dummy.asset`). The scene also needs the Hermes object described under Events.
+  gives a character without that piece; `CombatActions` is what plays actions at all. The scene also needs the Hermes object described under Events.
+- **A reaction action**: **ArkhamCombat → Build Reaction Actions Fixture** rebuilds the five in
+  `Actions/Reactions`; a new one is Create → ArkhamCombat → Action with its cues. A knockdown's duration
+  is its time on the floor.
+- **A hit receiver profile or an enemy archetype**: an item in `HitProfiles/HitReceiverProfiles.asset`
+  or `Archetypes/EnemyArchetypes.asset`, added in the database window and picked through the dropdown on
+  the archetype or the enemy's installer. Never a loose asset.
+- **An enemy**: `Prefabs/Thug.prefab` is the model. On the root: a `GameObjectContext` whose Mono
+  Installers list holds the `EnemyInstaller` on the same object with its archetype picked, `Variables`,
+  `AgentVariableWriter`, a `BehaviorTreeMachine` pointing at the root tree, `CombatActions`,
+  `EnemyStatus`, `EnemyArchetypeWriter`, the collider, and a `ProceduralPresentationDriver` whose body is
+  the capsule child. Drop instances into the scene; the scene context builds them.
+- **An enemy's behaviour**: edit its root tree on the canvas, or author one with
+  `BehaviorTreeAuthoring` from `eval_file` as `Trees/Roots/ThugRoot` was: pick sub-trees, their order,
+  their guards and the arguments on their ports. A new reaction is a new sub-tree and a guard; a different
+  enemy is a different root. Run `bt_verify` on it before trusting it.
 
 ## Extending
 
@@ -286,8 +336,9 @@ both generated assemblies reference it.
 | A new pool policy | One class implementing `IVariantPolicy`; same dropdown rule |
 | Real target selection | Implement `ITargetScorer`, bind it in `CombatStaticInstaller`; `CombatTargeting` keeps turning the stick into a world direction. A character that aims another way (an enemy agent) gets its own `IActionTargetPicker` component, which the character installer binds in place of `CombatTargeting` |
 | The encounter roster | Implement `ITargetRoster`, bind it in `CombatStaticInstaller` |
-| Enemies as targets | Their status component implements `ICombatTarget`, with a `HitReceiver` built from the enemy's own `HitReceiverProfile`. How the enemy looks when it dies is a component of its own; the dummy's fall is only the dummy's picture |
-| A tougher or armored target | A new `HitReceiverProfile` asset (**Create → ArkhamCombat → Hit Receiver Profile**), set on the target |
+| A tougher or armored enemy | A new item in the `HitReceiverProfiles` database, picked on a new or existing archetype |
+| A new kind of enemy | A new item in the `EnemyArchetypes` database; a prefab that points at it through its `EnemyInstaller`. Different behaviour is a different root tree on its `BehaviorTreeMachine` |
+| A new enemy reaction | A sub-tree with an Optional `action` parameter, a guard on `IsReacting` with its kind at the call site, and `EnemyStatus` publishing that kind |
 | Another way of landing hits (a swept volume) | Implement `IHitWindowListener`, bind it in `CombatCharacterInstaller` in place of `TargetedHitWindowListener` |
 | Real animation | A second `IPresentationDriver` component that sets clip time from the clock; on the character or under it, the character installer binds it. See spec 10 |
 | Another fighting character | Give it its own `GameObjectContext` and `CombatCharacterInstaller` with its stance, and only the character components it needs, in its `CharacterBrain`'s list |
@@ -302,18 +353,19 @@ both generated assemblies reference it.
 
 Open `Assets/CombatArena.unity` and press Play. Left mouse or the gamepad's west button strikes; the
 chain is Jab (left or right by target side), Cross, Roundhouse, then back to the jab. Stand near a
-dummy: beyond the lunge limit the warp refuses and the strike whiffs. Each strike takes its damage from the
-dummy's health (ten hits with the fixture's attacks and `HitProfiles/Dummy.asset`); the hit that empties it
-lays the dummy down, and the next strike picks another one. The overlay in the top left shows
+thug: beyond the lunge limit the warp refuses and the strike whiffs. A jab makes a thug flinch, the Cross
+staggers it, the Roundhouse knocks it down and it gets up; the sixth hit with the fixture's attacks kills it,
+it stays down, and the next strike picks another one. Each thug's agent variables show in BH3's Variable
+Watch, and its flight recorder shows which branch ran and who wrote each fact. The overlay in the top left shows
 why anything happened. If the Editor window loses focus play mode stops advancing unless Run In
 Background is on.
 
 ## Tests
 
 `ArkhamCombat.Tests` runs in EditMode and needs no scene. Edit mode runs no `Awake` and no `Start`, so a test that needs what they do calls the component's internal set-up methods by hand, in the order Unity would. It covers: windows, actions, stance validation, pool
-policies, the reaction table row by row, a receiver's health down to death and past it, the land check by range and by angle, the group framing math on plain vectors, the hit window listener against a target in and out of reach, behind, with a pending warp, and one that ignores the hit, with its announcements on a dispatcher built by the test, the dummy taking hits, dying, lying down and refusing hits without a profile, the targeting component's stick threshold and frame, the trace marking presses until it stops listening, one test that fails loudly when the Hermes events are not generated, the meter, the combo tracker on a dispatcher built by the test, the resolver, the clock, the runner with the null driver and recording test
+policies, the reaction table row by row, a receiver's health down to death and past it, the land check by range and by angle, the group framing math on plain vectors, the hit window listener against a target in and out of reach, behind, with a pending warp, and one that ignores the hit, with its announcements on a dispatcher built by the test, the enemy status publishing its starting facts, a reaction, a death, an armored shrug and nothing for a dead enemy, and refusing hits without a profile, the archetype writer copying the idle range, the enemy installer on containers built by the test (a runner without a stance, the open gate, the archetype's profile, the do-nothing driver, one warp mover under both names, and nothing without an archetype), the Play Action node on a hand-ticked graph (starts the action, runs until it ends, cancels on exit, fails loudly without an action or without `CombatActions`), the held-pose cues moving the rest pose and back, the targeting component's stick threshold and frame, the trace marking presses until it stops listening, one test that fails loudly when the Hermes events are not generated, the meter, the combo tracker on a dispatcher built by the test, the resolver, the clock, the runner with the null driver and recording test
 doubles, its started and ended events, the stand-in picker on test targets, the character brain listing the character components already on a character, the combat actions with a start gate that
 allows and refuses and their announcements on a dispatcher built by the test, the attacking state switch's rule, the character installer on containers built by the test (which
 condition evaluator a stance gets, the optional pieces and their do-nothing versions, a runner for a character with
-nothing optional), the player installer reporting an empty state list and an empty state slot, and the assembly boundary (no DOTween or Zenject in the core). The intent buffer's tests live in
+nothing optional), the player installer reporting an empty state list and an empty state slot, and the assembly boundary (no DOTween or Zenject in the core, and the enemies never reaching the player assembly). The intent buffer's tests live in
 the controller submodule, and so do the character brain skipping and reporting an empty entry of its list. Entering the `Attacking` state needs the whole controller and is checked in play mode.

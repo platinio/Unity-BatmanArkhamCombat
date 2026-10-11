@@ -6,7 +6,9 @@
         "ArkhamCombat.Combat",
         "ArkhamCombat.Presentation",
         "ArkhamCombat.Player",
-        "ArcaneOnyx.ScriptableObjectDatabase"
+        "ArcaneOnyx.ScriptableObjectDatabase",
+        "ArkhamCombat.Enemies",
+        "ArcaneOnyx.ScriptableObjectDatabaseEditor"
     ],
     "includePlatforms": [
         "Editor"

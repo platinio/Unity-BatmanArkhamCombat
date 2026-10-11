@@ -24,22 +24,16 @@ namespace ArkhamCombat.Presentation
         [SerializeField, Min(0f)] private float restBlendSeconds = 0.12f;
 
         private readonly ActionClock clock = new ActionClock();
-        private Vector3 standingLocalPosition;
-        private Quaternion standingLocalRotation;
-        private Vector3 restLocalPosition;
-        private Quaternion restLocalRotation;
-        private Vector3 restLocalScale;
+        private BodyPose standingPose;
+        private BodyPose restPose;
         private Vector3 fistRestLocalPosition;
 
         public Transform Body => body;
         public Transform Fist => fist;
         public Renderer BodyRenderer => bodyRenderer;
-        public Vector3 RestLocalPosition => restLocalPosition;
-        public Quaternion RestLocalRotation => restLocalRotation;
-        public Vector3 RestLocalScale => restLocalScale;
+        public BodyPose RestPose => restPose;
+        public BodyPose StandingPose => standingPose;
         public Vector3 FistRestLocalPosition => fistRestLocalPosition;
-        public Vector3 StandingLocalPosition => standingLocalPosition;
-        public Quaternion StandingLocalRotation => standingLocalRotation;
         public object TweenId => this;
 
         public bool IsPlaying => clock.IsPlaying;
@@ -98,18 +92,12 @@ namespace ArkhamCombat.Presentation
 
         public void Tick(float deltaTime) => clock.Tick(deltaTime);
 
-        public void RestAt(Vector3 localPosition, Quaternion localRotation)
-        {
-            restLocalPosition = localPosition;
-            restLocalRotation = localRotation;
-        }
+        public void RestAt(BodyPose pose) => restPose = pose;
 
         private void RememberStandingPose()
         {
-            standingLocalPosition = body.localPosition;
-            standingLocalRotation = body.localRotation;
-            RestAt(standingLocalPosition, standingLocalRotation);
-            restLocalScale = body.localScale;
+            standingPose = BodyPose.Of(body);
+            restPose = standingPose;
 
             if (fist != null)
             {
@@ -134,9 +122,9 @@ namespace ArkhamCombat.Presentation
                 return;
             }
 
-            body.DOLocalMove(restLocalPosition, restBlendSeconds).SetId(TweenId);
-            body.DOLocalRotateQuaternion(restLocalRotation, restBlendSeconds).SetId(TweenId);
-            body.DOScale(restLocalScale, restBlendSeconds).SetId(TweenId);
+            body.DOLocalMove(restPose.LocalPosition, restBlendSeconds).SetId(TweenId);
+            body.DOLocalRotateQuaternion(restPose.LocalRotation, restBlendSeconds).SetId(TweenId);
+            body.DOScale(restPose.LocalScale, restBlendSeconds).SetId(TweenId);
 
             if (fist != null)
             {

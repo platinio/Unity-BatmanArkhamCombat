@@ -27,22 +27,35 @@ namespace ArkhamCombat.Combat
         /// <summary>Optional. Colour cues do nothing without one.</summary>
         Renderer BodyRenderer { get; }
 
-        /// <summary>Where <c>Stop</c> returns the body to. Standing, until a cue that holds a pose moves it.</summary>
-        Vector3 RestLocalPosition { get; }
-        Quaternion RestLocalRotation { get; }
-        Vector3 RestLocalScale { get; }
+        /// <summary>Where <c>Stop</c> returns the body to: the standing pose until a cue that holds a pose moves it.</summary>
+        BodyPose RestPose { get; }
 
-        Vector3 StandingLocalPosition { get; }
-        Quaternion StandingLocalRotation { get; }
-
-        /// <summary>A held pose survives the end of its action: the body returns here instead of standing up.</summary>
-        void RestAt(Vector3 localPosition, Quaternion localRotation);
+        BodyPose StandingPose { get; }
 
         /// <summary>Rest of the fist, when there is one, so a punch returns to where it started however it was interrupted.</summary>
         Vector3 FistRestLocalPosition { get; }
 
         /// <summary>Every tween a cue starts carries this id, so the driver can kill or pause them as a group.</summary>
         object TweenId { get; }
+
+        /// <summary>A held pose survives the end of its action: the body returns here instead of standing up.</summary>
+        void RestAt(BodyPose pose);
+    }
+
+    public readonly struct BodyPose
+    {
+        public readonly Vector3 LocalPosition;
+        public readonly Quaternion LocalRotation;
+        public readonly Vector3 LocalScale;
+
+        public BodyPose(Vector3 localPosition, Quaternion localRotation, Vector3 localScale)
+        {
+            LocalPosition = localPosition;
+            LocalRotation = localRotation;
+            LocalScale = localScale;
+        }
+
+        public static BodyPose Of(Transform body) => new BodyPose(body.localPosition, body.localRotation, body.localScale);
     }
 
     /// <summary>
@@ -59,7 +72,7 @@ namespace ArkhamCombat.Combat
         [Tooltip("Seconds the tween runs.")]
         [SerializeField, Min(0f)] private float duration = 0.15f;
 
-        [Tooltip("Scalar: degrees for leans and spins, metres for a punch, a factor for scales, 0 to 1 for colour.")]
+        [Tooltip("Scalar: degrees for leans, spins and falls (a fall is backward when positive), metres for a punch, a factor for squashes and crumples, 0 to 1 for colour. A rise ignores it.")]
         [SerializeField] private float strength = 1f;
 
         [Tooltip("Easing over the tween's own time.")]
