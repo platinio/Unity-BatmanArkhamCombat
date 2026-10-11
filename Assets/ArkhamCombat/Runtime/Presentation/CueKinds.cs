@@ -145,4 +145,77 @@ namespace ArkhamCombat.Presentation
                 .OnKill(ClearTint);
         }
     }
+
+    /// <summary>
+    /// The lying pose becomes the rest pose, so the body stays down when the action ends. Strength is
+    /// the degrees to fall, backward when positive. The body is lowered by its half height less its
+    /// half width, so a capsule lies on the ground rather than floating at its standing centre.
+    /// </summary>
+    [Serializable]
+    public sealed class FallCue : ICueKind
+    {
+        public void Play(ICueTarget target, PresentationCue cue)
+        {
+            Quaternion lyingRotation = target.StandingLocalRotation * Quaternion.Euler(-cue.Strength, 0f, 0f);
+            Vector3 lyingPosition = target.StandingLocalPosition + Vector3.down * HeightLostLyingDown(target);
+
+            target.RestAt(lyingPosition, lyingRotation);
+            DOTween.Sequence().SetId(target.TweenId)
+                .Join(target.Body.DOLocalRotateQuaternion(lyingRotation, cue.Duration).SetEase(cue.Ease))
+                .Join(target.Body.DOLocalMove(lyingPosition, cue.Duration).SetEase(cue.Ease));
+        }
+
+        private static float HeightLostLyingDown(ICueTarget target)
+        {
+            Renderer renderer = target.BodyRenderer;
+            if (renderer == null)
+            {
+                return 0f;
+            }
+
+            Bounds standingBounds = renderer.bounds;
+            return Mathf.Max(0f, standingBounds.extents.y - standingBounds.extents.x);
+        }
+    }
+
+    /// <summary>Standing becomes the rest pose again, so the body stays up when the action ends.</summary>
+    [Serializable]
+    public sealed class RiseCue : ICueKind
+    {
+        public void Play(ICueTarget target, PresentationCue cue)
+        {
+            Vector3 standingPosition = target.StandingLocalPosition;
+            Quaternion standingRotation = target.StandingLocalRotation;
+
+            target.RestAt(standingPosition, standingRotation);
+            DOTween.Sequence().SetId(target.TweenId)
+                .Join(target.Body.DOLocalRotateQuaternion(standingRotation, cue.Duration).SetEase(cue.Ease))
+                .Join(target.Body.DOLocalMove(standingPosition, cue.Duration).SetEase(cue.Ease));
+        }
+    }
+
+    /// <summary>
+    /// Squashes the body by the cue's strength as a factor and tilts it forward, and leaves it there:
+    /// the body straightens when the action ends and the driver returns it to rest.
+    /// </summary>
+    [Serializable]
+    public sealed class CrumpleCue : ICueKind
+    {
+        private const float MaxSquashFactor = 0.9f;
+
+        [Tooltip("How far forward the crumpled body tilts.")]
+        [SerializeField] private float tiltDegrees = 25f;
+
+        public void Play(ICueTarget target, PresentationCue cue)
+        {
+            Vector3 restScale = target.RestLocalScale;
+            float squashFactor = Mathf.Clamp(cue.Strength, 0f, MaxSquashFactor);
+            Vector3 crumpledScale = new Vector3(restScale.x, restScale.y * (1f - squashFactor), restScale.z);
+            Quaternion crumpledRotation = target.RestLocalRotation * Quaternion.Euler(tiltDegrees, 0f, 0f);
+
+            DOTween.Sequence().SetId(target.TweenId)
+                .Join(target.Body.DOScale(crumpledScale, cue.Duration).SetEase(cue.Ease))
+                .Join(target.Body.DOLocalRotateQuaternion(crumpledRotation, cue.Duration).SetEase(cue.Ease));
+        }
+    }
 }

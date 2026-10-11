@@ -24,6 +24,8 @@ namespace ArkhamCombat.Presentation
         [SerializeField, Min(0f)] private float restBlendSeconds = 0.12f;
 
         private readonly ActionClock clock = new ActionClock();
+        private Vector3 standingLocalPosition;
+        private Quaternion standingLocalRotation;
         private Vector3 restLocalPosition;
         private Quaternion restLocalRotation;
         private Vector3 restLocalScale;
@@ -36,6 +38,8 @@ namespace ArkhamCombat.Presentation
         public Quaternion RestLocalRotation => restLocalRotation;
         public Vector3 RestLocalScale => restLocalScale;
         public Vector3 FistRestLocalPosition => fistRestLocalPosition;
+        public Vector3 StandingLocalPosition => standingLocalPosition;
+        public Quaternion StandingLocalRotation => standingLocalRotation;
         public object TweenId => this;
 
         public bool IsPlaying => clock.IsPlaying;
@@ -69,7 +73,7 @@ namespace ArkhamCombat.Presentation
                 return;
             }
 
-            RememberRestPose();
+            RememberStandingPose();
             clock.CueDue += PlayCue;
         }
 
@@ -94,10 +98,17 @@ namespace ArkhamCombat.Presentation
 
         public void Tick(float deltaTime) => clock.Tick(deltaTime);
 
-        private void RememberRestPose()
+        public void RestAt(Vector3 localPosition, Quaternion localRotation)
         {
-            restLocalPosition = body.localPosition;
-            restLocalRotation = body.localRotation;
+            restLocalPosition = localPosition;
+            restLocalRotation = localRotation;
+        }
+
+        private void RememberStandingPose()
+        {
+            standingLocalPosition = body.localPosition;
+            standingLocalRotation = body.localRotation;
+            RestAt(standingLocalPosition, standingLocalRotation);
             restLocalScale = body.localScale;
 
             if (fist != null)

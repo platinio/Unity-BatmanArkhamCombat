@@ -19,7 +19,7 @@ MonoBehaviour:
     pool:
       attacks: []
       policy:
-        rid: 3135146534942277824
+        rid: 3135146618665566291
     edges:
     - intentKind: {fileID: 11400000, guid: ba9cd6679aa44c144bb87a8e99f640be, type: 2}
       condition:
@@ -34,7 +34,7 @@ MonoBehaviour:
       - {fileID: 11400000, guid: 57c02750bb6bdf74d8a2f615033df455, type: 2}
       - {fileID: 11400000, guid: 86332dfe60f01de49865387f9779acd5, type: 2}
       policy:
-        rid: 3135146534942277825
+        rid: 3135146618665566292
     edges:
     - intentKind: {fileID: 11400000, guid: ba9cd6679aa44c144bb87a8e99f640be, type: 2}
       condition:
@@ -47,7 +47,7 @@ MonoBehaviour:
     pool:
       attacks: []
       policy:
-        rid: 3135146534942277826
+        rid: 3135146618665566293
     edges:
     - intentKind: {fileID: 11400000, guid: ba9cd6679aa44c144bb87a8e99f640be, type: 2}
       condition:
@@ -60,7 +60,7 @@ MonoBehaviour:
     pool:
       attacks: []
       policy:
-        rid: 3135146534942277827
+        rid: 3135146618665566294
     edges:
     - intentKind: {fileID: 11400000, guid: ba9cd6679aa44c144bb87a8e99f640be, type: 2}
       condition:
@@ -73,15 +73,15 @@ MonoBehaviour:
   references:
     version: 2
     RefIds:
-    - rid: 3135146534942277824
+    - rid: 3135146618665566291
       type: {class: NoRepeatPolicy, ns: ArkhamCombat.Combat, asm: ArkhamCombat.Combat}
       data: 
-    - rid: 3135146534942277825
+    - rid: 3135146618665566292
       type: {class: TargetSidePolicy, ns: ArkhamCombat.Combat, asm: ArkhamCombat.Combat}
       data: 
-    - rid: 3135146534942277826
+    - rid: 3135146618665566293
       type: {class: NoRepeatPolicy, ns: ArkhamCombat.Combat, asm: ArkhamCombat.Combat}
       data: 
-    - rid: 3135146534942277827
+    - rid: 3135146618665566294
       type: {class: NoRepeatPolicy, ns: ArkhamCombat.Combat, asm: ArkhamCombat.Combat}
       data: 

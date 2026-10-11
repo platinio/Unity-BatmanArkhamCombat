@@ -27,9 +27,16 @@ namespace ArkhamCombat.Combat
         /// <summary>Optional. Colour cues do nothing without one.</summary>
         Renderer BodyRenderer { get; }
 
+        /// <summary>Where <c>Stop</c> returns the body to. Standing, until a cue that holds a pose moves it.</summary>
         Vector3 RestLocalPosition { get; }
         Quaternion RestLocalRotation { get; }
         Vector3 RestLocalScale { get; }
+
+        Vector3 StandingLocalPosition { get; }
+        Quaternion StandingLocalRotation { get; }
+
+        /// <summary>A held pose survives the end of its action: the body returns here instead of standing up.</summary>
+        void RestAt(Vector3 localPosition, Quaternion localRotation);
 
         /// <summary>Rest of the fist, when there is one, so a punch returns to where it started however it was interrupted.</summary>
         Vector3 FistRestLocalPosition { get; }

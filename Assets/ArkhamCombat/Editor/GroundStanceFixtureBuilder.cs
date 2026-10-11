@@ -1,5 +1,4 @@
 using System.Collections.Generic;
-using System.IO;
 using ArcaneOnyx.TPCharacterController.Inputs;
 using ArkhamCombat.Combat;
 using ArkhamCombat.Player;
@@ -29,10 +28,10 @@ namespace ArkhamCombat.Editor
         [MenuItem("ArkhamCombat/Build Ground Stance Fixture")]
         public static void Build()
         {
-            EnsureFolder(IntentsFolder);
-            EnsureFolder(ActionsFolder);
-            EnsureFolder(StancesFolder);
-            EnsureFolder(SettingsFolder);
+            FixtureAssets.EnsureFolder(IntentsFolder);
+            FixtureAssets.EnsureFolder(ActionsFolder);
+            FixtureAssets.EnsureFolder(StancesFolder);
+            FixtureAssets.EnsureFolder(SettingsFolder);
 
             IntentKind strike = LoadOrCreateIntentKind("Strike");
             IntentKind counter = LoadOrCreateIntentKind("Counter");
@@ -47,11 +46,11 @@ namespace ArkhamCombat.Editor
             Debug.Log($"{LogPrefix} Ground stance fixture built: {IntentsFolder}, {ActionsFolder}, {StancePath}, {CombatConfigPath}");
         }
 
-        private static IntentKind LoadOrCreateIntentKind(string name) => LoadOrCreate<IntentKind>($"{IntentsFolder}/{name}.asset");
+        private static IntentKind LoadOrCreateIntentKind(string name) => FixtureAssets.LoadOrCreate<IntentKind>($"{IntentsFolder}/{name}.asset");
 
         private static Stance BuildStance(IntentKind strike)
         {
-            Stance stance = LoadOrCreate<Stance>(StancePath);
+            Stance stance = FixtureAssets.LoadOrCreate<Stance>(StancePath);
             stance.Configure(
                 root: "Neutral",
                 nodes: new[]
@@ -100,7 +99,8 @@ namespace ArkhamCombat.Editor
                     new PresentationCue(firesAt: 0.05f, new LeanCue(), duration: 0.3f, strength: 12f),
                     new PresentationCue(firesAt: 0.25f, new PunchCue(), duration: 0.3f, strength: 0.5f),
                     new PresentationCue(firesAt: 0.3f, new SquashCue(), duration: 0.2f, strength: 0.15f)
-                });
+                },
+                reaction: HitReaction.Stagger);
         }
 
         private static AttackDefinition RoundhouseKick()
@@ -119,7 +119,8 @@ namespace ArkhamCombat.Editor
                     new PresentationCue(firesAt: 0f, new LeanCue(), duration: 0.15f, strength: -10f),
                     new PresentationCue(firesAt: 0.2f, new SpinCue(), duration: 0.5f, strength: 1f),
                     new PresentationCue(firesAt: 0.55f, new SquashCue(), duration: 0.2f, strength: 0.2f)
-                });
+                },
+                reaction: HitReaction.Knockdown);
         }
 
         private static AttackDefinition Attack(
@@ -131,11 +132,12 @@ namespace ArkhamCombat.Editor
             Window warpWindow,
             float strikeDistance,
             float maxLunge,
-            PresentationCue[] cues)
+            PresentationCue[] cues,
+            HitReaction reaction = HitReaction.Flinch)
         {
-            AttackDefinition attack = LoadOrCreate<AttackDefinition>($"{ActionsFolder}/{name}.asset");
+            AttackDefinition attack = FixtureAssets.LoadOrCreate<AttackDefinition>($"{ActionsFolder}/{name}.asset");
             attack.Configure(duration, cues);
-            attack.ConfigureAttack(hitWindow, comboWindow, evadeWindow, warpWindow, strikeDistance, maxLunge);
+            attack.ConfigureAttack(hitWindow, comboWindow, evadeWindow, warpWindow, strikeDistance, maxLunge, reaction: reaction);
             EditorUtility.SetDirty(attack);
             return attack;
         }
@@ -151,38 +153,12 @@ namespace ArkhamCombat.Editor
 
         private static void SetInterruptKindsOnCombatConfig(IntentKind evade, IntentKind counter)
         {
-            CombatConfig config = LoadOrCreate<CombatConfig>(CombatConfigPath);
+            CombatConfig config = FixtureAssets.LoadOrCreate<CombatConfig>(CombatConfigPath);
             SerializedObject serializedConfig = new SerializedObject(config);
             serializedConfig.FindProperty(CombatConfigEvadeKindField).objectReferenceValue = evade;
             serializedConfig.FindProperty(CombatConfigCounterKindField).objectReferenceValue = counter;
             serializedConfig.ApplyModifiedPropertiesWithoutUndo();
             EditorUtility.SetDirty(config);
-        }
-
-        private static T LoadOrCreate<T>(string path) where T : ScriptableObject
-        {
-            T asset = AssetDatabase.LoadAssetAtPath<T>(path);
-            if (asset != null)
-            {
-                return asset;
-            }
-
-            asset = ScriptableObject.CreateInstance<T>();
-            AssetDatabase.CreateAsset(asset, path);
-            return asset;
-        }
-
-        private static void EnsureFolder(string path)
-        {
-            if (AssetDatabase.IsValidFolder(path))
-            {
-                return;
-            }
-
-            string parent = Path.GetDirectoryName(path)?.Replace(Path.DirectorySeparatorChar, Path.AltDirectorySeparatorChar);
-            string folderName = Path.GetFileName(path);
-            EnsureFolder(parent);
-            AssetDatabase.CreateFolder(parent, folderName);
         }
     }
 }
