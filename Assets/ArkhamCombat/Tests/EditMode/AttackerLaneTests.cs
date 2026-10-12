@@ -60,7 +60,7 @@ namespace ArkhamCombat.Tests
         [Test]
         public void WhileItHoldsAToken_TheOthersSteerAroundIt()
         {
-            agent.TryAcquireToken();
+            TakeAToken(director, agent);
 
             Assert.AreEqual(AttackerPriority, navMeshAgent.avoidancePriority);
         }
@@ -68,7 +68,7 @@ namespace ArkhamCombat.Tests
         [Test]
         public void WhenItGivesTheTokenBack_ItsPriorityIsTheDefaultAgain()
         {
-            agent.TryAcquireToken();
+            TakeAToken(director, agent);
 
             agent.ReleaseToken();
 
@@ -78,7 +78,7 @@ namespace ArkhamCombat.Tests
         [Test]
         public void WhenTheDirectorTakesTheTokenBack_ItsPriorityIsTheDefaultAgain()
         {
-            agent.TryAcquireToken();
+            TakeAToken(director, agent);
 
             director.Tick(MaxTokenHoldSeconds);
 
@@ -95,7 +95,7 @@ namespace ArkhamCombat.Tests
 
             try
             {
-                otherAgent.TryAcquireToken();
+                TakeAToken(director, otherAgent);
 
                 Assert.AreEqual(DefaultPriority, navMeshAgent.avoidancePriority);
             }
@@ -109,7 +109,7 @@ namespace ArkhamCombat.Tests
         public void EnabledWhileItsAgentAlreadyHoldsAToken_ItTakesTheLane()
         {
             lane.OnDisable();
-            agent.TryAcquireToken();
+            TakeAToken(director, agent);
 
             lane.OnEnable();
 
@@ -119,7 +119,7 @@ namespace ArkhamCombat.Tests
         [Test]
         public void DisabledWhileItsAgentHoldsAToken_ItGivesTheLaneBack()
         {
-            agent.TryAcquireToken();
+            TakeAToken(director, agent);
 
             lane.OnDisable();
 
@@ -131,7 +131,7 @@ namespace ArkhamCombat.Tests
         {
             lane.OnDisable();
 
-            agent.TryAcquireToken();
+            TakeAToken(director, agent);
 
             Assert.AreEqual(DefaultPriority, navMeshAgent.avoidancePriority);
         }

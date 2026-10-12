@@ -95,9 +95,9 @@ namespace ArkhamCombat.Tests
         {
             RegisterBoth();
 
-            director.TryAcquireToken(first);
-            director.TryAcquireToken(first);
-            director.TryAcquireToken(second);
+            TakeAToken(director, first);
+            TakeAToken(director, first);
+            TakeAToken(director, second);
 
             CollectionAssert.AreEqual(new IEncounterAgent[] { first }, granted, "the second agent was refused, so nothing was granted to it");
         }
@@ -106,7 +106,7 @@ namespace ArkhamCombat.Tests
         public void AReleasedToken_IsAnnounced()
         {
             RegisterBoth();
-            director.TryAcquireToken(first);
+            TakeAToken(director, first);
 
             director.ReleaseToken(first);
 
@@ -127,7 +127,7 @@ namespace ArkhamCombat.Tests
         public void ATokenTakenBackForBeingHeldTooLong_IsAnnouncedAsReleased()
         {
             RegisterBoth();
-            director.TryAcquireToken(first);
+            TakeAToken(director, first);
 
             director.Tick(MaxTokenHoldSeconds);
 
@@ -138,7 +138,7 @@ namespace ArkhamCombat.Tests
         public void AHolderThatLeaves_ReleasesItsTokenBeforeItIsGone()
         {
             RegisterBoth();
-            director.TryAcquireToken(first);
+            TakeAToken(director, first);
             bool wasStillInTheEncounterWhenReleased = false;
             director.TokenReleased += agent => wasStillInTheEncounterWhenReleased = director.IsRegistered(agent);
 

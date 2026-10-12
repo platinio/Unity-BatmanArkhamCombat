@@ -15,13 +15,17 @@ namespace ArkhamCombat.Encounter
             public IEncounterAgent Agent;
             public AttackTokenType TokenType;
             public bool HasToken;
+            public bool HasComeBackForItsToken;
+            public bool IsAskingForAToken;
             public float TokenHeldFor;
+            public float SecondsWithoutAToken;
             public float ReacquireCooldown;
             public int Slot = UnassignedSlot;
         }
 
         private readonly EncounterDirectorSettings settings;
         private readonly ISlotValidator slotValidator;
+        private readonly TokenRequestScorer tokenRequestScorer;
         private readonly int slotCount;
         private readonly List<AgentState> agentStates = new List<AgentState>();
         private readonly List<IEncounterAgent> registeredAgents = new List<IEncounterAgent>();
@@ -32,12 +36,14 @@ namespace ArkhamCombat.Encounter
         private readonly Vector3[] slotOffsetFromTarget;
 
         private Vector3 targetPosition;
+        private Vector3 targetForward;
         private float secondsUntilSlotsAreReassigned;
 
         public EncounterDirector(EncounterDirectorSettings settings, ISlotValidator slotValidator = null)
         {
             this.settings = settings ?? new EncounterDirectorSettings();
             this.slotValidator = slotValidator ?? new EverySlotIsValid();
+            tokenRequestScorer = new TokenRequestScorer(this.settings);
 
             slotCount = this.settings.SlotCount;
             isSlotTaken = new bool[slotCount];
@@ -58,12 +64,14 @@ namespace ArkhamCombat.Encounter
 
         public EncounterDirectorSettings Settings => settings;
         public Vector3 TargetPosition => targetPosition;
+        public Vector3 TargetForward => targetForward;
         public IReadOnlyList<IEncounterAgent> Agents => registeredAgents;
         public bool IsActive => agentStates.Count > 0;
 
-        public void SetTargetPosition(Vector3 position)
+        public void SetTarget(Vector3 position, Vector3 forward)
         {
             targetPosition = position;
+            targetForward = forward;
         }
 
         public void Register(IEncounterAgent agent, AttackTokenType tokenType)
@@ -120,6 +128,10 @@ namespace ArkhamCombat.Encounter
             return agent != null && stateByAgent.TryGetValue(agent, out AgentState state) && state.HasToken;
         }
 
+        /// <summary>
+        /// True only while the agent holds a token. Otherwise the ask is remembered until the tick
+        /// ends, when the free tokens go to the best of those who asked, so the agent asks again.
+        /// </summary>
         public bool TryAcquireToken(IEncounterAgent agent)
         {
             if (agent == null || !stateByAgent.TryGetValue(agent, out AgentState state))
@@ -129,21 +141,12 @@ namespace ArkhamCombat.Encounter
 
             if (state.HasToken)
             {
+                state.HasComeBackForItsToken = true;
                 return true;
             }
 
-            bool isCoolingDown = state.ReacquireCooldown > 0.0f;
-            bool isPoolEmpty = HeldTokenCount(state.TokenType) >= MaxTokens(state.TokenType);
-            if (isCoolingDown || isPoolEmpty)
-            {
-                return false;
-            }
-
-            state.HasToken = true;
-            state.TokenHeldFor = 0.0f;
-            TokenGranted?.Invoke(agent);
-
-            return true;
+            state.IsAskingForAToken = true;
+            return false;
         }
 
         public void ReleaseToken(IEncounterAgent agent)
@@ -185,6 +188,7 @@ namespace ArkhamCombat.Encounter
 
             state.HasToken = false;
             state.TokenHeldFor = 0.0f;
+            state.SecondsWithoutAToken = 0.0f;
             state.ReacquireCooldown = settings.ReacquireCooldownSeconds;
 
             TokenReleased?.Invoke(state.Agent);
@@ -235,7 +239,10 @@ namespace ArkhamCombat.Encounter
         {
             AgeReacquireCooldowns(deltaTime);
             AgeHeldTokens(deltaTime);
+            AgeTheWaitsForAToken(deltaTime);
             TakeBackTokensHeldTooLong();
+            TakeBackTokensNobodyCameBackFor();
+            GrantFreeTokensToTheBestRequests();
             AssignSlotsWhenDue(deltaTime);
         }
 
@@ -258,6 +265,108 @@ namespace ArkhamCombat.Encounter
                 {
                     agentStates[i].TokenHeldFor += deltaTime;
                 }
+            }
+        }
+
+        private void AgeTheWaitsForAToken(float deltaTime)
+        {
+            for (int i = 0; i < agentStates.Count; i++)
+            {
+                if (!agentStates[i].HasToken)
+                {
+                    agentStates[i].SecondsWithoutAToken += deltaTime;
+                }
+            }
+        }
+
+        // An agent that was interrupted between asking and attacking would otherwise sit on its token until the hold timeout.
+        private void TakeBackTokensNobodyCameBackFor()
+        {
+            bool mustATokenBeComeBackFor = settings.GrantGraceSeconds > 0.0f;
+
+            for (int i = 0; i < agentStates.Count; i++)
+            {
+                AgentState state = agentStates[i];
+
+                bool hasNotComeBackInTime = mustATokenBeComeBackFor
+                                            && state.HasToken
+                                            && !state.HasComeBackForItsToken
+                                            && state.TokenHeldFor >= settings.GrantGraceSeconds;
+                if (hasNotComeBackInTime)
+                {
+                    Release(state);
+                }
+            }
+        }
+
+        private void GrantFreeTokensToTheBestRequests()
+        {
+            GrantFreeTokensOf(AttackTokenType.Melee);
+            GrantFreeTokensOf(AttackTokenType.Ranged);
+            ForgetEveryRequest();
+        }
+
+        private void GrantFreeTokensOf(AttackTokenType tokenType)
+        {
+            int freeTokens = MaxTokens(tokenType) - HeldTokenCount(tokenType);
+
+            for (int i = 0; i < freeTokens; i++)
+            {
+                AgentState bestRequest = BestRequestFor(tokenType);
+                if (bestRequest == null)
+                {
+                    return;
+                }
+
+                Grant(bestRequest);
+            }
+        }
+
+        private AgentState BestRequestFor(AttackTokenType tokenType)
+        {
+            AgentState bestRequest = null;
+            float bestScore = float.NegativeInfinity;
+
+            for (int i = 0; i < agentStates.Count; i++)
+            {
+                AgentState state = agentStates[i];
+                if (!CanBeGrantedAToken(state, tokenType))
+                {
+                    continue;
+                }
+
+                float score = tokenRequestScorer.Score(state.Agent.Position, state.SecondsWithoutAToken, targetPosition, targetForward);
+                if (score > bestScore)
+                {
+                    bestScore = score;
+                    bestRequest = state;
+                }
+            }
+
+            return bestRequest;
+        }
+
+        private static bool CanBeGrantedAToken(AgentState state, AttackTokenType tokenType)
+        {
+            bool isCoolingDown = state.ReacquireCooldown > 0.0f;
+            return state.IsAskingForAToken && !state.HasToken && !isCoolingDown && state.TokenType == tokenType;
+        }
+
+        private void Grant(AgentState state)
+        {
+            state.HasToken = true;
+            state.HasComeBackForItsToken = false;
+            state.IsAskingForAToken = false;
+            state.TokenHeldFor = 0.0f;
+
+            TokenGranted?.Invoke(state.Agent);
+        }
+
+        private void ForgetEveryRequest()
+        {
+            for (int i = 0; i < agentStates.Count; i++)
+            {
+                agentStates[i].IsAskingForAToken = false;
             }
         }
 

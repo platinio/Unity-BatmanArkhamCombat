@@ -94,19 +94,19 @@ namespace ArkhamCombat.Tests
         {
             JoinTheEncounter();
             EncounterAgent waitingAgent = AnotherAgentInTheEncounter();
-            Assert.IsTrue(agent.TryAcquireToken(), "sanity: the first to ask gets the turn");
-            Assert.IsFalse(waitingAgent.TryAcquireToken(), "sanity: one token, already taken");
+            Assert.IsTrue(TakeAToken(director, agent), "sanity: the first to ask gets the turn");
+            Assert.IsFalse(TakeAToken(director, waitingAgent), "sanity: one token, already taken");
 
             agent.OnDisable();
 
-            Assert.IsTrue(waitingAgent.TryAcquireToken());
+            Assert.IsTrue(TakeAToken(director, waitingAgent));
         }
 
         [Test]
         public void ReleasingItsToken_GivesTheTurnBack()
         {
             JoinTheEncounter();
-            Assert.IsTrue(agent.TryAcquireToken(), "sanity: the melee token is free");
+            Assert.IsTrue(TakeAToken(director, agent), "sanity: the melee token is free");
 
             agent.ReleaseToken();
 
@@ -119,7 +119,7 @@ namespace ArkhamCombat.Tests
         {
             JoinTheEncounter();
 
-            Assert.IsTrue(agent.TryAcquireToken());
+            Assert.IsTrue(TakeAToken(director, agent));
 
             Assert.AreEqual(1, director.HeldTokenCount(AttackTokenType.Melee));
             Assert.AreEqual(0, director.HeldTokenCount(AttackTokenType.Ranged));
@@ -131,7 +131,7 @@ namespace ArkhamCombat.Tests
             agent.Construct(encounter, new SettingsOfARangedAttacker());
             agent.OnEnable();
 
-            Assert.IsTrue(agent.TryAcquireToken());
+            Assert.IsTrue(TakeAToken(director, agent));
 
             Assert.AreEqual(1, director.HeldTokenCount(AttackTokenType.Ranged));
             Assert.AreEqual(0, director.HeldTokenCount(AttackTokenType.Melee));
@@ -160,11 +160,11 @@ namespace ArkhamCombat.Tests
             agent.TokenGranted += () => granted++;
             agent.TokenReleased += () => released++;
 
-            otherAgent.TryAcquireToken();
+            TakeAToken(twoTokens, otherAgent);
             otherAgent.ReleaseToken();
             Assert.AreEqual(0, granted + released, "another agent's token");
 
-            agent.TryAcquireToken();
+            TakeAToken(twoTokens, agent);
             agent.ReleaseToken();
             Assert.AreEqual(1, granted);
             Assert.AreEqual(1, released);
@@ -179,7 +179,7 @@ namespace ArkhamCombat.Tests
             int granted = 0;
             agent.TokenGranted += () => granted++;
 
-            agent.TryAcquireToken();
+            TakeAToken(director, agent);
 
             Assert.AreEqual(1, granted);
         }
@@ -237,7 +237,7 @@ namespace ArkhamCombat.Tests
         {
             thug.transform.position = new Vector3(0f, 0f, 9f);
             JoinTheEncounter();
-            director.SetTargetPosition(Vector3.zero);
+            director.SetTarget(Vector3.zero, Vector3.forward);
             director.Tick(0.1f);
 
             Assert.AreEqual(director.GetSlotPosition(agent), agent.SlotPosition);

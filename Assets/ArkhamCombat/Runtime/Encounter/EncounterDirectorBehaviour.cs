@@ -18,12 +18,17 @@ namespace ArkhamCombat.Encounter
         [SerializeField] private bool drawGizmos = true;
 
         private MGizmoGroup ringOfSlots;
+        private ITargetForwardSource targetForwardSource;
 
         public EncounterDirector Director { get; private set; }
         public Transform Target => target;
 
         [Inject]
-        internal void Construct(EncounterDirector director) => Director = director;
+        internal void Construct(EncounterDirector director, [InjectOptional] ITargetForwardSource targetForwardSource = null)
+        {
+            Director = director;
+            this.targetForwardSource = targetForwardSource;
+        }
 
         public void SetTarget(Transform target) => this.target = target;
 
@@ -46,11 +51,14 @@ namespace ArkhamCombat.Encounter
 
             if (target != null)
             {
-                Director.SetTargetPosition(target.position);
+                Director.SetTarget(target.position, TargetForward());
             }
 
             Director.Tick(deltaTime);
         }
+
+        private Vector3 TargetForward() =>
+            targetForwardSource != null ? targetForwardSource.TargetForward : target.forward;
 
         private void DrawTheRingOfSlots()
         {

@@ -28,7 +28,7 @@ MonoBehaviour:
   encounter:
     maxMeleeTokens: 1
     maxRangedTokens: 1
-    maxTokenHoldSeconds: 3
+    maxTokenHoldSeconds: 6
     reacquireCooldownSeconds: 1.5
     slotCount: 8
     slotRadius: 3
@@ -36,3 +36,8 @@ MonoBehaviour:
     slotSampleRadius: 1
     attackerAvoidancePriority: 20
     defaultAvoidancePriority: 50
+    frontWeight: 1
+    fairnessWeight: 0.6
+    fairnessHorizonSeconds: 6
+    distancePenalty: 0.3
+    grantGraceSeconds: 0.5

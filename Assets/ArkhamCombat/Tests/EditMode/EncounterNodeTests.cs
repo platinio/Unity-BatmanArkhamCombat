@@ -63,11 +63,22 @@ namespace ArkhamCombat.Tests
         private static TValue ValueOf<TValue>(ValueOutput output) => (TValue)output.GetPortValue();
 
         [Test]
-        public void TryAcquireAttackToken_Succeeds_WhenTheTurnIsFree()
+        public void TryAcquireAttackToken_FailsOnTheFirstAsk_EvenWhenTheTurnIsFree()
         {
             BehaviorTreeGraph graph = TreeOfOne(thug, out TryAcquireAttackToken _);
 
-            Assert.AreEqual(ExecutionStatus.Success, graph.OnUpdate());
+            Assert.AreEqual(ExecutionStatus.Failure, graph.OnUpdate());
+            Assert.IsFalse(agent.HasToken);
+        }
+
+        [Test]
+        public void TryAcquireAttackToken_Succeeds_OnceTheDirectorGrantedTheTurnItAskedFor()
+        {
+            TreeOfOne(thug, out TryAcquireAttackToken _).OnUpdate();
+            director.Tick(0f);
+            BehaviorTreeGraph graphAskingAgain = TreeOfOne(thug, out TryAcquireAttackToken _);
+
+            Assert.AreEqual(ExecutionStatus.Success, graphAskingAgain.OnUpdate());
             Assert.IsTrue(agent.HasToken);
         }
 
@@ -75,7 +86,7 @@ namespace ArkhamCombat.Tests
         public void TryAcquireAttackToken_Fails_WhileAnotherAgentHasTheTurn()
         {
             EncounterAgent attacker = AgentInTheEncounter(otherThug);
-            attacker.TryAcquireToken();
+            TakeAToken(director, attacker);
             BehaviorTreeGraph graph = TreeOfOne(thug, out TryAcquireAttackToken _);
 
             Assert.AreEqual(ExecutionStatus.Failure, graph.OnUpdate());
@@ -93,7 +104,7 @@ namespace ArkhamCombat.Tests
         [Test]
         public void ReleaseAttackToken_GivesTheTurnBack()
         {
-            Assert.IsTrue(agent.TryAcquireToken(), "sanity: it holds the token before the node runs");
+            Assert.IsTrue(TakeAToken(director, agent), "sanity: it holds the token before the node runs");
             BehaviorTreeGraph graph = TreeOfOne(thug, out ReleaseAttackToken _);
 
             Assert.AreEqual(ExecutionStatus.Success, graph.OnUpdate());
@@ -114,7 +125,7 @@ namespace ArkhamCombat.Tests
             TreeOfOne(thug, out HasAttackToken hasAttackToken);
             Assert.IsFalse(ValueOf<bool>(hasAttackToken.Output), "before it has the turn");
 
-            agent.TryAcquireToken();
+            TakeAToken(director, agent);
 
             Assert.IsTrue(ValueOf<bool>(hasAttackToken.Output), "while it has the turn");
         }
@@ -131,7 +142,7 @@ namespace ArkhamCombat.Tests
         public void GetSlotPosition_OutputsTheSlotTheDirectorAssigned()
         {
             thug.transform.position = new Vector3(0f, 0f, 9f);
-            director.SetTargetPosition(Vector3.zero);
+            director.SetTarget(Vector3.zero, Vector3.forward);
             director.Tick(AnyTick);
             TreeOfOne(thug, out GetSlotPosition getSlotPosition);
 

@@ -109,7 +109,7 @@ namespace ArkhamCombat.Tests
         {
             JoinTheEncounter();
             StandThisFarFromTheTarget(CombatRange - 0.5f);
-            agent.TryAcquireToken();
+            TakeAToken(director, agent);
             Tick();
             Assert.IsTrue(Fact(EnemyVariableNames.InCombatRange) && Fact(EnemyVariableNames.HasToken), "sanity: in range and holding the token before it leaves");
 
@@ -180,7 +180,7 @@ namespace ArkhamCombat.Tests
             Tick();
             Assert.IsFalse(Fact(EnemyVariableNames.HasToken), "before it has the turn");
 
-            agent.TryAcquireToken();
+            TakeAToken(director, agent);
             Tick();
             Assert.IsTrue(Fact(EnemyVariableNames.HasToken), "while it has the turn");
 

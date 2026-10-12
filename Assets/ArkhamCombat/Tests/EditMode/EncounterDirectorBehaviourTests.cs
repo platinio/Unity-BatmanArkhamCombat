@@ -10,6 +10,14 @@ namespace ArkhamCombat.Tests
         private const float MaxTokenHoldSeconds = 3f;
 
         private const float AnyTick = 0.1f;
+        private const float Tolerance = 1e-4f;
+
+        private sealed class FixedTargetForward : ITargetForwardSource
+        {
+            public FixedTargetForward(Vector3 targetForward) => TargetForward = targetForward;
+
+            public Vector3 TargetForward { get; }
+        }
 
         private EncounterDirector director;
         private GameObject encounterObject;
@@ -45,12 +53,36 @@ namespace ArkhamCombat.Tests
         }
 
         [Test]
+        public void TheTargetsFront_IsWhereTheTargetFaces_WhenTheGameSaysNothingElse()
+        {
+            encounter.Construct(director);
+            encounter.SetTarget(target.transform);
+            target.transform.rotation = Quaternion.LookRotation(Vector3.right);
+
+            encounter.Tick(AnyTick);
+
+            Assert.Less((director.TargetForward - Vector3.right).magnitude, Tolerance);
+        }
+
+        [Test]
+        public void TheTargetsFront_IsWhatTheGameSays_WhenItSays()
+        {
+            encounter.Construct(director, new FixedTargetForward(Vector3.back));
+            encounter.SetTarget(target.transform);
+            target.transform.rotation = Quaternion.LookRotation(Vector3.right);
+
+            encounter.Tick(AnyTick);
+
+            Assert.AreEqual(Vector3.back, director.TargetForward);
+        }
+
+        [Test]
         public void EachTick_PassesItsTimeToTheDirector()
         {
             encounter.Construct(director);
             StandingAgent agent = new StandingAgent();
             director.Register(agent, AttackTokenType.Melee);
-            Assert.IsTrue(director.TryAcquireToken(agent), "sanity: it holds the token before time passes");
+            Assert.IsTrue(TakeAToken(director, agent), "sanity: it holds the token before time passes");
 
             encounter.Tick(MaxTokenHoldSeconds);
 
@@ -61,7 +93,7 @@ namespace ArkhamCombat.Tests
         public void WithoutATarget_TheRingStaysWhereItWas()
         {
             encounter.Construct(director);
-            director.SetTargetPosition(new Vector3(2f, 0f, 2f));
+            director.SetTarget(new Vector3(2f, 0f, 2f), Vector3.forward);
 
             encounter.Tick(AnyTick);
 
