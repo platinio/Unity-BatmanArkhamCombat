@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using UnityEngine;
 
@@ -20,22 +21,44 @@ namespace ArkhamCombat.Encounter
         }
 
         private readonly EncounterDirectorSettings settings;
+        private readonly ISlotValidator slotValidator;
         private readonly List<AgentState> agentStates = new List<AgentState>();
+        private readonly List<IEncounterAgent> registeredAgents = new List<IEncounterAgent>();
         private readonly Dictionary<IEncounterAgent, AgentState> stateByAgent = new Dictionary<IEncounterAgent, AgentState>();
         private readonly List<AgentState> assignmentOrder = new List<AgentState>();
         private readonly bool[] isSlotTaken;
+        private readonly bool[] isSlotUsable;
+        private readonly Vector3[] slotOffsetFromTarget;
 
         private Vector3 targetPosition;
         private float secondsUntilSlotsAreReassigned;
 
-        public EncounterDirector(EncounterDirectorSettings settings)
+        public EncounterDirector(EncounterDirectorSettings settings, ISlotValidator slotValidator = null)
         {
             this.settings = settings ?? new EncounterDirectorSettings();
-            isSlotTaken = new bool[this.settings.SlotCount];
+            this.slotValidator = slotValidator ?? new EverySlotIsValid();
+
+            int slotCount = this.settings.SlotCount;
+            isSlotTaken = new bool[slotCount];
+            isSlotUsable = new bool[slotCount];
+            slotOffsetFromTarget = new Vector3[slotCount];
+
+            for (int slot = 0; slot < slotCount; slot++)
+            {
+                isSlotUsable[slot] = true;
+                slotOffsetFromTarget[slot] = OffsetOnTheRing(slot);
+            }
         }
+
+        public event Action<IEncounterAgent> AgentRegistered;
+        public event Action<IEncounterAgent> AgentUnregistered;
+        public event Action<IEncounterAgent> TokenGranted;
+        public event Action<IEncounterAgent> TokenReleased;
 
         public EncounterDirectorSettings Settings => settings;
         public Vector3 TargetPosition => targetPosition;
+        public IReadOnlyList<IEncounterAgent> Agents => registeredAgents;
+        public bool IsActive => agentStates.Count > 0;
 
         public void SetTargetPosition(Vector3 position)
         {
@@ -51,9 +74,11 @@ namespace ArkhamCombat.Encounter
 
             AgentState state = new AgentState { Agent = agent, TokenType = tokenType };
             agentStates.Add(state);
+            registeredAgents.Add(agent);
             stateByAgent.Add(agent, state);
 
             ReassignSlotsOnTheNextTick();
+            AgentRegistered?.Invoke(agent);
         }
 
         public void Unregister(IEncounterAgent agent)
@@ -63,10 +88,14 @@ namespace ArkhamCombat.Encounter
                 return;
             }
 
+            Release(state);
+
             agentStates.Remove(state);
+            registeredAgents.Remove(agent);
             stateByAgent.Remove(agent);
 
             ReassignSlotsOnTheNextTick();
+            AgentUnregistered?.Invoke(agent);
         }
 
         public bool IsRegistered(IEncounterAgent agent)
@@ -105,6 +134,7 @@ namespace ArkhamCombat.Encounter
 
             state.HasToken = true;
             state.TokenHeldFor = 0.0f;
+            TokenGranted?.Invoke(agent);
 
             return true;
         }
@@ -149,6 +179,8 @@ namespace ArkhamCombat.Encounter
             state.HasToken = false;
             state.TokenHeldFor = 0.0f;
             state.ReacquireCooldown = settings.ReacquireCooldownSeconds;
+
+            TokenReleased?.Invoke(state.Agent);
         }
 
         public Vector3 GetSlotPosition(IEncounterAgent agent)
@@ -168,10 +200,15 @@ namespace ArkhamCombat.Encounter
 
         public Vector3 SlotWorldPosition(int slot)
         {
+            return targetPosition + slotOffsetFromTarget[slot];
+        }
+
+        private Vector3 OffsetOnTheRing(int slot)
+        {
             float radians = slot * ((Mathf.PI * 2.0f) / settings.SlotCount);
             Vector3 directionFromTarget = new Vector3(Mathf.Sin(radians), 0.0f, Mathf.Cos(radians));
 
-            return targetPosition + (directionFromTarget * settings.SlotRadius);
+            return directionFromTarget * settings.SlotRadius;
         }
 
         // An agent the ring has no room for holds the line here, instead of piling onto a slot someone else has.
@@ -234,8 +271,20 @@ namespace ArkhamCombat.Encounter
                 return;
             }
 
+            ValidateSlots();
             AssignSlots();
             secondsUntilSlotsAreReassigned = settings.SlotReassignIntervalSeconds;
+        }
+
+        // A slot keeps the place it was given here until the next assignment, carried along with the target.
+        private void ValidateSlots()
+        {
+            for (int slot = 0; slot < isSlotUsable.Length; slot++)
+            {
+                Vector3 offsetOnTheRing = OffsetOnTheRing(slot);
+                isSlotUsable[slot] = slotValidator.TryValidate(targetPosition + offsetOnTheRing, out Vector3 validPosition);
+                slotOffsetFromTarget[slot] = isSlotUsable[slot] ? validPosition - targetPosition : offsetOnTheRing;
+            }
         }
 
         /// <summary>
@@ -280,7 +329,7 @@ namespace ArkhamCombat.Encounter
 
             for (int slot = 0; slot < isSlotTaken.Length; slot++)
             {
-                if (isSlotTaken[slot])
+                if (isSlotTaken[slot] || !isSlotUsable[slot])
                 {
                     continue;
                 }
