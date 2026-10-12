@@ -146,7 +146,7 @@ namespace ArkhamCombat.Combat
 
                 if (node.Id != root && node.HasNothingToPlay)
                 {
-                    errors.Add($"'{name}': node '{node.Id}' has neither an attack nor a pool entry.");
+                    errors.Add($"'{name}': node '{node.Id}' has neither an action nor a pool entry.");
                 }
 
                 ValidateEdges(node.Edges, $"node '{node.Id}'", errors);

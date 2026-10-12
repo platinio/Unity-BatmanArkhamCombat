@@ -20,6 +20,7 @@ namespace ArkhamCombat.Combat
         private readonly IWarpMover warpMover;
         private readonly IHitWindowListener hitWindowListener;
         private readonly IActionTargetPicker targetPicker;
+        private readonly ITravelDirectionPicker travelDirectionPicker;
         private readonly System.Random random;
         private readonly Dictionary<ChainNode, AttackDefinition> lastAttackPickedAtNode = new Dictionary<ChainNode, AttackDefinition>();
 
@@ -30,6 +31,7 @@ namespace ArkhamCombat.Combat
         private bool isTelegraphWindowOpen;
         private bool isWarping;
         private float idleSeconds;
+        private Vector3 travelDirection;
 
         private const float NegligibleWindowTime = 1e-5f;
 
@@ -46,7 +48,8 @@ namespace ArkhamCombat.Combat
             IWarpMover warpMover,
             IHitWindowListener hitWindowListener,
             IActionTargetPicker targetPicker = null,
-            System.Random random = null)
+            System.Random random = null,
+            ITravelDirectionPicker travelDirectionPicker = null)
         {
             this.stance = stance;
             this.intents = intents;
@@ -55,6 +58,7 @@ namespace ArkhamCombat.Combat
             this.warpMover = warpMover ?? new NullWarpMover();
             this.hitWindowListener = hitWindowListener ?? new NullHitWindowListener();
             this.targetPicker = targetPicker ?? new NullActionTargetPicker();
+            this.travelDirectionPicker = travelDirectionPicker ?? new NullTravelDirectionPicker();
             this.random = random ?? new System.Random();
 
             resolver = new ComboResolver(conditions, interruptKinds);
@@ -83,6 +87,9 @@ namespace ArkhamCombat.Combat
         /// <summary>Null while idle or while a plain action plays.</summary>
         public AttackDefinition CurrentAttack { get; private set; }
 
+        /// <summary>Null unless the action that plays is a dash.</summary>
+        public DashDefinition CurrentDash { get; private set; }
+
         /// <summary>
         /// Who the current action is aimed at, picked when it started and kept until it ends, so the
         /// warp and the hit go to the same target. Null while idle; may be null or invalid while
@@ -100,6 +107,8 @@ namespace ArkhamCombat.Combat
         public bool IsTelegraphWindowOpen => isTelegraphWindowOpen;
 
         public bool IsInvulnerable => isPlaying && CurrentAction.IsInvulnerableAt(driver.NormalizedTime);
+
+        public bool IsTravelling => CurrentDash != null && CurrentDash.TravelWindow.Contains(driver.NormalizedTime);
 
         /// <summary>True when the current attack did not warp because the target was beyond its lunge limit.</summary>
         public bool WasWarpRefused { get; private set; }
@@ -142,12 +151,19 @@ namespace ArkhamCombat.Combat
                 return;
             }
 
-            StartAction(node, PickAttack(node), position, isInterrupt: true, StraightAhead);
+            StartAction(node, PickAction(node), position, isInterrupt: true, StraightAhead);
         }
 
         /// <summary>Plays an action outside the combo: reactions, and every enemy action.</summary>
         public void PlayAction(ActionDefinition action, Vector3 position) =>
             StartAction(null, action, position, isInterrupt: isPlaying, StraightAhead);
+
+        /// <summary>For whoever knows better than the character's own picker which way a dash should go.</summary>
+        public void PlayAction(ActionDefinition action, Vector3 position, Vector3 travelDirection)
+        {
+            PlayAction(action, position);
+            this.travelDirection = OnTheGroundAndOfLengthOne(travelDirection);
+        }
 
         /// <summary>For an external interrupt that has nothing to play yet.</summary>
         public void Cancel()
@@ -171,6 +187,37 @@ namespace ArkhamCombat.Combat
             {
                 HandleAttackWindows(CurrentAttack, previousTime, currentTime, position);
             }
+
+            if (CurrentDash != null)
+            {
+                Travel(CurrentDash, previousTime, currentTime);
+            }
+        }
+
+        /// <summary>
+        /// Moves the share of the dash's distance that this frame covers of its travel window, so
+        /// the whole distance is covered as the window closes, whatever the frame rate.
+        /// </summary>
+        private void Travel(DashDefinition dash, float previousTime, float currentTime)
+        {
+            Window travelWindow = dash.TravelWindow;
+            float frameStart = Mathf.Max(previousTime, travelWindow.Start);
+            float frameEnd = Mathf.Min(currentTime, travelWindow.End);
+
+            bool isOutsideTheTravelWindow = frameEnd <= frameStart;
+            if (isOutsideTheTravelWindow)
+            {
+                return;
+            }
+
+            float shareOfDistance = (frameEnd - frameStart) / travelWindow.Length;
+            warpMover.MoveBy(travelDirection * (dash.TravelDistance * shareOfDistance));
+        }
+
+        private static Vector3 OnTheGroundAndOfLengthOne(Vector3 direction)
+        {
+            direction.y = 0f;
+            return direction.normalized;
         }
 
         private void AdvanceIdleTime(float deltaTime)
@@ -215,7 +262,7 @@ namespace ArkhamCombat.Combat
 
             ChainNode nextNode = resolution.Destination;
             Vector2 directionAtPress = resolution.ConsumedIntent.MoveAtPress;
-            StartAction(nextNode, PickAttack(nextNode), position, resolution.IsInterrupt, directionAtPress);
+            StartAction(nextNode, PickAction(nextNode), position, resolution.IsInterrupt, directionAtPress);
             return true;
         }
 
@@ -232,11 +279,17 @@ namespace ArkhamCombat.Combat
             return new ComboSituation(CurrentNode, CurrentAttack, driver.NormalizedTime, isComboWindowOpen, isPlaying: true);
         }
 
+        private ActionDefinition PickAction(ChainNode node)
+        {
+            bool playsOneAction = node.Action != null;
+            return playsOneAction ? node.Action : PickFromThePoolOf(node);
+        }
+
         /// <summary>Remembers the pick so a pool can avoid playing the same attack twice in a row.</summary>
-        private AttackDefinition PickAttack(ChainNode node)
+        private AttackDefinition PickFromThePoolOf(ChainNode node)
         {
             lastAttackPickedAtNode.TryGetValue(node, out AttackDefinition lastPick);
-            AttackDefinition pick = node.PickAttack(new VariantPickContext(lastPick, facts.TargetSide, random));
+            AttackDefinition pick = node.Pool?.Pick(new VariantPickContext(lastPick, facts.TargetSide, random));
             if (pick != null)
             {
                 lastAttackPickedAtNode[node] = pick;
@@ -250,7 +303,7 @@ namespace ArkhamCombat.Combat
         /// hit window never stays open behind it. That action counts as interrupted only when an
         /// interrupt replaced it; the next attack of the combo is something the action allowed.
         /// </summary>
-        private void StartAction(ChainNode node, ActionDefinition action, Vector3 position, bool isInterrupt, Vector2 targetDirection)
+        private void StartAction(ChainNode node, ActionDefinition action, Vector3 position, bool isInterrupt, Vector2 directionAtPress)
         {
             if (action == null)
             {
@@ -269,7 +322,8 @@ namespace ArkhamCombat.Combat
 
             CurrentAction = action;
             action.GiveItsWindowsTo(this);
-            CurrentActionTarget = targetPicker.PickTarget(targetDirection);
+            CurrentActionTarget = targetPicker.PickTarget(directionAtPress);
+            travelDirection = CurrentDash != null ? OnTheGroundAndOfLengthOne(travelDirectionPicker.PickTravelDirection(directionAtPress)) : Vector3.zero;
             isPlaying = true;
             idleSeconds = 0f;
             WasWarpRefused = false;
@@ -293,6 +347,15 @@ namespace ArkhamCombat.Combat
             }
         }
 
+        internal void TakeTheWindowsOf(DashDefinition dash)
+        {
+            bool isTheActionThatIsStarting = ReferenceEquals(dash, CurrentAction);
+            if (isTheActionThatIsStarting)
+            {
+                CurrentDash = dash;
+            }
+        }
+
         private void EndCurrentAction(bool wasInterrupted)
         {
             if (isHitWindowOpen)
@@ -307,6 +370,7 @@ namespace ArkhamCombat.Combat
             isPlaying = false;
             CurrentAction = null;
             CurrentAttack = null;
+            CurrentDash = null;
             CurrentActionTarget = null;
             idleSeconds = 0f;
 
