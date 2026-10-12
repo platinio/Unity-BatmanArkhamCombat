@@ -1,3 +1,4 @@
+using ArkhamCombat.Characters;
 using ArkhamCombat.Combat;
 using UnityEngine;
 using Zenject;
@@ -34,7 +35,7 @@ namespace ArkhamCombat.Player
                 return;
             }
 
-            receiver = new HitReceiver(profile);
+            receiver = new HitReceiver(profile, CombatActions.RunnerOn(gameObject));
         }
 
         public HitResult Receive(HitInfo hit)

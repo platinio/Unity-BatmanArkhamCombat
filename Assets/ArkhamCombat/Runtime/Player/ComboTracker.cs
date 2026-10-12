@@ -59,6 +59,7 @@ namespace ArkhamCombat.Player
 
             SceneEvents.StrikeLandedGameEvent.AddListener(OnStrikeLanded);
             SceneEvents.StrikeWhiffedGameEvent.AddListener(OnStrikeWhiffed);
+            SceneEvents.StrikeEvadedGameEvent.AddListener(OnStrikeEvaded);
         }
 
         internal void StopListeningToStrikes()
@@ -70,6 +71,7 @@ namespace ArkhamCombat.Player
 
             SceneEvents.StrikeLandedGameEvent.RemoveListener(OnStrikeLanded);
             SceneEvents.StrikeWhiffedGameEvent.RemoveListener(OnStrikeWhiffed);
+            SceneEvents.StrikeEvadedGameEvent.RemoveListener(OnStrikeEvaded);
         }
 
         private void OnStrikeLanded(StrikeLandedEventArgs strike)
@@ -89,6 +91,15 @@ namespace ArkhamCombat.Player
             if (IsThisCharacter(strike.Attacker))
             {
                 meter.Reset(ComboResetReason.Whiff);
+            }
+        }
+
+        // Being evaded costs the attacker nothing: its strike reached someone, so it is not a whiff.
+        private void OnStrikeEvaded(StrikeEvadedEventArgs strike)
+        {
+            if (IsThisCharacter(strike.Target))
+            {
+                meter.Increment();
             }
         }
 

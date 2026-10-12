@@ -138,13 +138,6 @@ namespace ArkhamCombat.Combat
             return isWellFormed;
         }
 
-        private void ReportWhenWindowEndsBeforeItStarts(string windowName, Window window, List<string> errors)
-        {
-            if (!window.IsValid(out string whatIsWrong))
-            {
-                errors.Add($"'{name}': {windowName} {whatIsWrong}.");
-            }
-        }
 
         private void ReportWhenLungeCannotReachStrikeDistance(List<string> errors)
         {

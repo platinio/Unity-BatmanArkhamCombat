@@ -1,4 +1,5 @@
 using ArcaneOnyx.BehaviorTree;
+using ArkhamCombat.Characters;
 using ArkhamCombat.Combat;
 using UnityEngine;
 using Zenject;
@@ -49,7 +50,7 @@ namespace ArkhamCombat.Enemies
                 return;
             }
 
-            receiver = new HitReceiver(profile);
+            receiver = new HitReceiver(profile, CombatActions.RunnerOn(gameObject));
         }
 
         private void PublishStartingFacts()

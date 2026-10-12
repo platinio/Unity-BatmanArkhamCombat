@@ -38,17 +38,21 @@ namespace ArkhamCombat.Combat
     public readonly struct HitResult
     {
         public static readonly HitResult Ignored = default;
+        public static readonly HitResult Missed = default;
+        public static readonly HitResult Evaded = new HitResult(hasLanded: false, wasEvaded: true, AppliedReaction.None);
 
         public readonly bool HasLanded;
+        public readonly bool WasEvaded;
         public readonly AppliedReaction AppliedReaction;
 
-        private HitResult(AppliedReaction appliedReaction)
+        private HitResult(bool hasLanded, bool wasEvaded, AppliedReaction appliedReaction)
         {
-            HasLanded = true;
+            HasLanded = hasLanded;
+            WasEvaded = wasEvaded;
             AppliedReaction = appliedReaction;
         }
 
-        public static HitResult Landed(AppliedReaction appliedReaction) => new HitResult(appliedReaction);
+        public static HitResult Landed(AppliedReaction appliedReaction) => new HitResult(hasLanded: true, wasEvaded: false, appliedReaction);
 
         public bool WasKilled => AppliedReaction == AppliedReaction.Death;
     }

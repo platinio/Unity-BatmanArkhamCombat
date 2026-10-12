@@ -33,6 +33,7 @@ namespace ArkhamCombat.Tests
             dispatcher = hermesObject.AddComponent<GameEventDispatcher>();
             dispatcher.StrikeLandedGameEvent = new GameEventDispatcher.StrikeLandedEvent(dispatcher);
             dispatcher.StrikeWhiffedGameEvent = new GameEventDispatcher.StrikeWhiffedEvent(dispatcher);
+            dispatcher.StrikeEvadedGameEvent = new GameEventDispatcher.StrikeEvadedEvent(dispatcher);
             dispatcher.ComboChangedGameEvent = new GameEventDispatcher.ComboChangedEvent(dispatcher);
             dispatcher.ComboResetGameEvent = new GameEventDispatcher.ComboResetEvent(dispatcher);
 
@@ -65,6 +66,37 @@ namespace ArkhamCombat.Tests
         private void StrikeLandsFor(GameObject attacker) => dispatcher.StrikeLandedGameEvent.Raise(attacker, attack, target);
 
         private void StrikeWhiffsFor(GameObject attacker) => dispatcher.StrikeWhiffedGameEvent.Raise(attacker, attack);
+
+        private void StrikeIsEvaded(GameObject attacker, GameObject whoEvadedIt) => dispatcher.StrikeEvadedGameEvent.Raise(attacker, attack, whoEvadedIt);
+
+        [Test]
+        public void EvadingAStrike_CountsTowardTheCombo()
+        {
+            StrikeLandsFor(character);
+
+            StrikeIsEvaded(anotherCharacter, whoEvadedIt: character);
+
+            Assert.AreEqual(2, tracker.Count);
+        }
+
+        [Test]
+        public void HavingItsOwnStrikeEvaded_NeitherCountsNorLosesTheCombo()
+        {
+            StrikeLandsFor(character);
+
+            StrikeIsEvaded(character, whoEvadedIt: target);
+
+            Assert.AreEqual(1, tracker.Count);
+            Assert.IsEmpty(comboResets);
+        }
+
+        [Test]
+        public void AnEvadeBetweenTwoOtherCharacters_IsNotCounted()
+        {
+            StrikeIsEvaded(anotherCharacter, whoEvadedIt: target);
+
+            Assert.AreEqual(0, tracker.Count);
+        }
 
         [Test]
         public void CountsItsOwnCharactersLandedStrikes()

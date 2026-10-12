@@ -99,6 +99,8 @@ namespace ArkhamCombat.Combat
         public bool IsWarpWindowOpen => isWarpWindowOpen;
         public bool IsTelegraphWindowOpen => isTelegraphWindowOpen;
 
+        public bool IsInvulnerable => isPlaying && CurrentAction.IsInvulnerableAt(driver.NormalizedTime);
+
         /// <summary>True when the current attack did not warp because the target was beyond its lunge limit.</summary>
         public bool WasWarpRefused { get; private set; }
 

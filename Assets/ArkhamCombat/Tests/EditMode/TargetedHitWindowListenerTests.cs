@@ -103,6 +103,7 @@ namespace ArkhamCombat.Tests
         private GameObject hermesObject;
         private List<StrikeLandedEventArgs> landedStrikes;
         private List<StrikeWhiffedEventArgs> whiffedStrikes;
+        private List<StrikeEvadedEventArgs> evadedStrikes;
 
         private ISceneGameEvents BuildSceneGameEventsRecordingStrikes()
         {
@@ -110,11 +111,14 @@ namespace ArkhamCombat.Tests
             GameEventDispatcher dispatcher = hermesObject.AddComponent<GameEventDispatcher>();
             dispatcher.StrikeLandedGameEvent = new GameEventDispatcher.StrikeLandedEvent(dispatcher);
             dispatcher.StrikeWhiffedGameEvent = new GameEventDispatcher.StrikeWhiffedEvent(dispatcher);
+            dispatcher.StrikeEvadedGameEvent = new GameEventDispatcher.StrikeEvadedEvent(dispatcher);
 
             landedStrikes = new List<StrikeLandedEventArgs>();
             whiffedStrikes = new List<StrikeWhiffedEventArgs>();
+            evadedStrikes = new List<StrikeEvadedEventArgs>();
             dispatcher.StrikeLandedGameEvent.AddListener(landedStrikes.Add);
             dispatcher.StrikeWhiffedGameEvent.AddListener(whiffedStrikes.Add);
+            dispatcher.StrikeEvadedGameEvent.AddListener(evadedStrikes.Add);
 
             return new SceneGameEventsWith(dispatcher);
         }
@@ -138,6 +142,37 @@ namespace ArkhamCombat.Tests
             {
                 Object.DestroyImmediate(sceneEventsObject);
             }
+        }
+
+        [Test]
+        public void AStrikeItsTargetEvades_IsAnnouncedAsEvaded_AndNeitherLandedNorWhiffed()
+        {
+            GameObject victimObject = HiddenObject("Victim");
+            PointCombatTarget target = TargetAhead(WithinReach);
+            target.Owner = victimObject;
+            target.ResultToGive = HitResult.Evaded;
+
+            listener.HitWindowOpened(jab, target);
+
+            Assert.AreEqual(1, evadedStrikes.Count);
+            Assert.AreSame(character, evadedStrikes[0].Attacker);
+            Assert.AreSame(jab, evadedStrikes[0].Attack);
+            Assert.AreSame(victimObject, evadedStrikes[0].Target);
+            Assert.IsEmpty(landedStrikes);
+            Assert.IsEmpty(whiffedStrikes);
+            Object.DestroyImmediate(victimObject);
+        }
+
+        [Test]
+        public void AStrikeOutOfReachOfAnInvulnerableTarget_IsAWhiff_NotAnEvade()
+        {
+            PointCombatTarget target = TargetAhead(BeyondReach);
+            target.ResultToGive = HitResult.Evaded;
+
+            listener.HitWindowOpened(jab, target);
+
+            Assert.IsEmpty(evadedStrikes);
+            Assert.AreEqual(1, whiffedStrikes.Count);
         }
 
         [Test]
