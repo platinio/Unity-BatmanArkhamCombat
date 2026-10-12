@@ -22,12 +22,14 @@ namespace ArkhamCombat.Encounter
             public float TokenHeldFor;
             public float SecondsWithoutAToken;
             public float ReacquireCooldown;
+            public int AttacksLeftInItsTurn;
             public int Slot = UnassignedSlot;
         }
 
         private readonly EncounterDirectorSettings settings;
         private readonly ISlotValidator slotValidator;
         private readonly TokenRequestScorer tokenRequestScorer;
+        private readonly System.Random random;
         private readonly int slotCount;
         private readonly List<AgentState> agentStates = new List<AgentState>();
         private readonly List<IEncounterAgent> registeredAgents = new List<IEncounterAgent>();
@@ -41,10 +43,11 @@ namespace ArkhamCombat.Encounter
         private Vector3 targetForward;
         private float secondsUntilSlotsAreReassigned;
 
-        public EncounterDirector(EncounterDirectorSettings settings, ISlotValidator slotValidator = null)
+        public EncounterDirector(EncounterDirectorSettings settings, ISlotValidator slotValidator = null, System.Random random = null)
         {
             this.settings = settings ?? new EncounterDirectorSettings();
             this.slotValidator = slotValidator ?? new EverySlotIsValid();
+            this.random = random ?? new System.Random();
             tokenRequestScorer = new TokenRequestScorer(this.settings);
 
             slotCount = this.settings.SlotCount;
@@ -179,6 +182,30 @@ namespace ArkhamCombat.Encounter
             Release(state);
         }
 
+        public int AttacksLeftInTheTurnOf(IEncounterAgent agent)
+        {
+            return agent != null && stateByAgent.TryGetValue(agent, out AgentState state) ? state.AttacksLeftInItsTurn : 0;
+        }
+
+        /// <summary>
+        /// A turn ends with its last attack: the token then goes back without the agent giving it.
+        /// </summary>
+        public void SpendAnAttackOfTheTurn(IEncounterAgent agent)
+        {
+            if (agent == null || !stateByAgent.TryGetValue(agent, out AgentState state) || !state.HasToken)
+            {
+                return;
+            }
+
+            state.AttacksLeftInItsTurn--;
+
+            bool wasTheLastAttackOfTheTurn = state.AttacksLeftInItsTurn <= 0;
+            if (wasTheLastAttackOfTheTurn)
+            {
+                Release(state);
+            }
+        }
+
         public void TelegraphAnAttack(IEncounterAgent agent, bool isCounterable)
         {
             if (agent != null && stateByAgent.TryGetValue(agent, out AgentState state))
@@ -230,6 +257,7 @@ namespace ArkhamCombat.Encounter
             }
 
             state.HasToken = false;
+            state.AttacksLeftInItsTurn = 0;
             state.TokenHeldFor = 0.0f;
             state.SecondsWithoutAToken = 0.0f;
             state.ReacquireCooldown = settings.ReacquireCooldownSeconds;
@@ -339,6 +367,12 @@ namespace ArkhamCombat.Encounter
             }
         }
 
+        private int AttacksATurnIsWorth()
+        {
+            int oneMoreThanTheMost = settings.MaxAttacksPerTurn + 1;
+            return random.Next(settings.MinAttacksPerTurn, oneMoreThanTheMost);
+        }
+
         // An agent that asked and then turned to something else would otherwise hold a turn it never took until the hold timeout.
         private void TakeBackTokensNobodyCameBackFor()
         {
@@ -417,6 +451,7 @@ namespace ArkhamCombat.Encounter
             state.HasComeBackForItsToken = false;
             state.IsAskingForAToken = false;
             state.TokenHeldFor = 0.0f;
+            state.AttacksLeftInItsTurn = AttacksATurnIsWorth();
 
             TokenGranted?.Invoke(state.Agent);
         }

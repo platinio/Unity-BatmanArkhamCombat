@@ -116,6 +116,24 @@ namespace ArkhamCombat.Tests
         }
 
         [Test]
+        public void SpendAttackOfTheTurn_EndsATurnWorthOneAttack()
+        {
+            Assert.IsTrue(TakeAToken(director, agent), "sanity: it holds the token before the node runs");
+            BehaviorTreeGraph graph = TreeOfOne(thug, out SpendAttackOfTheTurn _);
+
+            Assert.AreEqual(ExecutionStatus.Success, graph.OnUpdate());
+            Assert.IsFalse(agent.HasToken);
+        }
+
+        [Test]
+        public void SpendAttackOfTheTurn_Succeeds_OnAnObjectWithoutAnEncounterAgent()
+        {
+            BehaviorTreeGraph graph = TreeOfOne(loner, out SpendAttackOfTheTurn _);
+
+            Assert.AreEqual(ExecutionStatus.Success, graph.OnUpdate());
+        }
+
+        [Test]
         public void ReleaseAttackToken_Succeeds_OnAnObjectWithoutAnEncounterAgent()
         {
             BehaviorTreeGraph graph = TreeOfOne(loner, out ReleaseAttackToken _);

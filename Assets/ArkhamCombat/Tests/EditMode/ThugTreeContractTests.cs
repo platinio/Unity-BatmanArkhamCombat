@@ -147,11 +147,35 @@ namespace ArkhamCombat.Tests
         {
             List<BehaviorTreeNode> stepsOfTheSwing = StepsOfTheSwing();
 
-            Assert.AreEqual(4, stepsOfTheSwing.Count);
+            Assert.AreEqual(5, stepsOfTheSwing.Count);
             Assert.IsInstanceOf<MoveToStrikeDistanceNode>(stepsOfTheSwing[0]);
             Assert.AreEqual("FaceTarget", SubTreeRunBy(stepsOfTheSwing[1]));
             Assert.IsInstanceOf<TryAcquireAttackToken>(stepsOfTheSwing[2], "a thug that lost the turn while it walked in must not swing");
             Assert.IsInstanceOf<ParallelSelector>(stepsOfTheSwing[3]);
+        }
+
+        [Test]
+        public void EachSwing_SpendsOneAttackOfTheTurn_OnceItsStrikeIsOver()
+        {
+            Assert.IsInstanceOf<SpendAttackOfTheTurn>(StepsOfTheSwing().Last());
+        }
+
+        [Test]
+        public void TheSwing_IsRepeatedUntilItFails_SoATurnCanBeWorthSeveralAttacks()
+        {
+            BehaviorTreeGraph attack = AttackTree().graph;
+            BehaviorTreeNode swingOrGiveUp = StepsOfTheAttack().OfType<ReturnSuccess>().Single();
+
+            Assert.IsInstanceOf<UntilFailure>(attack.ChildrenInPriorityOrder(swingOrGiveUp).Single());
+        }
+
+        [Test]
+        public void ASwing_OnlyStartsWhileTheThugHoldsItsToken_AskedOfTheDirectorAndNotOfAFactAFrameOld()
+        {
+            ConditionalExecution guard = AttackTree().graph.Nodes.OfType<ConditionalExecution>().Single(candidate => candidate.Owner == TheSwing());
+
+            Assert.IsInstanceOf<HasAttackToken>(WhatFeeds(guard, "Value"));
+            Assert.IsNotInstanceOf<ReactiveGuard>(guard, "a swing that has started is not cut short when the turn ends under it");
         }
 
         [Test]
@@ -194,12 +218,14 @@ namespace ArkhamCombat.Tests
             return attack.ChildrenInPriorityOrder(spine);
         }
 
-        private static List<BehaviorTreeNode> StepsOfTheSwing()
+        private static List<BehaviorTreeNode> StepsOfTheSwing() => AttackTree().graph.ChildrenInPriorityOrder(TheSwing());
+
+        private static BehaviorTreeNode TheSwing()
         {
             BehaviorTreeGraph attack = AttackTree().graph;
             BehaviorTreeNode swingOrGiveUp = StepsOfTheAttack().OfType<ReturnSuccess>().Single();
-            BehaviorTreeNode swing = attack.ChildrenInPriorityOrder(swingOrGiveUp).Single();
-            return attack.ChildrenInPriorityOrder(swing);
+            BehaviorTreeNode whileTheTurnLasts = attack.ChildrenInPriorityOrder(swingOrGiveUp).Single();
+            return attack.ChildrenInPriorityOrder(whileTheTurnLasts).Single();
         }
 
         private static BehaviorTreeNode WhatFeeds(BehaviorTreeNode node, string port) =>

@@ -41,3 +41,5 @@ MonoBehaviour:
     fairnessHorizonSeconds: 6
     distancePenalty: 0.3
     grantGraceSeconds: 0.5
+    minAttacksPerTurn: 1
+    maxAttacksPerTurn: 2
