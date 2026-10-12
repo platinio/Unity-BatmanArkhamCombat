@@ -33,20 +33,13 @@ namespace ArkhamCombat.Player
 
         internal static void EnterTheStateFor(AppliedReaction reaction, CharacterStateMachine stateMachine)
         {
-            bool isDead = stateMachine.Current is DeadState;
-            if (isDead)
-            {
-                return;
-            }
-
             if (reaction == AppliedReaction.Death)
             {
                 stateMachine.Change<DeadState>();
                 return;
             }
 
-            bool isOnTheFloor = stateMachine.Current is KnockedDownState;
-            if (isOnTheFloor)
+            if (!stateMachine.Current.CanBeInterrupted)
             {
                 return;
             }

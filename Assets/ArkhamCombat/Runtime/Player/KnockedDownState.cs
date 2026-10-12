@@ -13,6 +13,8 @@ namespace ArkhamCombat.Player
             : base(context, combatActions, actionsInOrder)
         {
         }
+
+        public override bool CanBeInterrupted => false;
     }
 
     [Serializable]

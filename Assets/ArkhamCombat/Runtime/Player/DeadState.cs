@@ -14,6 +14,8 @@ namespace ArkhamCombat.Player
         {
         }
 
+        public override bool CanBeInterrupted => false;
+
         protected override bool ShouldReturnToLocomotionWhenTheReactionEnds => false;
     }
 

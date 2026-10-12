@@ -26,6 +26,8 @@ namespace ArkhamCombat.Player
             this.actionsInOrder = actionsInOrder;
         }
 
+        public virtual bool CanBeInterrupted => true;
+
         protected virtual bool ShouldReturnToLocomotionWhenTheReactionEnds => true;
 
         public void Enter()

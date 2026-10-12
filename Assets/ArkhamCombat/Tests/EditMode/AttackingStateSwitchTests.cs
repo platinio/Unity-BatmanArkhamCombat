@@ -5,7 +5,7 @@ using NUnit.Framework;
 
 namespace ArkhamCombat.Tests
 {
-    // The rule alone: the states are only looked at for their type, so they are built without a
+    // The rule alone: the states are only asked what they allow, so they are built without a
     // character. Entering the Attacking state needs the whole controller and is checked in play mode.
     public class AttackingStateSwitchTests
     {
@@ -15,6 +15,8 @@ namespace ArkhamCombat.Tests
         private static readonly ICharacterState Locomotion = new LocomotionState(null);
         private static readonly ICharacterState Airborne = new AirborneState(null);
         private static readonly ICharacterState Attacking = new AttackingState(null, null, null);
+        private static readonly ICharacterState Flinching = new FlinchState(null, null, null);
+        private static readonly ICharacterState OnTheFloor = new KnockedDownState(null, null, null);
 
         [Test]
         public void TheCharacterEntersAttacking_WhenAnAttackPlays()
@@ -33,13 +35,27 @@ namespace ArkhamCombat.Tests
         }
 
         [Test]
-        public void TheCharacterAlreadyAttacking_IsNotEnteredAgain()
+        public void ACharacterInAStateThatCannotBeInterrupted_IsNotPulledIntoAttacking()
         {
             AttackDefinition jab = CombatTestDoubles.Attack("Jab");
 
-            Assert.IsFalse(AttackingStateSwitch.ShouldEnterAttackingWhen(jab, Attacking));
+            Assert.IsFalse(AttackingStateSwitch.ShouldEnterAttackingWhen(jab, OnTheFloor));
 
             UnityEngine.Object.DestroyImmediate(jab);
+        }
+
+        [Test]
+        public void TheCharacterAlreadyAttacking_IsNotEnteredAgain()
+        {
+            CharacterStateMachine stateMachine = new CharacterStateMachine();
+            stateMachine.Register(Attacking);
+            int timesTheStateChanged = 0;
+            stateMachine.StateChanged += (previous, next) => timesTheStateChanged++;
+
+            stateMachine.Change<AttackingState>();
+            stateMachine.Change<AttackingState>();
+
+            Assert.AreEqual(1, timesTheStateChanged);
         }
 
         [Test]
@@ -58,6 +74,13 @@ namespace ArkhamCombat.Tests
         public void NoActionStarts_InAStateThatCannotAttack()
         {
             Assert.IsFalse(AttackingStateSwitch.CanStartFromIdleWhen(Grounded, Airborne));
+        }
+
+        [Test]
+        public void NoActionStarts_WhileTheCharacterReacts()
+        {
+            Assert.IsFalse(AttackingStateSwitch.CanStartFromIdleWhen(Grounded, Flinching));
+            Assert.IsFalse(AttackingStateSwitch.CanStartFromIdleWhen(Grounded, OnTheFloor));
         }
 
         [Test]

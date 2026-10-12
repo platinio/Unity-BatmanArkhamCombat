@@ -32,15 +32,16 @@ namespace ArkhamCombat.Player
 
         public override void Tick(float deltaTime) => EnterAttackingStateWhileAnAttackPlays();
 
-        // Attacking counts too: an idle runner while still in Attacking is recovery, so a queued press
-        // continues the combo without a one-frame trip through Locomotion.
-        internal static bool CanStartFromIdleWhen(bool isGrounded, ICharacterState currentState) =>
-            isGrounded && (currentState is LocomotionState || currentState is AttackingState);
+        internal static bool CanStartFromIdleWhen(bool isGrounded, ICharacterState currentState)
+        {
+            bool hasAState = currentState != null;
+            return isGrounded && hasAState && currentState.IsFreeToAct;
+        }
 
         internal static bool ShouldEnterAttackingWhen(AttackDefinition currentAttack, ICharacterState currentState)
         {
             bool isAnAttackPlaying = currentAttack != null;
-            return isAnAttackPlaying && !(currentState is AttackingState);
+            return isAnAttackPlaying && currentState.CanBeInterrupted;
         }
 
         private void EnterAttackingStateWhileAnAttackPlays()

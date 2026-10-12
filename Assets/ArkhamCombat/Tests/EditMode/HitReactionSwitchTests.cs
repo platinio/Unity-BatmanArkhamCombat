@@ -29,6 +29,7 @@ namespace ArkhamCombat.Tests
         private MotorConfig motorConfig;
         private ActionRunner runner;
         private CharacterStateMachine stateMachine;
+        private LocomotionState locomotion;
         private CharacterContext context;
         private CombatActions combatActions;
         private ActionDefinition flinch;
@@ -65,7 +66,8 @@ namespace ArkhamCombat.Tests
 
             stateMachine = new CharacterStateMachine();
             context = new CharacterContext(motor, input: null, profile: null, movementFrame: null) { StateMachine = stateMachine };
-            stateMachine.Register(new LocomotionState(context));
+            locomotion = new LocomotionState(context);
+            stateMachine.Register(locomotion);
             stateMachine.Register(new FlinchState(context, combatActions, new[] { flinch }));
             stateMachine.Register(new StaggerState(context, combatActions, new[] { stagger }));
             stateMachine.Register(new KnockedDownState(context, combatActions, new[] { knockdown, getUp }));
@@ -92,7 +94,7 @@ namespace ArkhamCombat.Tests
         private void TickTheCharacterWhileItReactsFor(float seconds)
         {
             int ticks = Mathf.RoundToInt(seconds / TickSeconds);
-            for (int i = 0; i < ticks && !(stateMachine.Current is LocomotionState); i++)
+            for (int i = 0; i < ticks && stateMachine.Current != locomotion; i++)
             {
                 combatActions.Tick(TickSeconds);
                 stateMachine.Tick(TickSeconds);
