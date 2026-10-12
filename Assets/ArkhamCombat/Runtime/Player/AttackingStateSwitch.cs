@@ -35,7 +35,7 @@ namespace ArkhamCombat.Player
         internal static bool CanStartFromIdleWhen(bool isGrounded, ICharacterState currentState)
         {
             bool hasAState = currentState != null;
-            return isGrounded && hasAState && currentState.IsFreeToAct;
+            return isGrounded && hasAState && currentState.CanBeInterrupted;
         }
 
         internal static bool ShouldEnterAttackingWhen(AttackDefinition currentAttack, ICharacterState currentState)

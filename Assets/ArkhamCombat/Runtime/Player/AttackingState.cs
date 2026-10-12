@@ -33,10 +33,6 @@ namespace ArkhamCombat.Player
 
         private ActionRunner Runner => combatActions.Runner;
 
-        // An idle runner while still in Attacking is recovery, so a queued press continues the combo
-        // without a one-frame trip through Locomotion.
-        public bool IsFreeToAct => true;
-
         public void Enter() { }
 
         // Warp movement left over from this attack must not carry into the next one.

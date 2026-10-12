@@ -17,6 +17,7 @@ namespace ArkhamCombat.Tests
         private static readonly ICharacterState Attacking = new AttackingState(null, null, null);
         private static readonly ICharacterState Flinching = new FlinchState(null, null, null);
         private static readonly ICharacterState OnTheFloor = new KnockedDownState(null, null, null);
+        private static readonly ICharacterState Dead = new DeadState(null, null, null);
 
         [Test]
         public void TheCharacterEntersAttacking_WhenAnAttackPlays()
@@ -71,16 +72,22 @@ namespace ArkhamCombat.Tests
         }
 
         [Test]
-        public void NoActionStarts_InAStateThatCannotAttack()
+        public void AnActionCanStart_OnTheFrameTheCharacterHasLandedButIsStillAirborne()
         {
-            Assert.IsFalse(AttackingStateSwitch.CanStartFromIdleWhen(Grounded, Airborne));
+            Assert.IsTrue(AttackingStateSwitch.CanStartFromIdleWhen(Grounded, Airborne));
         }
 
         [Test]
-        public void NoActionStarts_WhileTheCharacterReacts()
+        public void AnActionCanStart_FromAReactionThatCanBeInterrupted()
         {
-            Assert.IsFalse(AttackingStateSwitch.CanStartFromIdleWhen(Grounded, Flinching));
+            Assert.IsTrue(AttackingStateSwitch.CanStartFromIdleWhen(Grounded, Flinching));
+        }
+
+        [Test]
+        public void NoActionStarts_FromAStateThatCannotBeInterrupted()
+        {
             Assert.IsFalse(AttackingStateSwitch.CanStartFromIdleWhen(Grounded, OnTheFloor));
+            Assert.IsFalse(AttackingStateSwitch.CanStartFromIdleWhen(Grounded, Dead));
         }
 
         [Test]

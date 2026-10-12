@@ -105,8 +105,7 @@ namespace ArkhamCombat.Combat
         private bool HasValidTarget => CurrentActionTarget != null && CurrentActionTarget.IsValid;
 
         /// <summary>
-        /// <paramref name="canStartFromIdle"/> is false while the character is airborne or in a hit
-        /// reaction; a press then waits instead of starting an action.
+        /// While <paramref name="canStartFromIdle"/> is false a press waits instead of starting an action.
         /// </summary>
         public void Tick(float deltaTime, Vector3 position, bool canStartFromIdle)
         {
