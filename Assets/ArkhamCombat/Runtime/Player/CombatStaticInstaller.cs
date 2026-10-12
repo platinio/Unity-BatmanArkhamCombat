@@ -1,5 +1,6 @@
 using ArcaneOnyx.UnityExtensions;
 using ArkhamCombat.Combat;
+using ArkhamCombat.Encounter;
 using UnityEngine;
 using Zenject;
 
@@ -32,6 +33,7 @@ namespace ArkhamCombat.Player
             Container.Bind<ICombatFactsSettings>().FromInstance(config);
             Container.Bind<IHitCheckSettings>().FromInstance(config);
             Container.Bind<InterruptKinds>().FromMethod(_ => InterruptKindsOf(config)).AsSingle();
+            Container.Bind<EncounterDirectorSettings>().FromMethod(_ => EncounterSettingsOf(config)).AsSingle();
         }
 
         private void BindTargeting()
@@ -44,6 +46,9 @@ namespace ArkhamCombat.Player
             combatConfig != null
                 ? new InterruptKinds(combatConfig.EvadeKind, combatConfig.CounterKind)
                 : new InterruptKinds(evade: null, counter: null);
+
+        internal static EncounterDirectorSettings EncounterSettingsOf(CombatConfig combatConfig) =>
+            combatConfig != null ? combatConfig.Encounter : new EncounterDirectorSettings();
 
         /// <summary>
         /// Checks the config once at scene load, so a missing evade or counter kind is an error in

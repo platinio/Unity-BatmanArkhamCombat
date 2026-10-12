@@ -1,6 +1,7 @@
 using System.Collections.Generic;
 using ArcaneOnyx.TPCharacterController.Inputs;
 using ArkhamCombat.Combat;
+using ArkhamCombat.Encounter;
 using UnityEngine;
 
 namespace ArkhamCombat.Player
@@ -57,8 +58,13 @@ namespace ArkhamCombat.Player
         [Tooltip("A strike lands only on a target within this many degrees either side of the attacker's facing. 180 hits all around.")]
         [SerializeField, Range(0f, 180f)] private float hitAngle = 60f;
 
+        [Header("Encounter")]
+        [Tooltip("How many enemies may attack at once, and the ring the others stand on.")]
+        [SerializeField] private EncounterDirectorSettings encounter = new EncounterDirectorSettings();
+
         public IntentKind EvadeKind => evadeKind;
         public IntentKind CounterKind => counterKind;
+        public EncounterDirectorSettings Encounter => encounter;
 
         IReadOnlyList<int> IComboMeterSettings.TierThresholds => comboTierThresholds;
         float IComboMeterSettings.MeterTimeoutSeconds => comboTimeoutSeconds;
