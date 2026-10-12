@@ -17,6 +17,8 @@ namespace ArkhamCombat.Encounter
             public bool HasToken;
             public bool HasComeBackForItsToken;
             public bool IsAskingForAToken;
+            public bool IsTelegraphing;
+            public bool IsTelegraphingACounterableAttack;
             public float TokenHeldFor;
             public float SecondsWithoutAToken;
             public float ReacquireCooldown;
@@ -67,6 +69,22 @@ namespace ArkhamCombat.Encounter
         public Vector3 TargetForward => targetForward;
         public IReadOnlyList<IEncounterAgent> Agents => registeredAgents;
         public bool IsActive => agentStates.Count > 0;
+
+        public bool IsACounterableAttackIncoming
+        {
+            get
+            {
+                for (int i = 0; i < agentStates.Count; i++)
+                {
+                    if (agentStates[i].IsTelegraphingACounterableAttack)
+                    {
+                        return true;
+                    }
+                }
+
+                return false;
+            }
+        }
 
         public void SetTarget(Vector3 position, Vector3 forward)
         {
@@ -157,6 +175,29 @@ namespace ArkhamCombat.Encounter
             }
 
             Release(state);
+        }
+
+        public void TelegraphAnAttack(IEncounterAgent agent, bool isCounterable)
+        {
+            if (agent != null && stateByAgent.TryGetValue(agent, out AgentState state))
+            {
+                state.IsTelegraphing = true;
+                state.IsTelegraphingACounterableAttack = isCounterable;
+            }
+        }
+
+        public void StopTelegraphing(IEncounterAgent agent)
+        {
+            if (agent != null && stateByAgent.TryGetValue(agent, out AgentState state))
+            {
+                state.IsTelegraphing = false;
+                state.IsTelegraphingACounterableAttack = false;
+            }
+        }
+
+        public bool IsTelegraphing(IEncounterAgent agent)
+        {
+            return agent != null && stateByAgent.TryGetValue(agent, out AgentState state) && state.IsTelegraphing;
         }
 
         public int HeldTokenCount(AttackTokenType tokenType)

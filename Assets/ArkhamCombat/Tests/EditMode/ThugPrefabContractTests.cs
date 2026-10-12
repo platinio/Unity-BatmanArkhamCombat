@@ -25,13 +25,14 @@ namespace ArkhamCombat.Tests
         }
 
         [Test]
-        public void TheFactsAreWrittenBeforeTheActionsTick()
+        public void TheFactsAreWrittenBeforeTheActionsTick_AndTheTelegraphIsAnnouncedAfter()
         {
             SerializedProperty jobs = new SerializedObject(thug.GetComponent<CharacterComponentUpdater>()).FindProperty("characterComponents");
 
-            Assert.AreEqual(2, jobs.arraySize);
+            Assert.AreEqual(3, jobs.arraySize);
             Assert.IsInstanceOf<EncounterFactsUpdater>(jobs.GetArrayElementAtIndex(0).objectReferenceValue);
             Assert.IsInstanceOf<CombatActions>(jobs.GetArrayElementAtIndex(1).objectReferenceValue);
+            Assert.IsInstanceOf<TelegraphAnnouncer>(jobs.GetArrayElementAtIndex(2).objectReferenceValue);
         }
 
         [Test]

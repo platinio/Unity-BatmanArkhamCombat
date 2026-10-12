@@ -3,6 +3,7 @@ using ArcaneOnyx.BehaviorTree;
 using ArcaneOnyx.TPCharacterController;
 using ArcaneOnyx.TPCharacterController.Movement;
 using ArkhamCombat.Combat;
+using ArkhamCombat.Encounter;
 using UnityEngine;
 using Zenject;
 
@@ -18,6 +19,7 @@ namespace ArkhamCombat.Player
         private ComboTracker comboTracker;
         private ICombatFactsSettings settings;
         private IMovementFrame frame;
+        private EncounterDirector encounterDirector;
         private CharacterBrain characterBrain;
         private Vector3 toTarget;
         private int lastWrittenComboCount = -1;
@@ -31,16 +33,18 @@ namespace ArkhamCombat.Player
         public CombatFacts Facts { get; } = new CombatFacts();
 
         [Inject]
-        private void Construct(
+        internal void Construct(
             ActionRunner runner,
             ICombatFactsSettings settings,
             IMovementFrame frame,
-            IActionTargetPicker targetPicker)
+            IActionTargetPicker targetPicker,
+            [InjectOptional] EncounterDirector encounterDirector = null)
         {
             this.runner = runner;
             this.settings = settings;
             this.frame = frame;
             this.targetPicker = targetPicker;
+            this.encounterDirector = encounterDirector;
         }
 
         private void Awake()
@@ -109,8 +113,12 @@ namespace ArkhamCombat.Player
             }
         }
 
-        // Nothing attacks the player yet, so there is never an attack to counter.
-        private void MeasureIncomingAttack() => Facts.IsIncomingAttackCounterable = false;
+        // Everyone in the encounter fights this character, so any attack telegraphed there is aimed at it.
+        internal void MeasureIncomingAttack()
+        {
+            bool isInAnEncounter = encounterDirector != null;
+            Facts.IsIncomingAttackCounterable = isInAnEncounter && encounterDirector.IsACounterableAttackIncoming;
+        }
 
         private void DescribeTarget(IActionTarget target, AttackDefinition currentAttack)
         {

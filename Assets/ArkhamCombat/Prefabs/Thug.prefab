@@ -24,6 +24,7 @@ GameObject:
   - component: {fileID: 5714672956776223283}
   - component: {fileID: 1843358124852920154}
   - component: {fileID: 721430270210715259}
+  - component: {fileID: 8078573834698712993}
   m_Layer: 0
   m_Name: Thug
   m_TagString: Untagged
@@ -159,6 +160,7 @@ MonoBehaviour:
   characterComponents:
   - {fileID: 1843358124852920154}
   - {fileID: 6457208113203780478}
+  - {fileID: 8078573834698712993}
 --- !u!114 &6457208113203780478
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -269,6 +271,18 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 1d66261ad918dd44590709cb4006a3e5, type: 3}
   m_Name: 
   m_EditorClassIdentifier: ArkhamCombat.Encounter::ArkhamCombat.Encounter.AttackerLane
+--- !u!114 &8078573834698712993
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1801664893403502907}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: ce079e8022b1201449ea32a43bb0690f, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: ArkhamCombat.Enemies::ArkhamCombat.Enemies.TelegraphAnnouncer
 --- !u!1 &4915860763269778321
 GameObject:
   m_ObjectHideFlags: 0
