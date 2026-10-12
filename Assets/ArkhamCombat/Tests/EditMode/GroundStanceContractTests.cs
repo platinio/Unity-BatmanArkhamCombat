@@ -12,6 +12,7 @@ namespace ArkhamCombat.Tests
         private const string StancePath = "Assets/ArkhamCombat/Stances/Ground.asset";
         private const string ConfigPath = "Assets/ArkhamCombat/Settings/CombatConfig.asset";
         private const string PlayerInstallerPath = "Assets/Installers/Static/PlayerStaticInstaller.asset";
+        private const string StunKindPath = "Assets/ArkhamCombat/Intents/Stun.asset";
 
         private static Stance Ground()
         {
@@ -133,16 +134,28 @@ namespace ArkhamCombat.Tests
             Assert.IsTrue(TheCounter().TelegraphWindow.IsZeroLength);
         }
 
+        private static ActionDefinition TheCapeStun()
+        {
+            UnityEngine.Object stunKind = AssetDatabase.LoadAssetAtPath<UnityEngine.Object>(StunKindPath);
+            Assert.IsNotNull(stunKind, $"no intent kind at {StunKindPath}");
+            return WhatThePressPlaysFromAnywhere(Ground(), stunKind);
+        }
+
         [Test]
         public void TheStunPress_PlaysAnAttackThatAsksForAStun_FromAnywhere()
         {
-            UnityEngine.Object stunKind = AssetDatabase.LoadAssetAtPath<UnityEngine.Object>("Assets/ArkhamCombat/Intents/Stun.asset");
-            ActionDefinition stun = WhatThePressPlaysFromAnywhere(Ground(), stunKind);
+            AttackDefinition capeStun = TheCapeStun() as AttackDefinition;
+
+            Assert.IsNotNull(capeStun, "the stun press does not play an attack");
+            Assert.AreEqual(HitReaction.Stun, capeStun.Reaction);
+        }
+
+        [Test]
+        public void TheCapeStun_IsAnActionThatCanPlay()
+        {
             List<string> errors = new List<string>();
 
-            Assert.IsInstanceOf<AttackDefinition>(stun);
-            Assert.AreEqual(HitReaction.Stun, ((AttackDefinition)stun).Reaction);
-            Assert.IsTrue(stun.Validate(errors), string.Join("\n", errors));
+            Assert.IsTrue(TheCapeStun().Validate(errors), string.Join("\n", errors));
         }
 
         [Test]

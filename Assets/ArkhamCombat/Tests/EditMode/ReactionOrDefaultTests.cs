@@ -95,10 +95,11 @@ namespace ArkhamCombat.Tests
             Assert.AreEqual(ownParameter, ownAction.defaultValues[nameof(GetVariable.Key)]);
         }
 
-        [Test]
-        public void AFlinch_IsNeverBorrowed()
+        [TestCase("Flinch")]
+        [TestCase("Stunned")]
+        public void ABranchThatAlwaysPlaysItsOwnAction_NeverBorrows(string subTree)
         {
-            Assert.IsFalse(SubTree("Flinch").graph.Nodes.OfType<VisualScriptGraphVariable>().Any(call => call.Function == reactionOrDefault));
+            Assert.IsFalse(SubTree(subTree).graph.Nodes.OfType<VisualScriptGraphVariable>().Any(call => call.Function == reactionOrDefault));
         }
 
         [Test]

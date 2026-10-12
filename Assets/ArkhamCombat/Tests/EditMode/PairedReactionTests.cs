@@ -127,6 +127,7 @@ namespace ArkhamCombat.Tests
         [TestCase(HitReaction.Flinch, AppliedReaction.Flinch)]
         [TestCase(HitReaction.Stagger, AppliedReaction.Stagger)]
         [TestCase(HitReaction.Knockdown, AppliedReaction.Knockdown)]
+        [TestCase(HitReaction.Stun, AppliedReaction.Stun)]
         public void TheTargetOfAPairedAttack_PlaysTheReactionThatWasAskedFor(HitReaction asked, AppliedReaction played)
         {
             Assert.AreEqual(played, ReactionRules.ResolveForAPairedAttack(asked, FullHealth));
