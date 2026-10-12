@@ -2,10 +2,8 @@ using System.Collections.Generic;
 #if HERMES_EVENTS_GENERATED
 using ArcaneOnyx.GameEventGenerator;
 #endif
-using ArcaneOnyx.TPCharacterController.Motor;
 using ArkhamCombat.Characters;
 using ArkhamCombat.Combat;
-using ArkhamCombat.Player;
 using NUnit.Framework;
 using UnityEngine;
 using static ArkhamCombat.Tests.CombatTestDoubles;
@@ -19,7 +17,7 @@ namespace ArkhamCombat.Tests
         private const float BeyondReach = 1.6f;
 
         private GameObject character;
-        private MotorWarpMover warpMover;
+        private PendingWarpMovement pendingWarpMovement;
         private TargetedHitWindowListener listener;
         private AttackDefinition jab;
 
@@ -27,12 +25,11 @@ namespace ArkhamCombat.Tests
         public void SetUp()
         {
             character = HiddenObject("Character");
-            CharacterMotor motor = character.AddComponent<CharacterMotor>();
-            warpMover = new MotorWarpMover();
+            pendingWarpMovement = new PendingWarpMovement();
 #if HERMES_EVENTS_GENERATED
-            listener = new TargetedHitWindowListener(new HitCheckSettings(), motor, warpMover, BuildSceneGameEventsRecordingStrikes());
+            listener = new TargetedHitWindowListener(new HitCheckSettings(), character.transform, pendingWarpMovement, BuildSceneGameEventsRecordingStrikes());
 #else
-            listener = new TargetedHitWindowListener(new HitCheckSettings(), motor, warpMover, null);
+            listener = new TargetedHitWindowListener(new HitCheckSettings(), character.transform, pendingWarpMovement, null);
 #endif
             jab = Attack("Jab", strikeDistance: StrikeDistance);
         }
@@ -84,7 +81,7 @@ namespace ArkhamCombat.Tests
         public void TheWarpStillPendingThisTick_CountsTowardTheRange()
         {
             PointCombatTarget target = TargetAhead(3f);
-            warpMover.MoveBy(new Vector3(0f, 0f, 2f));
+            pendingWarpMovement.MoveBy(new Vector3(0f, 0f, 2f));
 
             listener.HitWindowOpened(jab, target);
 

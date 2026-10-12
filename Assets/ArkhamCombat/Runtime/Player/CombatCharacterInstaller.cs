@@ -88,8 +88,8 @@ namespace ArkhamCombat.Player
 
         private void BindWarpAndHits()
         {
-            Container.Bind(typeof(MotorWarpMover), typeof(IWarpMover)).To<MotorWarpMover>().AsSingle();
-            Container.Bind<IHitWindowListener>().To<TargetedHitWindowListener>().AsSingle();
+            Container.Bind(typeof(PendingWarpMovement), typeof(IWarpMover)).To<PendingWarpMovement>().AsSingle();
+            Container.Bind<IHitWindowListener>().To<TargetedHitWindowListener>().AsSingle().WithArguments(transform);
         }
 
         private void BindTargeting()

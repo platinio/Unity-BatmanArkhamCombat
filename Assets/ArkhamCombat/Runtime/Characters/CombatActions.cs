@@ -14,7 +14,7 @@ namespace ArkhamCombat.Characters
     public sealed class CombatActions : CharacterComponent
     {
         private ActionRunner runner;
-        private MotorWarpMover warpMover;
+        private PendingWarpMovement pendingWarpMovement;
         private IActionStartGate startGate;
         private ISceneGameEvents sceneGameEvents;
 
@@ -23,12 +23,12 @@ namespace ArkhamCombat.Characters
         [Inject]
         internal void Construct(
             ActionRunner runner,
-            MotorWarpMover warpMover,
+            PendingWarpMovement pendingWarpMovement,
             IActionStartGate startGate,
             ISceneGameEvents sceneGameEvents)
         {
             this.runner = runner;
-            this.warpMover = warpMover;
+            this.pendingWarpMovement = pendingWarpMovement;
             this.startGate = startGate;
             this.sceneGameEvents = sceneGameEvents;
         }
@@ -54,7 +54,7 @@ namespace ArkhamCombat.Characters
         public override void Tick(float deltaTime) =>
             runner.Tick(deltaTime, transform.position, startGate.CanStartFromIdle);
 
-        public Vector3 TakePendingWarpMovement() => warpMover.TakePendingMovement();
+        public Vector3 TakePendingWarpMovement() => pendingWarpMovement.TakeMovement();
 
 #if HERMES_EVENTS_GENERATED
         private GameEventDispatcher SceneEvents => sceneGameEvents.GameEventDispatcher;
