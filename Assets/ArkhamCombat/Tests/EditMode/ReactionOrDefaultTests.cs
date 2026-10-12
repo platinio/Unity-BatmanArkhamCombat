@@ -88,10 +88,10 @@ namespace ArkhamCombat.Tests
         {
             BehaviorTreeGraph graph = SubTree(subTree).graph;
             VisualScriptGraphVariable call = graph.Nodes.OfType<VisualScriptGraphVariable>().Single(candidate => candidate.Function == reactionOrDefault);
-            PlayActionNode play = graph.Nodes.OfType<PlayActionNode>().Single(candidate => WhatFeeds(candidate, nameof(PlayActionNode.Action)) == call);
+            PlayActionNode play = graph.Nodes.OfType<PlayActionNode>().SingleOrDefault(candidate => WhatFeeds(candidate, nameof(PlayActionNode.Action)) == call);
             GetVariable ownAction = (GetVariable)WhatFeeds(call, WhatTheBranchPlaysOtherwise);
 
-            Assert.IsNotNull(play);
+            Assert.IsNotNull(play, $"no Play Action of {subTree} is fed by ReactionOrDefault");
             Assert.AreEqual(ownParameter, ownAction.defaultValues[nameof(GetVariable.Key)]);
         }
 

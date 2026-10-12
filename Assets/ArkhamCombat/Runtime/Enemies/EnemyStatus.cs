@@ -88,10 +88,6 @@ namespace ArkhamCombat.Enemies
             }
         }
 
-        /// <summary>
-        /// Whatever it was playing is cut short at once, its own swing included, so a countered
-        /// attacker cannot land the hit it had started.
-        /// </summary>
         public void BeginPairedReaction(AttackDefinition attack)
         {
             if (!IsAlive)
@@ -99,10 +95,12 @@ namespace ArkhamCombat.Enemies
                 return;
             }
 
-            runner?.Cancel();
+            CutShortWhateverItIsPlaying();
             Write(EnemyVariableNames.ReactionOverride, attack.PairedReaction);
             Write(EnemyVariableNames.Reaction, receiver.ReactionToAPairedAttack(attack).ToString());
         }
+
+        private void CutShortWhateverItIsPlaying() => runner?.Cancel();
 
         public HitResult Receive(HitInfo hit)
         {
@@ -125,9 +123,7 @@ namespace ArkhamCombat.Enemies
         private void PublishHit(AppliedReaction appliedReaction)
         {
             Write(EnemyVariableNames.Health01, ShareOfHealthLeft);
-
-            // The branch a paired attack started is already playing its action; whatever this hit starts plays its own.
-            Write(EnemyVariableNames.ReactionOverride, NoOverride);
+            LetTheNextReactionPlayItsOwnAction();
 
             switch (appliedReaction)
             {
@@ -141,6 +137,8 @@ namespace ArkhamCombat.Enemies
                     return;
             }
         }
+
+        private void LetTheNextReactionPlayItsOwnAction() => Write(EnemyVariableNames.ReactionOverride, NoOverride);
 
         private void Write(string key, object value) => AgentVariableWriter.SetOn(gameObject, key, value, Source);
     }

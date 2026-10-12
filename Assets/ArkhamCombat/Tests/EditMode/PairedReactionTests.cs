@@ -176,9 +176,9 @@ namespace ArkhamCombat.Tests
         }
 
         [Test]
-        public void AnEnemyToldOfAPairedAttack_ReactsAtOnce_WithTheActionTheAttackBrought()
+        public void AnEnemyToldOfAPairedAttack_ReactsAtOnce_WithTheActionTheAttackBrought_WhateverItsArmor()
         {
-            WakeTheEnemyWith(profile);
+            WakeTheEnemyWith(armoredProfile);
 
             status.BeginPairedReaction(counter);
 
@@ -192,6 +192,7 @@ namespace ArkhamCombat.Tests
         {
             WakeTheEnemyWith(profile);
             enemyActions.Runner.PlayAction(cross, Vector3.zero);
+            Assert.IsTrue(enemyActions.Runner.IsPlaying, "the swing has started");
 
             status.BeginPairedReaction(counter);
 
@@ -199,11 +200,41 @@ namespace ArkhamCombat.Tests
         }
 
         [Test]
+        public void APairedAttackPlayedAtAnEnemy_MakesItReact()
+        {
+            WakeTheEnemyWith(profile);
+
+            ARunnerAimedAt(status).PlayAction(counter, Vector3.zero);
+
+            Assert.AreSame(countered, facts.Get(EnemyVariableNames.ReactionOverride));
+        }
+
+        [TestCase(HitReaction.Flinch)]
+        [TestCase(HitReaction.Stun)]
+        public void APairedAttackThatAsksForAReactionThatPlaysItsOwnAction_IsReported(HitReaction reactionAskedFor)
+        {
+            AttackDefinition pairedWithNothingToPlayIt = Attack(
+                "Paired", CounterSeconds, hitWindow: HitsAfterAWhile, damage: CounterDamage, reaction: reactionAskedFor);
+            pairedWithNothingToPlayIt.ConfigurePairedReaction(countered);
+            List<string> errors = new List<string>();
+
+            try
+            {
+                Assert.IsFalse(pairedWithNothingToPlayIt.Validate(errors));
+                StringAssert.Contains("would never play", string.Join("\n", errors));
+            }
+            finally
+            {
+                Object.DestroyImmediate(pairedWithNothingToPlayIt);
+            }
+        }
+
+        [Test]
         public void TheHitOfThePairedAttack_HurtsTheEnemy_AndLeavesItInTheReactionItIsAlreadyPlaying()
         {
             // Only an agent with a machine keeps the versions a guard wakes on.
             enemy.AddComponent<BehaviorTreeMachine>();
-            WakeTheEnemyWith(profile);
+            WakeTheEnemyWith(armoredProfile);
             status.BeginPairedReaction(counter);
             int versionBeforeTheHit = enemy.GetComponent<AgentVariableWriter>().VersionOf(EnemyVariableNames.Reaction);
 
