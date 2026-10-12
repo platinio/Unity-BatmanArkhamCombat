@@ -209,6 +209,15 @@ namespace ArkhamCombat.Tests
             Assert.IsTrue(guard.StopsItsOwnBranch);
         }
 
+        [Test]
+        public void AThugHoldingItsPlace_GoesWhereTheDirectorSaysItStands_SoOneThatWalkedInDoesNotWalkBackOut()
+        {
+            BehaviorTreeGraph holdSlot = Tree(SubTreesFolder + "HoldSlot.asset").graph;
+            SetNavAgentPosition walk = holdSlot.Nodes.OfType<SetNavAgentPosition>().Single();
+
+            Assert.IsInstanceOf<GetStandingPosition>(WhatFeeds(walk, nameof(SetNavAgentPosition.NavPosition)));
+        }
+
         private static BehaviorTreeGraphAsset AttackTree() => Tree(SubTreesFolder + AttackSubTree + ".asset");
 
         private static List<BehaviorTreeNode> StepsOfTheAttack()

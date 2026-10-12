@@ -57,6 +57,9 @@ namespace ArkhamCombat.Encounter
         [Tooltip("The most attacks a turn is worth. At 1 an agent attacks once and gives its token back.")]
         [SerializeField, Min(1)] private int maxAttacksPerTurn = 1;
 
+        [Tooltip("Seconds after a token is given back before the next one of its kind is granted: the breath between two turns. 0 grants the next turn at once.")]
+        [SerializeField, Min(0f)] private float secondsBetweenTurns = 0.0f;
+
         public int MaxMeleeTokens => Mathf.Max(0, maxMeleeTokens);
         public int MaxRangedTokens => Mathf.Max(0, maxRangedTokens);
         public float MaxTokenHoldSeconds => Mathf.Max(0.0f, maxTokenHoldSeconds);
@@ -74,6 +77,7 @@ namespace ArkhamCombat.Encounter
         public float GrantGraceSeconds => Mathf.Max(0.0f, grantGraceSeconds);
         public int MinAttacksPerTurn => Mathf.Clamp(minAttacksPerTurn, 1, MaxAttacksPerTurn);
         public int MaxAttacksPerTurn => Mathf.Max(1, maxAttacksPerTurn);
+        public float SecondsBetweenTurns => Mathf.Max(0.0f, secondsBetweenTurns);
 
         public EncounterDirectorSettings()
         {
@@ -96,7 +100,8 @@ namespace ArkhamCombat.Encounter
             float distancePenalty = 0.3f,
             float grantGraceSeconds = 0.5f,
             int minAttacksPerTurn = 1,
-            int maxAttacksPerTurn = 1)
+            int maxAttacksPerTurn = 1,
+            float secondsBetweenTurns = 0.0f)
         {
             this.maxMeleeTokens = maxMeleeTokens;
             this.maxRangedTokens = maxRangedTokens;
@@ -115,6 +120,7 @@ namespace ArkhamCombat.Encounter
             this.grantGraceSeconds = grantGraceSeconds;
             this.minAttacksPerTurn = minAttacksPerTurn;
             this.maxAttacksPerTurn = maxAttacksPerTurn;
+            this.secondsBetweenTurns = secondsBetweenTurns;
         }
     }
 }
