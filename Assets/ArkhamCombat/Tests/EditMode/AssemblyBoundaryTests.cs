@@ -101,6 +101,23 @@ namespace ArkhamCombat.Tests
         }
 
         [Test]
+        public void NoGameplayAssembly_DrawsWithUnitysGizmos()
+        {
+            const BindingFlags everyDeclaredMethod = BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance | BindingFlags.DeclaredOnly;
+            foreach (Assembly assembly in AppDomain.CurrentDomain.GetAssemblies())
+            {
+                if (GameplayAssemblies.Contains(assembly.GetName().Name))
+                {
+                    foreach (Type type in assembly.GetTypes())
+                    {
+                        bool drawsWithUnitysGizmos = type.GetMethods(everyDeclaredMethod).Any(method => method.Name.StartsWith("OnDrawGizmos"));
+                        Assert.IsFalse(drawsWithUnitysGizmos, $"{type.FullName} draws in OnDrawGizmos, which only the Scene view shows; debug drawing goes through MGizmos.");
+                    }
+                }
+            }
+        }
+
+        [Test]
         public void ThePresentationAssembly_IsTheOneThatReferencesDOTween()
         {
             Assert.IsTrue(HasReferenceTo(PresentationAssembly, "DOTween"), "sanity: the reference check would otherwise pass vacuously");

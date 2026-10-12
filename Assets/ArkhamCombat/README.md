@@ -236,10 +236,10 @@ answer is stays the director's decision.
 | `IEncounterAgent` | `Position`: all the director knows about a participant, so tests drive it with plain objects |
 | `IEncounterAgentSettings` | `TokenType`: whether an agent waits for a melee token or a ranged one. An enemy's archetype implements it |
 | `ISlotValidator`, `EverySlotIsValid`, `NavMeshSlotValidator` | Whether a slot can be stood on, and exactly where. The NavMesh one moves a slot to the nearest walkable point within `slotSampleRadius` and rejects it when there is none; a director built without a validator accepts every slot as it is |
-| `EncounterDirectorBehaviour` | The scene's host, one per scene: each `Update` it centres the ring on its `target` Transform and ticks the injected director. Draws the ring while selected in play mode |
+| `EncounterDirectorBehaviour` | The scene's host, one per scene: each `Update` it centres the ring on its `target` Transform and ticks the injected director. While `drawGizmos` is on it marks every standing position of the ring through MGizmos, in the Scene view and in the Game view of a camera that has `MGizmosCamera` |
 | `EncounterAgent` | Enrols its object in the encounter: registers with the injected host's director when enabled and unregisters when disabled, which also gives back a token it holds. It waits for the kind of token its injected `IEncounterAgentSettings` name, and for a melee one when it was given none. `Target`, `HasToken`, `SlotPosition`, `TryAcquireToken` and `ReleaseToken` are what the nodes and the facts updater ask; `TokenGranted` and `TokenReleased` are raised for its own token only. It counts as joined before the director announces it, so a listener can already ask it for its target. In a scene with no encounter it warns once, is never granted a token, has no target, and its slot is where it stands; an agent that was never injected (instantiated without the container) says that instead |
 | `AttackerLane` | Makes the ring yield to the attacker: while its agent holds a token the `NavMeshAgent`'s avoidance priority is `attackerAvoidancePriority`, otherwise `defaultAvoidancePriority`. Enabled while the token is already held it takes the lane at once, and disabled it gives the lane back |
-| `EncounterDebugView` | Tints a renderer while its agent holds a token and draws a line to its slot. On no prefab yet |
+| `EncounterDebugView` | Tints a renderer while its agent holds a token and draws a line to its slot through MGizmos, so the line shows in the Game view too. On no prefab yet |
 | `EncounterStaticInstaller` | Binds scene-wide one `EncounterDirector`, the NavMesh slot validator, and the `EncounterDirectorBehaviour` found in the hierarchy. The director's settings are bound by `CombatStaticInstaller`, from the config |
 | The nodes (`Nodes/`) | **Encounter → Try Acquire Attack Token** (answers at once: Success while the agent is granted or holds a token, Failure otherwise), **Release Attack Token** (always Success), and three value nodes: **Has Attack Token**, **Get Slot Position**, **Get Encounter Target**. On an agent that is in no encounter they answer Failure, Success, false, the agent's own position and nothing |
 
@@ -363,6 +363,11 @@ both generated assemblies reference it.
   and a baked NavMesh. In `CombatArena` the walkable level sits under the `Arena` object, whose
   `NavMeshSurface` collects its children's colliders; after moving level geometry, bake it again from
   that component. The data is `Assets/CombatArena/NavMesh-Arena.asset`.
+- **Debug drawing**: through MGizmos, never Unity's `OnDrawGizmos`, which only the Scene view shows; a
+  test fails on it. What stays on screen (the ring, a slot line) is an `MGizmoGroup` that its owner
+  clears and fills again each frame and disposes when it is disabled. The Game view shows it because
+  `CombatArena`'s Main Camera has `MGizmosCamera`; a build shows it only with the scripting define
+  `SHOW_MESH_GIZMOS_IN_BUILD`. To hide the ring, switch `drawGizmos` off on the `EncounterDirector` object.
 - **An enemy's behaviour**: edit its root tree on the canvas, or author one with
   `BehaviorTreeAuthoring` from `eval_file` as `Trees/Roots/ThugRoot` was: pick sub-trees, their order,
   their guards and the arguments on their ports. A new reaction is a new sub-tree and a guard; a different
@@ -398,7 +403,8 @@ both generated assemblies reference it.
 Open `Assets/CombatArena.unity` and press Play. Left mouse or the gamepad's west button strikes; the
 chain is Jab (left or right by target side), Cross, Roundhouse, then back to the jab. The three thugs
 walk up and stand around the player on a ring three metres out, facing in, and follow when the player
-moves; near the arena's edge the ring bends to the walkable ground. They do not attack yet. Beyond the
+moves; near the arena's edge the ring bends to the walkable ground, and its eight standing positions
+are marked in yellow. They do not attack yet. Beyond the
 lunge limit the warp refuses and the strike whiffs. A hit stops a thug where it is, and it rejoins the
 ring afterwards. A jab makes a thug flinch, the Cross
 staggers it, the Roundhouse knocks it down and it gets up; the sixth hit kills it (ten damage a strike against the Thug profile's sixty health),
