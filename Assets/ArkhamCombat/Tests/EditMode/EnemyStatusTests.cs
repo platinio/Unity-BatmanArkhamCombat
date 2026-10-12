@@ -97,6 +97,24 @@ namespace ArkhamCombat.Tests
         }
 
         [Test]
+        public void TheEnemy_IsTheObjectAnEventAboutItNames()
+        {
+            IActionTarget target = status;
+
+            Assert.AreSame(enemy, target.Owner);
+        }
+
+        [Test]
+        public void ADeadEnemyReadAsAnActionTarget_StillReportsItsOwnState()
+        {
+            WakeWithHealthForOneHit();
+            Hit(jab);
+            IActionTarget target = status;
+
+            Assert.AreEqual("Dead", target.State);
+        }
+
+        [Test]
         public void ADeadEnemy_IsNoLongerATarget()
         {
             WakeWithHealthForOneHit();

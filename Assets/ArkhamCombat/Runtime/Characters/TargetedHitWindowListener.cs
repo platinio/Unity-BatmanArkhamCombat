@@ -25,9 +25,9 @@ namespace ArkhamCombat.Characters
 
         public void HitWindowOpened(AttackDefinition attack, IActionTarget target)
         {
-            if (target is ICombatTarget victim && TryLandOn(victim, attack))
+            if (TryLandOn(target, attack))
             {
-                AnnounceStrikeLanded(attack, victim);
+                AnnounceStrikeLanded(attack, target);
             }
             else
             {
@@ -37,9 +37,10 @@ namespace ArkhamCombat.Characters
 
         public void HitWindowClosed() { }
 
-        private bool TryLandOn(ICombatTarget victim, AttackDefinition attack)
+        private bool TryLandOn(IActionTarget victim, AttackDefinition attack)
         {
-            if (!victim.IsValid)
+            bool hasAVictim = victim != null && victim.IsValid;
+            if (!hasAVictim)
             {
                 return false;
             }
@@ -57,12 +58,12 @@ namespace ArkhamCombat.Characters
         private StrikeOrigin WhereTheStrikeComesFrom() =>
             new StrikeOrigin(character.position + pendingWarpMovement.Movement, character.forward);
 
-        private void AnnounceStrikeLanded(AttackDefinition attack, ICombatTarget victim)
+        private void AnnounceStrikeLanded(AttackDefinition attack, IActionTarget victim)
         {
 #if HERMES_EVENTS_GENERATED
             if (CanAnnounceStrikes)
             {
-                sceneGameEvents.GameEventDispatcher.StrikeLandedGameEvent.Raise(character.gameObject, attack, GameObjectOf(victim));
+                sceneGameEvents.GameEventDispatcher.StrikeLandedGameEvent.Raise(character.gameObject, attack, victim.Owner);
             }
 #endif
         }
@@ -81,9 +82,5 @@ namespace ArkhamCombat.Characters
         // Compared with != and not skipped with ?.: a dispatcher that was destroyed or never added is not a C# null.
         private bool CanAnnounceStrikes => sceneGameEvents != null && sceneGameEvents.GameEventDispatcher != null;
 #endif
-
-        // A target that is not a component has no object to name, and the event carries null for it.
-        private static GameObject GameObjectOf(ICombatTarget victim) =>
-            victim is Component component ? component.gameObject : null;
     }
 }

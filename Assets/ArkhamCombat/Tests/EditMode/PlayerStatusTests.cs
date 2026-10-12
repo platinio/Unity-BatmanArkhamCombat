@@ -71,6 +71,25 @@ namespace ArkhamCombat.Tests
         }
 
         [Test]
+        public void ThePlayer_IsTheObjectAnEventAboutItNames()
+        {
+            IActionTarget target = status;
+
+            Assert.AreSame(player, target.Owner);
+        }
+
+        [Test]
+        public void AHitHandedToThePlayerAsAnActionTarget_StillReachesIt()
+        {
+            WakeWith(profile);
+            IActionTarget target = status;
+
+            HitResult result = target.Receive(new HitInfo(jab, Vector3.forward));
+
+            Assert.IsTrue(result.HasLanded);
+        }
+
+        [Test]
         public void ALivingPlayer_IsAValidTarget()
         {
             WakeWith(profile);

@@ -19,6 +19,7 @@ namespace ArkhamCombat.Player
         public string State => IsAlive ? NoReaction : Dead;
         public bool IsValid => this != null && isActiveAndEnabled && IsAlive;
         public Vector3 Position => transform.position;
+        public GameObject Owner => gameObject;
 
         public bool IsAlive => receiver != null && receiver.IsAlive;
 

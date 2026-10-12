@@ -152,6 +152,37 @@ namespace ArkhamCombat.Tests
         }
 
         [Test]
+        public void AStrikeThatLands_NamesTheObjectItsTargetLivesOn()
+        {
+            GameObject victimObject = HiddenObject("Victim");
+            PointCombatTarget target = TargetAhead(WithinReach);
+            target.Owner = victimObject;
+
+            listener.HitWindowOpened(jab, target);
+
+            Assert.AreSame(victimObject, landedStrikes[0].Target);
+            Object.DestroyImmediate(victimObject);
+        }
+
+        [Test]
+        public void AStrikeThatLandsOnATargetLivingOnNoObject_NamesNone()
+        {
+            listener.HitWindowOpened(jab, TargetAhead(WithinReach));
+
+            Assert.AreEqual(1, landedStrikes.Count);
+            Assert.IsNull(landedStrikes[0].Target);
+        }
+
+        [Test]
+        public void AStrikeAtNoTarget_IsAWhiff()
+        {
+            listener.HitWindowOpened(jab, target: null);
+
+            Assert.AreEqual(1, whiffedStrikes.Count);
+            Assert.IsEmpty(landedStrikes);
+        }
+
+        [Test]
         public void AStrikeOutOfRange_IsAnnouncedAsAWhiff()
         {
             listener.HitWindowOpened(jab, TargetAhead(BeyondReach));

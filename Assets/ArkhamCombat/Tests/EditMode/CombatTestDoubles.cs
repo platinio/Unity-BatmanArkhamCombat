@@ -314,6 +314,7 @@ namespace ArkhamCombat.Tests
             public bool IsValid { get; set; } = true;
             public Vector3 Position { get; set; }
             public string State => "Idle";
+            public GameObject Owner { get; set; }
             public HitResult ResultToGive = HitResult.Landed(AppliedReaction.Flinch);
             public HitInfo LastReceived;
             public int HitsTaken;
