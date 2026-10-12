@@ -1,6 +1,5 @@
 using System.Collections.Generic;
 using ArkhamCombat.Combat;
-using ArkhamCombat.Enemies;
 using ArkhamCombat.Player;
 using NUnit.Framework;
 using UnityEngine;
@@ -92,32 +91,6 @@ namespace ArkhamCombat.Tests
             PointCombatTarget behindButNear = AddTargetAt(new Vector3(0f, 0f, -1f));
 
             Assert.AreSame(behindButNear, scorer.BestTarget(Vector3.zero, Vector3.zero));
-        }
-    }
-
-    public class SceneTargetRosterTests
-    {
-        [Test]
-        public void FindsEveryCombatTargetComponentInTheScene_OnFirstRead()
-        {
-            GameObject firstObject = new GameObject("a");
-            GameObject secondObject = new GameObject("b");
-            EnemyStatus firstEnemy = firstObject.AddComponent<EnemyStatus>();
-            EnemyStatus secondEnemy = secondObject.AddComponent<EnemyStatus>();
-
-            try
-            {
-                SceneTargetRoster roster = new SceneTargetRoster();
-                IReadOnlyList<ICombatTarget> targets = roster.Targets;
-
-                CollectionAssert.Contains(targets, firstEnemy);
-                CollectionAssert.Contains(targets, secondEnemy);
-            }
-            finally
-            {
-                Object.DestroyImmediate(firstObject);
-                Object.DestroyImmediate(secondObject);
-            }
         }
     }
 }

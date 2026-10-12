@@ -38,7 +38,7 @@ namespace ArkhamCombat.Player
 
         private void BindTargeting()
         {
-            Container.Bind<ITargetRoster>().To<SceneTargetRoster>().AsSingle();
+            Container.Bind<ITargetRoster>().To<EncounterTargetRoster>().AsSingle();
             Container.Bind<ITargetScorer>().To<StandInTargetScorer>().AsSingle();
         }
 

@@ -15,8 +15,7 @@ namespace ArkhamCombat.Combat
     }
 
     /// <summary>
-    /// The encounter director owns this once it exists; until then a scene scan stands in. The
-    /// picker reads it and never finds targets on its own.
+    /// The picker reads it and never finds targets on its own.
     /// </summary>
     public interface ITargetRoster
     {

@@ -185,5 +185,14 @@ namespace ArkhamCombat.Tests
 
             InstallTheEnemyWithItsArchetype();
         }
+
+        [Test]
+        public void AnArchetypeThatCannotWalk_IsReported()
+        {
+            archetype.ConfigureMovement(combatRange: 5f, moveSpeed: 0f);
+            LogAssert.Expect(LogType.Error, new Regex("has no move speed"));
+
+            InstallTheEnemyWithItsArchetype();
+        }
     }
 }

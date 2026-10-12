@@ -17,15 +17,29 @@ namespace ArkhamCombat.Enemies
         [Tooltip("Seconds an idle loop lasts, at most.")]
         [SerializeField, Min(0f)] private float idleMax = 0.5f;
 
+        [Tooltip("Within this many metres of its target the enemy stops closing in and takes its place on the ring. Keep it wider than the ring.")]
+        [SerializeField, Min(0f)] private float combatRange = 5f;
+
+        [Tooltip("Metres per second it walks at.")]
+        [SerializeField, Min(0f)] private float moveSpeed = 3.5f;
+
         public HitReceiverProfile HitReceiverProfile => hitReceiverProfile;
         public float IdleMin => idleMin;
         public float IdleMax => idleMax;
+        public float CombatRange => combatRange;
+        public float MoveSpeed => moveSpeed;
 
         public void Configure(HitReceiverProfile hitReceiverProfile, float idleMin, float idleMax)
         {
             this.hitReceiverProfile = hitReceiverProfile;
             this.idleMin = idleMin;
             this.idleMax = idleMax;
+        }
+
+        public void ConfigureMovement(float combatRange, float moveSpeed)
+        {
+            this.combatRange = combatRange;
+            this.moveSpeed = moveSpeed;
         }
 
         public bool Validate(List<string> errors)
@@ -40,6 +54,11 @@ namespace ArkhamCombat.Enemies
             if (idleMax < idleMin)
             {
                 errors.Add($"Archetype '{name}': idleMax ({idleMax:0.00}) is below idleMin ({idleMin:0.00}).");
+            }
+
+            if (moveSpeed <= 0f)
+            {
+                errors.Add($"Archetype '{name}' has no move speed, so its enemies cannot walk to their target.");
             }
 
             return errors.Count == errorCountBefore;
