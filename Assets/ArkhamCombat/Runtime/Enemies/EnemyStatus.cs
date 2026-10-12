@@ -1,5 +1,4 @@
 using ArcaneOnyx.BehaviorTree;
-using ArkhamCombat.Characters;
 using ArkhamCombat.Combat;
 using UnityEngine;
 using Zenject;
@@ -38,7 +37,11 @@ namespace ArkhamCombat.Enemies
         private string ReactionAsTheTreeLeftIt => agentVariables.Read(EnemyVariableNames.Reaction) as string ?? NoReaction;
 
         [Inject]
-        internal void Construct([InjectOptional] HitReceiverProfile profile) => this.profile = profile;
+        internal void Construct([InjectOptional] HitReceiverProfile profile, [InjectOptional] ActionRunner runner = null)
+        {
+            this.profile = profile;
+            this.runner = runner;
+        }
 
         internal void Awake()
         {
@@ -55,7 +58,6 @@ namespace ArkhamCombat.Enemies
                 return;
             }
 
-            runner = CombatActions.RunnerOnOrNull(gameObject);
             receiver = new HitReceiver(profile, runner);
         }
 

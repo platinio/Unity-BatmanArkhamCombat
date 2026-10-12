@@ -22,8 +22,6 @@ namespace ArkhamCombat.Characters
 
         public ActionRunner Runner => runner;
 
-        public static ActionRunner RunnerOnOrNull(GameObject character) =>
-            character.TryGetComponent(out CombatActions combatActions) ? combatActions.Runner : null;
 
         [Inject]
         internal void Construct(

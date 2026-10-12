@@ -79,7 +79,7 @@ namespace ArkhamCombat.Tests
 
         private void WakeTheEnemyWith(HitReceiverProfile profileToUse)
         {
-            status.Construct(profileToUse);
+            status.Construct(profileToUse, enemyActions.Runner);
             status.Awake();
         }
 

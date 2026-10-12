@@ -104,6 +104,16 @@ namespace ArkhamCombat.Tests
             return profile;
         }
 
+        public static ActionRunner RunnerPlayingAnActionThatCannotBeHit(out ActionDefinition actionItPlays)
+        {
+            actionItPlays = Action("CannotBeHit");
+            actionItPlays.ConfigureInvulnerableWindow(new Window(0f, 1f));
+
+            ActionRunner runner = new ActionRunner(null, null, null, null, new InterruptKinds(null, null), new NullPresentationDriver(), null, null);
+            runner.PlayAction(actionItPlays, Vector3.zero);
+            return runner;
+        }
+
         public static ActionDefinition Action(string name, float duration = 1f, params PresentationCue[] cues)
         {
             ActionDefinition action = ScriptableObject.CreateInstance<ActionDefinition>();

@@ -1,4 +1,3 @@
-using ArkhamCombat.Characters;
 using ArkhamCombat.Combat;
 using UnityEngine;
 using Zenject;
@@ -14,6 +13,7 @@ namespace ArkhamCombat.Player
         private const string NoReaction = nameof(AppliedReaction.None);
 
         private HitReceiverProfile profile;
+        private ActionRunner runner;
         private HitReceiver receiver;
         private AppliedReaction pendingReaction = AppliedReaction.None;
 
@@ -25,7 +25,11 @@ namespace ArkhamCombat.Player
         public bool IsAlive => receiver != null && receiver.IsAlive;
 
         [Inject]
-        internal void Construct([InjectOptional] HitReceiverProfile profile) => this.profile = profile;
+        internal void Construct([InjectOptional] HitReceiverProfile profile, [InjectOptional] ActionRunner runner = null)
+        {
+            this.profile = profile;
+            this.runner = runner;
+        }
 
         internal void Awake()
         {
@@ -35,7 +39,7 @@ namespace ArkhamCombat.Player
                 return;
             }
 
-            receiver = new HitReceiver(profile, CombatActions.RunnerOnOrNull(gameObject));
+            receiver = new HitReceiver(profile, runner);
         }
 
         public HitResult Receive(HitInfo hit)

@@ -8,8 +8,8 @@ namespace ArkhamCombat.Tests
 {
     public class InvulnerableWindowTests
     {
-        // The action lasts one second, so seconds played and normalized time are the same number.
         private const float ActionSeconds = 1f;
+        private const float HealthOfOneHit = 1f;
         private const float BeforeTheWindow = 0.1f;
         private const float InsideTheWindow = 0.4f;
         private const float AfterTheWindow = 0.8f;
@@ -131,8 +131,8 @@ namespace ArkhamCombat.Tests
         [Test]
         public void TheDead_IgnoreAHit_RatherThanEvadeIt()
         {
-            HitReceiverProfile oneHitFromDeath = ReceiverProfile(maxHealth: 1f);
-            HitReceiver receiver = new HitReceiver(oneHitFromDeath, runner);
+            profile.Configure(HealthOfOneHit);
+            HitReceiver receiver = new HitReceiver(profile, runner);
             receiver.Receive(AJab());
             PlayUntil(evade, InsideTheWindow);
 
@@ -140,14 +140,16 @@ namespace ArkhamCombat.Tests
 
             Assert.IsFalse(result.WasEvaded);
             Assert.IsFalse(result.HasLanded);
-            Object.DestroyImmediate(oneHitFromDeath);
         }
 
         [Test]
-        public void AMissedStrike_IsNeitherLandedNorEvaded()
+        public void AWindowThatStartsWithTheAction_IsOpenBeforeTheFirstTick()
         {
-            Assert.IsFalse(HitResult.Missed.HasLanded);
-            Assert.IsFalse(HitResult.Missed.WasEvaded);
+            evade.ConfigureInvulnerableWindow(new Window(0f, 0.6f));
+
+            runner.PlayAction(evade, Vector3.zero);
+
+            Assert.IsTrue(runner.IsInvulnerable);
         }
 
         [Test]
