@@ -1,5 +1,6 @@
 using System.Text.RegularExpressions;
 using ArcaneOnyx.BehaviorTree;
+using ArkhamCombat.Combat;
 using ArkhamCombat.Encounter;
 using ArkhamCombat.Enemies;
 using NUnit.Framework;
@@ -81,6 +82,35 @@ namespace ArkhamCombat.Tests
             Tick();
 
             Assert.IsTrue(Fact(EnemyVariableNames.HasTarget));
+        }
+
+        [Test]
+        public void ATargetThatWasKilled_IsNoLongerATarget()
+        {
+            EnemyStatus targetsStatus = MakeTheTargetAFighterOneHitFromDeath(out HitReceiverProfile profile, out AttackDefinition jab);
+            JoinTheEncounter();
+            Tick();
+            Assert.IsTrue(Fact(EnemyVariableNames.HasTarget), "while the target lives");
+
+            targetsStatus.Receive(new HitInfo(jab, Vector3.forward));
+            Tick();
+
+            Assert.IsFalse(Fact(EnemyVariableNames.HasTarget));
+            Assert.IsFalse(Fact(EnemyVariableNames.InCombatRange));
+            Object.DestroyImmediate(profile);
+            Object.DestroyImmediate(jab);
+        }
+
+        private EnemyStatus MakeTheTargetAFighterOneHitFromDeath(out HitReceiverProfile profile, out AttackDefinition jab)
+        {
+            const float healthForOneHit = 10f;
+            profile = ReceiverProfile(healthForOneHit);
+            jab = Attack("Jab", damage: healthForOneHit);
+
+            EnemyStatus targetsStatus = target.AddComponent<EnemyStatus>();
+            targetsStatus.Construct(profile);
+            targetsStatus.Awake();
+            return targetsStatus;
         }
 
         [Test]

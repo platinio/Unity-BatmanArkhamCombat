@@ -33,6 +33,7 @@ namespace ArkhamCombat.Enemies
             Write(EnemyVariableNames.IdleMin, archetype.IdleMin);
             Write(EnemyVariableNames.IdleMax, archetype.IdleMax);
             Write(EnemyVariableNames.CombatRange, archetype.CombatRange);
+            Write(EnemyVariableNames.Attack, archetype.Attack);
         }
 
         internal void ApplyMoveSpeed()

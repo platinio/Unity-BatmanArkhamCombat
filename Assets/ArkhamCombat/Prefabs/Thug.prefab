@@ -25,6 +25,8 @@ GameObject:
   - component: {fileID: 1843358124852920154}
   - component: {fileID: 721430270210715259}
   - component: {fileID: 8078573834698712993}
+  - component: {fileID: 3847029040725474167}
+  - component: {fileID: 7645833777203211693}
   m_Layer: 0
   m_Name: Thug
   m_TagString: Untagged
@@ -160,6 +162,7 @@ MonoBehaviour:
   characterComponents:
   - {fileID: 1843358124852920154}
   - {fileID: 6457208113203780478}
+  - {fileID: 7645833777203211693}
   - {fileID: 8078573834698712993}
 --- !u!114 &6457208113203780478
 MonoBehaviour:
@@ -283,6 +286,30 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: ce079e8022b1201449ea32a43bb0690f, type: 3}
   m_Name: 
   m_EditorClassIdentifier: ArkhamCombat.Enemies::ArkhamCombat.Enemies.TelegraphAnnouncer
+--- !u!114 &3847029040725474167
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1801664893403502907}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: b624a53725d228345baf647ca10d31d1, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: ArkhamCombat.Enemies::ArkhamCombat.Enemies.EncounterTargetPicker
+--- !u!114 &7645833777203211693
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1801664893403502907}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 278cce1c2a57a0a47b7058352581b1dc, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: ArkhamCombat.Enemies::ArkhamCombat.Enemies.NavMeshWarpMover
 --- !u!1 &4915860763269778321
 GameObject:
   m_ObjectHideFlags: 0

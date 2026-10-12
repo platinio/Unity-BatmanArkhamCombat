@@ -25,14 +25,31 @@ namespace ArkhamCombat.Tests
         }
 
         [Test]
-        public void TheFactsAreWrittenBeforeTheActionsTick_AndTheTelegraphIsAnnouncedAfter()
+        public void TheFactsAreWrittenBeforeTheActionsTick_AndTheWarpAndTheTelegraphFollowThem()
         {
             SerializedProperty jobs = new SerializedObject(thug.GetComponent<CharacterComponentUpdater>()).FindProperty("characterComponents");
 
-            Assert.AreEqual(3, jobs.arraySize);
+            Assert.AreEqual(4, jobs.arraySize);
             Assert.IsInstanceOf<EncounterFactsUpdater>(jobs.GetArrayElementAtIndex(0).objectReferenceValue);
             Assert.IsInstanceOf<CombatActions>(jobs.GetArrayElementAtIndex(1).objectReferenceValue);
-            Assert.IsInstanceOf<TelegraphAnnouncer>(jobs.GetArrayElementAtIndex(2).objectReferenceValue);
+            Assert.IsInstanceOf<NavMeshWarpMover>(jobs.GetArrayElementAtIndex(2).objectReferenceValue);
+            Assert.IsInstanceOf<TelegraphAnnouncer>(jobs.GetArrayElementAtIndex(3).objectReferenceValue);
+        }
+
+        [Test]
+        public void TheThugAimsItsActions_AtWhoeverTheEncounterRevolvesAround()
+        {
+            Assert.IsTrue(thug.TryGetComponent(out EncounterTargetPicker _), "the installer binds the target picker it finds on the enemy");
+        }
+
+        [Test]
+        public void TheThugsArchetype_NamesAnAttackThatTelegraphsBeforeItCanHit()
+        {
+            EnemyArchetype archetype = (EnemyArchetype)new SerializedObject(thug.GetComponent<EnemyInstaller>()).FindProperty("archetype").objectReferenceValue;
+
+            Assert.IsNotNull(archetype.Attack);
+            Assert.Greater(archetype.Attack.TelegraphWindow.Length, 0f);
+            Assert.LessOrEqual(archetype.Attack.TelegraphWindow.End, archetype.Attack.HitWindow.Start);
         }
 
         [Test]

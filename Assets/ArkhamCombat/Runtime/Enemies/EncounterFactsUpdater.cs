@@ -1,5 +1,6 @@
 using ArcaneOnyx.BehaviorTree;
 using ArcaneOnyx.TPCharacterController;
+using ArkhamCombat.Combat;
 using ArkhamCombat.Encounter;
 using UnityEngine;
 using Zenject;
@@ -30,7 +31,7 @@ namespace ArkhamCombat.Enemies
         private void PublishFacts()
         {
             Transform target = encounterAgent.Target;
-            bool hasTarget = target != null;
+            bool hasTarget = target != null && !IsOutOfTheFight(target);
             float targetDistance = hasTarget ? DistanceOnTheGroundTo(target.position) : float.PositiveInfinity;
 
             Write(EnemyVariableNames.HasTarget, hasTarget);
@@ -38,6 +39,10 @@ namespace ArkhamCombat.Enemies
             Write(EnemyVariableNames.InCombatRange, hasTarget && IsWithinCombatRange(targetDistance));
             Write(EnemyVariableNames.HasToken, encounterAgent.HasToken);
         }
+
+        // A target that can be struck and no longer is, the dead, is nobody to walk up to or swing at.
+        private static bool IsOutOfTheFight(Transform target) =>
+            target.TryGetComponent(out ICombatTarget combatTarget) && !combatTarget.IsValid;
 
         private bool IsWithinCombatRange(float distance) => archetype != null && distance <= archetype.CombatRange;
 

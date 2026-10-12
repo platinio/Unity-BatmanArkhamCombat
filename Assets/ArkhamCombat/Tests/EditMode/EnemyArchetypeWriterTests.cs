@@ -1,3 +1,4 @@
+using ArkhamCombat.Combat;
 using ArkhamCombat.Enemies;
 using NUnit.Framework;
 using Unity.VisualScripting;
@@ -60,6 +61,19 @@ namespace ArkhamCombat.Tests
             writer.WriteTunables();
 
             Assert.AreEqual(CombatRange, (float)facts.Get(EnemyVariableNames.CombatRange), Tolerance);
+        }
+
+        [Test]
+        public void WritesTheArchetypesAttackOntoTheAgent()
+        {
+            AttackDefinition haymaker = Attack("Haymaker");
+            archetype.ConfigureAttack(haymaker);
+            writer.Construct(archetype);
+
+            writer.WriteTunables();
+
+            Assert.AreSame(haymaker, facts.Get(EnemyVariableNames.Attack));
+            Object.DestroyImmediate(haymaker);
         }
 
         [Test]

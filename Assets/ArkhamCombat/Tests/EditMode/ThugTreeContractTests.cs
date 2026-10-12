@@ -21,6 +21,7 @@ namespace ArkhamCombat.Tests
         private const string HasTargetInCombatRangePath = "Assets/ArkhamCombat/Trees/Functions/HasTargetInCombatRange.asset";
         private const string TreesFolder = "Assets/ArkhamCombat/Trees";
         private const string SwitchedOnOrOff = "enabled";
+        private const string AttackSubTree = "Attack";
 
         private static BehaviorTreeGraphAsset Tree(string path)
         {
@@ -93,11 +94,62 @@ namespace ArkhamCombat.Tests
         }
 
         [Test]
-        public void TheRoot_TriesEveryReactionBeforeTheRing_AndIdleLast()
+        public void TheRoot_TriesEveryReactionFirst_ThenTheAttack_ThenTheRing_AndIdleLast()
         {
             string[] subTreesInPriorityOrder = BranchesOfTheRootInPriorityOrder().Select(SubTreeRunBy).ToArray();
 
-            CollectionAssert.AreEqual(new[] { "Death", "KnockedDown", "Stagger", "Flinch", "HoldSlot", "Approach", "Idle" }, subTreesInPriorityOrder);
+            CollectionAssert.AreEqual(new[] { "Death", "KnockedDown", "Stagger", "Flinch", "Attack", "HoldSlot", "Approach", "Idle" }, subTreesInPriorityOrder);
+        }
+
+        [Test]
+        public void TheAttacksGuard_ChecksOnlyAtTheDoor_SoASwingIsNeverCutShortByIt()
+        {
+            ConditionalExecution guard = Tree(RootPath).graph.Nodes.OfType<ConditionalExecution>().Single(candidate => SubTreeRunBy(candidate.Owner) == AttackSubTree);
+
+            Assert.IsNotInstanceOf<ReactiveGuard>(guard);
+        }
+
+        [Test]
+        public void TheAttackAndTheRing_AskTheSameFunctionWhetherTheTargetIsInCombatRange()
+        {
+            FunctionGraphAsset hasTargetInCombatRange = AssetDatabase.LoadAssetAtPath<FunctionGraphAsset>(HasTargetInCombatRangePath);
+
+            int guardsAskingIt = Tree(RootPath).graph.Nodes.OfType<VisualScriptGraphVariable>().Count(read => read.Function == hasTargetInCombatRange);
+
+            Assert.AreEqual(2, guardsAskingIt, "one for Attack, one for HoldSlot");
+        }
+
+        [Test]
+        public void TheRoot_HandsTheAttackBranchTheAttackTheArchetypeWriterWrites()
+        {
+            GetVariable read = Tree(RootPath).graph.Nodes.OfType<GetVariable>().Single();
+
+            Assert.AreEqual(EnemyVariableNames.Attack, read.defaultValues[nameof(GetVariable.Key)]);
+            Assert.IsTrue(Tree(SubTreesFolder + AttackSubTree + ".asset").requiredDeclarations.IsDefined(EnemyVariableNames.Attack));
+        }
+
+        [Test]
+        public void AnAttack_AsksForTheTurnFirst_AndGivesItBackLast_EvenWhenTheSwingFails()
+        {
+            BehaviorTreeGraph attack = Tree(SubTreesFolder + AttackSubTree + ".asset").graph;
+            BehaviorTreeNode spine = attack.ChildrenInPriorityOrder(attack.EntryNode).Single();
+
+            List<BehaviorTreeNode> steps = attack.ChildrenInPriorityOrder(spine);
+
+            Assert.AreEqual(3, steps.Count);
+            Assert.IsInstanceOf<TryAcquireAttackToken>(steps[0]);
+            Assert.IsInstanceOf<ReturnSuccess>(steps[1], "a walk-in that times out must not skip giving the turn back");
+            Assert.IsInstanceOf<ReleaseAttackToken>(steps[2]);
+        }
+
+        [Test]
+        public void AnAttackingThug_TracksItsTarget_WhileTheFactTheAnnouncerWritesIsTrue()
+        {
+            ReactiveGuard guard = Tree(SubTreesFolder + AttackSubTree + ".asset").graph.Nodes.OfType<ReactiveGuard>().Single();
+
+            Assert.AreEqual("FaceTarget", SubTreeRunBy(guard.Owner));
+            CollectionAssert.AreEquivalent(new[] { EnemyVariableNames.Telegraphing }, guard.Triggers.SelectMany(trigger => trigger.Keys).ToArray());
+            Assert.IsTrue(guard.StopsItsOwnBranch, "it stops turning the moment the telegraph closes");
         }
 
         [Test]
@@ -196,7 +248,7 @@ namespace ArkhamCombat.Tests
         {
             string[] guardedSubTrees = Tree(RootPath).graph.Nodes.OfType<ConditionalExecution>().Select(guard => SubTreeRunBy(guard.Owner)).ToArray();
 
-            CollectionAssert.AreEquivalent(new[] { "Death", "KnockedDown", "Stagger", "Flinch", "HoldSlot", "Approach" }, guardedSubTrees);
+            CollectionAssert.AreEquivalent(new[] { "Death", "KnockedDown", "Stagger", "Flinch", AttackSubTree, "HoldSlot", "Approach" }, guardedSubTrees);
         }
 
         [Test]
