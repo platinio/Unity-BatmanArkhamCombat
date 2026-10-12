@@ -241,7 +241,7 @@ answer is stays the director's decision.
 | `AttackerLane` | Makes the ring yield to the attacker: while its agent holds a token the `NavMeshAgent`'s avoidance priority is `attackerAvoidancePriority`, otherwise `defaultAvoidancePriority`. Enabled while the token is already held it takes the lane at once, and disabled it gives the lane back |
 | `EncounterDebugView` | Tints a renderer while its agent holds a token and draws a line to its slot. On no prefab yet |
 | `EncounterStaticInstaller` | Binds scene-wide one `EncounterDirector`, the NavMesh slot validator, and the `EncounterDirectorBehaviour` found in the hierarchy. The director's settings are bound by `CombatStaticInstaller`, from the config |
-| The nodes (`Nodes/`) | **Encounter → Request Attack Token** (Success while the agent is granted or holds a token, Failure otherwise), **Release Attack Token** (always Success), and three value nodes: **Has Attack Token**, **Get Slot Position**, **Get Encounter Target**. On an agent that is in no encounter they answer Failure, Success, false, the agent's own position and nothing |
+| The nodes (`Nodes/`) | **Encounter → Try Acquire Attack Token** (answers at once: Success while the agent is granted or holds a token, Failure otherwise), **Release Attack Token** (always Success), and three value nodes: **Has Attack Token**, **Get Slot Position**, **Get Encounter Target**. On an agent that is in no encounter they answer Failure, Success, false, the agent's own position and nothing |
 
 ### Enemies (`Runtime/Enemies`)
 

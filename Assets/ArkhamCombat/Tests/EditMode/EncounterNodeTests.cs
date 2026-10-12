@@ -63,29 +63,29 @@ namespace ArkhamCombat.Tests
         private static TValue ValueOf<TValue>(ValueOutput output) => (TValue)output.GetPortValue();
 
         [Test]
-        public void RequestAttackToken_Succeeds_WhenTheTurnIsFree()
+        public void TryAcquireAttackToken_Succeeds_WhenTheTurnIsFree()
         {
-            BehaviorTreeGraph graph = TreeOfOne(thug, out RequestAttackToken _);
+            BehaviorTreeGraph graph = TreeOfOne(thug, out TryAcquireAttackToken _);
 
             Assert.AreEqual(ExecutionStatus.Success, graph.OnUpdate());
             Assert.IsTrue(agent.HasToken);
         }
 
         [Test]
-        public void RequestAttackToken_Fails_WhileAnotherAgentHasTheTurn()
+        public void TryAcquireAttackToken_Fails_WhileAnotherAgentHasTheTurn()
         {
             EncounterAgent attacker = AgentInTheEncounter(otherThug);
             attacker.TryAcquireToken();
-            BehaviorTreeGraph graph = TreeOfOne(thug, out RequestAttackToken _);
+            BehaviorTreeGraph graph = TreeOfOne(thug, out TryAcquireAttackToken _);
 
             Assert.AreEqual(ExecutionStatus.Failure, graph.OnUpdate());
             Assert.IsFalse(agent.HasToken);
         }
 
         [Test]
-        public void RequestAttackToken_Fails_OnAnObjectWithoutAnEncounterAgent()
+        public void TryAcquireAttackToken_Fails_OnAnObjectWithoutAnEncounterAgent()
         {
-            BehaviorTreeGraph graph = TreeOfOne(loner, out RequestAttackToken _);
+            BehaviorTreeGraph graph = TreeOfOne(loner, out TryAcquireAttackToken _);
 
             Assert.AreEqual(ExecutionStatus.Failure, graph.OnUpdate());
         }
