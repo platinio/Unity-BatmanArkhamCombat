@@ -28,7 +28,7 @@ namespace ArkhamCombat.Player
             ReportMissingActions();
         }
 
-        protected virtual bool ReturnsToLocomotionWhenTheReactionEnds => true;
+        protected virtual bool ShouldReturnToLocomotionWhenTheReactionEnds => true;
 
         public void Enter()
         {
@@ -40,7 +40,7 @@ namespace ArkhamCombat.Player
         {
             playback.PlayTheNextActionWhenTheCurrentOneEnds(context.Transform.position);
 
-            if (playback.HasEnded && ReturnsToLocomotionWhenTheReactionEnds)
+            if (playback.HasEnded && ShouldReturnToLocomotionWhenTheReactionEnds)
             {
                 context.StateMachine.Change<LocomotionState>();
                 return;

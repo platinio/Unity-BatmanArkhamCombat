@@ -6,8 +6,8 @@ using UnityEngine.AI;
 namespace ArkhamCombat.Enemies
 {
     /// <summary>
-    /// Listed after <see cref="CombatActions"/>: it moves the enemy by the warp the runner asked
-    /// for this frame, through the NavMeshAgent, so a lunge never carries it off walkable ground.
+    /// The warp the runner asked for this frame goes through the NavMeshAgent, so a lunge never
+    /// carries the enemy off walkable ground.
     /// </summary>
     [RequireComponent(typeof(CombatActions), typeof(NavMeshAgent))]
     public sealed class NavMeshWarpMover : CharacterComponent

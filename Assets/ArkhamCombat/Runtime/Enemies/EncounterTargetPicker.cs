@@ -17,7 +17,6 @@ namespace ArkhamCombat.Enemies
 
         public IActionTarget PickTarget(Vector2 direction) => CombatTargetOf(encounterAgent.Target);
 
-        // Null when there is no target, or it is one that nothing can strike.
         private static ICombatTarget CombatTargetOf(Transform target)
         {
             if (target == null)

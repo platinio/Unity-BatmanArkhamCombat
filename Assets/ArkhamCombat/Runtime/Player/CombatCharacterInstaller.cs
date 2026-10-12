@@ -48,7 +48,7 @@ namespace ArkhamCombat.Player
 
         private void BindStance() => Container.Bind<Stance>().FromInstance(stance);
 
-        // Left unbound when missing: the character's status takes it as optional and reports that it cannot be hit.
+        // Left unbound when missing: what depends on it takes it as optional and goes without.
         private void BindHitReceiverProfile()
         {
             if (hitReceiverProfile != null)

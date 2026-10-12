@@ -8,9 +8,8 @@ using UnityEngine;
 namespace ArkhamCombat.Enemies
 {
     /// <summary>
-    /// Listed after <see cref="CombatActions"/>, so what it says is this frame's. It says where the
-    /// runner stands every tick rather than when the window opens and closes, so an attack cut
-    /// short can never leave a telegraph behind.
+    /// It says where the runner stands every tick rather than when the window opens and closes,
+    /// so an attack cut short can never leave a telegraph behind.
     /// </summary>
     [RequireComponent(typeof(CombatActions), typeof(EncounterAgent), typeof(AgentVariableWriter))]
     public sealed class TelegraphAnnouncer : CharacterComponent

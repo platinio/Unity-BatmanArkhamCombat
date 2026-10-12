@@ -14,7 +14,7 @@ namespace ArkhamCombat.Player
         {
         }
 
-        protected override bool ReturnsToLocomotionWhenTheReactionEnds => false;
+        protected override bool ShouldReturnToLocomotionWhenTheReactionEnds => false;
     }
 
     [Serializable]

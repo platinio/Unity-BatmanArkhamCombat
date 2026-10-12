@@ -323,13 +323,13 @@ namespace ArkhamCombat.Encounter
         // An agent that was interrupted between asking and attacking would otherwise sit on its token until the hold timeout.
         private void TakeBackTokensNobodyCameBackFor()
         {
-            bool mustATokenBeComeBackFor = settings.GrantGraceSeconds > 0.0f;
+            bool isThereAGraceTime = settings.GrantGraceSeconds > 0.0f;
 
             for (int i = 0; i < agentStates.Count; i++)
             {
                 AgentState state = agentStates[i];
 
-                bool hasNotComeBackInTime = mustATokenBeComeBackFor
+                bool hasNotComeBackInTime = isThereAGraceTime
                                             && state.HasToken
                                             && !state.HasComeBackForItsToken
                                             && state.TokenHeldFor >= settings.GrantGraceSeconds;

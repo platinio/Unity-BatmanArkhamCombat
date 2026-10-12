@@ -25,7 +25,6 @@ namespace ArkhamCombat.Encounter
                    - settings.DistancePenalty * ShareOfTheRingRadiusAway(fromTargetToAgent);
         }
 
-        // One dead ahead of the target, zero right behind it. A target with no facing has no front.
         private static float ShareInFrontOfTheTarget(Vector3 fromTargetToAgent, Vector3 targetForward)
         {
             targetForward.y = 0f;
