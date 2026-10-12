@@ -21,7 +21,7 @@ namespace ArkhamCombat.Encounter
             fromTargetToAgent.y = 0f;
 
             return settings.FrontWeight * ShareInFrontOfTheTarget(fromTargetToAgent, targetForward)
-                   + settings.FairnessWeight * ShareOfTheFairnessHorizonWaited(secondsWithoutAToken)
+                   + settings.FairnessWeight * FairnessHorizonsWaited(secondsWithoutAToken)
                    - settings.DistancePenalty * ShareOfTheRingRadiusAway(fromTargetToAgent);
         }
 
@@ -39,10 +39,12 @@ namespace ArkhamCombat.Encounter
             return 1f - Vector3.Angle(targetForward, fromTargetToAgent) / HalfTurnDegrees;
         }
 
-        private float ShareOfTheFairnessHorizonWaited(float secondsWithoutAToken)
+        // Never capped: a wait that stopped counting could not outweigh a better place, and an agent
+        // standing behind the target would be passed over for the whole fight.
+        private float FairnessHorizonsWaited(float secondsWithoutAToken)
         {
             bool isEveryWaitTheSame = settings.FairnessHorizonSeconds <= 0f;
-            return isEveryWaitTheSame ? 0f : Mathf.Clamp01(secondsWithoutAToken / settings.FairnessHorizonSeconds);
+            return isEveryWaitTheSame ? 0f : secondsWithoutAToken / settings.FairnessHorizonSeconds;
         }
 
         private float ShareOfTheRingRadiusAway(Vector3 fromTargetToAgent)
