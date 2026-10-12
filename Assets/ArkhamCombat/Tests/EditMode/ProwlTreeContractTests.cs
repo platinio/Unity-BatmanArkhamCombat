@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using ArcaneOnyx.BehaviorTree;
@@ -10,7 +11,6 @@ namespace ArkhamCombat.Tests
 {
     public class ProwlTreeContractTests
     {
-        private const string RootPath = "Assets/ArkhamCombat/Trees/Roots/ThugRoot.asset";
         private const string ProwlSubTree = "Prowl";
 
         private static BehaviorTreeGraph Prowl => SubTree(ProwlSubTree).graph;
@@ -114,6 +114,36 @@ namespace ArkhamCombat.Tests
             Assert.IsTrue(SubTree(ProwlSubTree).optionalDeclarations.IsDefined(parameter));
         }
 
+        [TestCase(typeof(SetNavAgentSpeedNode), nameof(SetNavAgentSpeedNode.Speed), "prowlSpeed")]
+        [TestCase(typeof(RandomChance), nameof(RandomChance.Chance), "stepInChance")]
+        [TestCase(typeof(GetFreePositionCloserToTarget), nameof(GetFreePositionCloserToTarget.DistanceFromTarget), "stepInDistance")]
+        [TestCase(typeof(GetFreePositionCloserToTarget), nameof(GetFreePositionCloserToTarget.RoomEachAgentKeeps), "personalSpace")]
+        [TestCase(typeof(WaitTimeRandomRange), "minTime", "restMin")]
+        [TestCase(typeof(WaitTimeRandomRange), "maxTime", "restMax")]
+        public void EachNumberOfTheProwl_ReachesTheStepItTunes(Type step, string port, string parameter)
+        {
+            BehaviorTreeNode stepOfTheProwl = Prowl.Nodes.Single(node => node.GetType() == step);
+
+            Assert.AreEqual(parameter, ParameterThatFeeds(stepOfTheProwl, port));
+        }
+
+        [Test]
+        public void TheLengthOfASidestep_IsTheProwlsParameter()
+        {
+            BehaviorTreeNode spotToTheSide = WhatFeeds(WaysToMove()[1], nameof(SetNavAgentPosition.NavPosition));
+
+            Assert.AreEqual("sidestepDistance", ParameterThatFeeds(spotToTheSide, "distance"));
+        }
+
+        [TestCase("Attack")]
+        [TestCase("Approach")]
+        public void ABranchThatWalksFast_SetsTheSpeedItWasHanded(string subTree)
+        {
+            BehaviorTreeNode setTheSpeed = SubTree(subTree).graph.Nodes.OfType<SetNavAgentSpeedNode>().Single();
+
+            Assert.AreEqual(EnemyVariableNames.MoveSpeed, ParameterThatFeeds(setTheSpeed, nameof(SetNavAgentSpeedNode.Speed)));
+        }
+
         [Test]
         public void Approach_SetsTheSpeedItWalksAt_BeforeItWalks()
         {
@@ -128,7 +158,7 @@ namespace ArkhamCombat.Tests
         [TestCase("Approach")]
         public void TheRoot_HandsABranchThatWalksFast_TheMoveSpeedTheArchetypeWriterWrites(string subTree)
         {
-            BehaviorTreeGraph root = Tree(RootPath).graph;
+            BehaviorTreeGraph root = Tree(ThugRootPath).graph;
             BehaviorTreeNode branch = root.Nodes.OfType<RunBehaviorTreeGraphNode>().Single(call => SubTreeRunBy(call) == subTree);
 
             VisualScriptGraphVariable read = (VisualScriptGraphVariable)WhatFeeds(branch, EnemyVariableNames.MoveSpeed);

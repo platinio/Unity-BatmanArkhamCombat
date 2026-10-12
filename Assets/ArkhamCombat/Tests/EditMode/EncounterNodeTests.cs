@@ -11,6 +11,7 @@ namespace ArkhamCombat.Tests
     {
         private const float NoTime = 0f;
 
+        private const float AnyRoom = 1f;
         private const float AnyTick = 0.1f;
 
         private EncounterDirector director;
@@ -200,6 +201,7 @@ namespace ArkhamCombat.Tests
             director.Tick(AnyTick);
             TreeOfOne(thug, out GetFreePositionCloserToTarget getFreePositionCloserToTarget);
             getFreePositionCloserToTarget.DistanceFromTarget.SetDefaultValue(distanceFromTarget);
+            getFreePositionCloserToTarget.RoomEachAgentKeeps.SetDefaultValue(AnyRoom);
 
             Assert.AreEqual(new Vector3(0f, 0f, distanceFromTarget), ValueOf<Vector3>(getFreePositionCloserToTarget.Output));
         }
@@ -209,8 +211,9 @@ namespace ArkhamCombat.Tests
         {
             const float distanceFromTarget = 2f;
             const float roomEachAgentKeeps = 1.5f;
+            const float insideThatRoomOnly = 1.35f;
             thug.transform.position = new Vector3(0f, 0f, 9f);
-            otherThug.transform.position = new Vector3(1f, 0f, distanceFromTarget);
+            otherThug.transform.position = new Vector3(insideThatRoomOnly, 0f, distanceFromTarget);
             AgentInTheEncounter(otherThug);
             director.SetTarget(Vector3.zero, Vector3.forward);
             director.Tick(AnyTick);

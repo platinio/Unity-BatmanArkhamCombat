@@ -8,8 +8,6 @@ namespace ArkhamCombat.Encounter
     [GraphCreateMenu("Encounter/Get Free Position Closer To Target")]
     public sealed class GetFreePositionCloserToTarget : EncounterNode
     {
-        private const float DistanceFromTargetUnlessFed = 1.8f;
-        private const float RoomEachAgentKeepsUnlessFed = 1.2f;
 
         [Unity.VisualScripting.DoNotSerialize]
         public ValueInput DistanceFromTarget { get; private set; }
@@ -24,8 +22,8 @@ namespace ArkhamCombat.Encounter
 
         public override string Description =>
             "Outputs the spot DistanceFromTarget metres from the encounter target, straight in from where this agent is.\n" +
-            "When another agent stands within RoomEachAgentKeeps metres of that spot, or this agent is already that close,\n" +
-            "it outputs where the agent stands while it waits instead.";
+            "When another agent stands within RoomEachAgentKeeps metres of that spot, the spot is not walkable ground,\n" +
+            "or this agent is already that close, it outputs where the agent stands while it waits instead.";
 
         public override bool CanBeUsedAsTransitionDestination => false;
 
@@ -33,8 +31,8 @@ namespace ArkhamCombat.Encounter
         {
             base.Definition();
 
-            DistanceFromTarget = ValueInput<float>(nameof(DistanceFromTarget), DistanceFromTargetUnlessFed);
-            RoomEachAgentKeeps = ValueInput<float>(nameof(RoomEachAgentKeeps), RoomEachAgentKeepsUnlessFed);
+            DistanceFromTarget = ValueInput<float>(nameof(DistanceFromTarget));
+            RoomEachAgentKeeps = ValueInput<float>(nameof(RoomEachAgentKeeps));
 
             Output = ValueOutput<Vector3>(nameof(Output), () => FreePositionCloserToTarget());
         }

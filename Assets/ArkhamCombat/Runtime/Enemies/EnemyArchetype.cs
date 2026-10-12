@@ -30,7 +30,7 @@ namespace ArkhamCombat.Enemies
         [Tooltip("What it swings when it is its turn to attack.")]
         [SerializeField] private AttackDefinition attack;
 
-        [Tooltip("How likely it is to taunt each time it may, from 0 (never) to 1 (every time). How often it may is on the Taunt branch of its tree.")]
+        [Tooltip("How likely it is to taunt each time it may, from 0 (never) to 1 (every time). Only an enemy whose tree has a Taunt branch reads it, and how often it may is on that branch.")]
         [SerializeField, Range(0f, 1f)] private float tauntChance = 0.25f;
 
         [Tooltip("How likely it is to dodge a strike aimed at it, from 0 (never) to 1 (every time). It only matters to an enemy whose tree has a Dodge branch.")]

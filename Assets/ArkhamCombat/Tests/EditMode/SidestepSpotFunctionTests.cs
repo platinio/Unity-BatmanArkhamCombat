@@ -21,6 +21,7 @@ namespace ArkhamCombat.Tests
 
         private GameObject agent;
         private FunctionGraphAsset sidestepSpot;
+        private Random.State randomStateBeforeTheTest;
 
         [SetUp]
         public void SetUp()
@@ -30,11 +31,16 @@ namespace ArkhamCombat.Tests
 
             agent = HiddenObject("Agent");
             agent.AddComponent<BehaviorTreeMachine>();
+            randomStateBeforeTheTest = Random.state;
             Random.InitState(AnySeed);
         }
 
         [TearDown]
-        public void TearDown() => Object.DestroyImmediate(agent);
+        public void TearDown()
+        {
+            Random.state = randomStateBeforeTheTest;
+            Object.DestroyImmediate(agent);
+        }
 
         private Vector3 SidestepSpot(Vector3 from, Vector3 around, float distance)
         {
@@ -97,7 +103,7 @@ namespace ArkhamCombat.Tests
         }
 
         [Test]
-        public void AnAgentStandingOnTheCentre_StillGetsASpotItCanWalkTo()
+        public void AnAgentStandingOnTheCentre_IsNotSentToASpotThatIsNotANumber()
         {
             Vector3 spot = SidestepSpot(Centre, Centre, SidestepDistance);
 

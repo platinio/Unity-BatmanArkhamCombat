@@ -323,8 +323,7 @@ namespace ArkhamCombat.Encounter
 
         public Vector3 GetFreePositionCloserToTarget(IEncounterAgent agent, float distanceFromTarget, float roomEachAgentKeeps)
         {
-            bool isInTheEncounter = agent != null && stateByAgent.ContainsKey(agent);
-            if (!isInTheEncounter || IsAlreadyThisCloseToTheTarget(agent, distanceFromTarget))
+            if (!IsRegistered(agent) || IsAlreadyThisCloseToTheTarget(agent, distanceFromTarget))
             {
                 return GetStandingPosition(agent);
             }
