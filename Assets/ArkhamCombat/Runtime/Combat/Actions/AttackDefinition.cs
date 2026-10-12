@@ -32,6 +32,9 @@ namespace ArkhamCombat.Combat
         [Tooltip("The character is moved toward the target over this span.")]
         [SerializeField] private Window warpWindow = new Window(0f, 0.3f);
 
+        [Tooltip("While open, the attack is announced before it can hit, so its target can answer it. Leave it empty for an attack that gives no warning.")]
+        [SerializeField] private Window telegraphWindow = new Window(0f, 0f);
+
         [Header("Travel")]
         [Tooltip("Where the warp wants to end: this far from the target, on the character's side.")]
         [SerializeField, Min(0f)] private float strikeDistance = 1.2f;
@@ -53,6 +56,7 @@ namespace ArkhamCombat.Combat
         public Window ComboWindow => comboWindow;
         public Window EvadeWindow => evadeWindow;
         public Window WarpWindow => warpWindow;
+        public Window TelegraphWindow => telegraphWindow;
         public float StrikeDistance => strikeDistance;
         public float MaxLunge => maxLunge;
         public float Damage => damage;
@@ -83,6 +87,8 @@ namespace ArkhamCombat.Combat
             this.isCounterable = isCounterable;
             this.isUnblockable = isUnblockable;
         }
+
+        public void ConfigureTelegraph(Window telegraphWindow) => this.telegraphWindow = telegraphWindow;
 
         /// <summary>
         /// A character standing on the target backs off along -Z so the result is still defined.
@@ -122,6 +128,7 @@ namespace ArkhamCombat.Combat
             isValid &= ValidateWindow(nameof(comboWindow), comboWindow, errors);
             isValid &= ValidateWindow(nameof(evadeWindow), evadeWindow, errors);
             isValid &= ValidateWindow(nameof(warpWindow), warpWindow, errors);
+            isValid &= ValidateWindow(nameof(telegraphWindow), telegraphWindow, errors);
             isValid &= ValidateLungeReachesStrikeDistance(errors);
 
             return isValid;

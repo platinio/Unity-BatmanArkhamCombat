@@ -39,6 +39,18 @@ namespace ArkhamCombat.Tests
         }
 
         [Test]
+        public void AReversedTelegraphWindow_IsReportedByName()
+        {
+            AttackDefinition attack = Attack("Bad");
+            attack.ConfigureTelegraph(new Window(0.6f, 0.4f));
+            List<string> errors = new List<string>();
+
+            Assert.IsFalse(attack.Validate(errors));
+            Assert.AreEqual(1, errors.Count);
+            StringAssert.Contains("telegraphWindow", errors[0]);
+        }
+
+        [Test]
         public void AMaxLungeShorterThanTheStrikeDistance_IsReported()
         {
             AttackDefinition attack = Attack("Bad", strikeDistance: 2f, maxLunge: 1f);
