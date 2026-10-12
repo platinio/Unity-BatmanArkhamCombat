@@ -64,11 +64,14 @@ namespace ArkhamCombat.Tests
             serializedInstaller.ApplyModifiedPropertiesWithoutUndo();
         }
 
+        // The way a context does it, so anything Zenject warns about during an install is warned about here too.
         private void InstallTheEnemy()
         {
             enemyContainer = sceneContainer.CreateSubContainer();
+            enemyContainer.IsInstalling = true;
             enemyContainer.Inject(installer);
             installer.InstallBindings();
+            enemyContainer.IsInstalling = false;
         }
 
         private void InstallTheEnemyWithItsArchetype()
@@ -196,6 +199,34 @@ namespace ArkhamCombat.Tests
             LogAssert.Expect(LogType.Error, new Regex("does not reach past the ring"));
 
             InstallTheEnemyWithItsArchetype();
+        }
+
+        [Test]
+        public void InstallingAnEnemyInAnEncounter_AsksTheContainerForNothing()
+        {
+            EncounterDirectorSettings ringOutToFour = new EncounterDirectorSettings(slotRadius: 3f, slotSampleRadius: 1f);
+            sceneContainer.Bind<EncounterDirectorSettings>().FromInstance(ringOutToFour);
+            archetype.ConfigureMovement(combatRange: 5f, moveSpeed: 3f);
+            string zenjectWarning = null;
+            Application.LogCallback rememberAZenjectWarning = (message, stackTrace, type) =>
+            {
+                if (type == LogType.Warning && message.Contains("Zenject Warning"))
+                {
+                    zenjectWarning = message;
+                }
+            };
+
+            Application.logMessageReceived += rememberAZenjectWarning;
+            try
+            {
+                InstallTheEnemyWithItsArchetype();
+            }
+            finally
+            {
+                Application.logMessageReceived -= rememberAZenjectWarning;
+            }
+
+            Assert.IsNull(zenjectWarning, "resolving while the bindings are still being made is what Zenject warns about");
         }
 
         [Test]

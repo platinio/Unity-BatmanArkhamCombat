@@ -19,6 +19,15 @@ namespace ArkhamCombat.Enemies
         [SerializeField, ScriptableItemDatabaseSelector(typeof(EnemyArchetypeDatabase))]
         private EnemyArchetype archetype;
 
+        private EncounterDirectorSettings encounterSettings;
+
+        // Handed over before the bindings are made: asking the container for it during the install is what Zenject warns about.
+        [Inject]
+        internal void Construct([InjectOptional] EncounterDirectorSettings encounterSettings)
+        {
+            this.encounterSettings = encounterSettings;
+        }
+
         public override void InstallBindings()
         {
             ReportAuthoringErrors();
@@ -110,13 +119,13 @@ namespace ArkhamCombat.Enemies
         // Inside the ring's reach the two would undo each other: holding its slot walks the enemy out of combat range, and closing in walks it back.
         private void ReportACombatRangeInsideTheRing()
         {
-            EncounterDirectorSettings encounter = Container.TryResolve<EncounterDirectorSettings>();
-            if (encounter == null)
+            bool isInAnEncounter = encounterSettings != null;
+            if (!isInAnEncounter)
             {
                 return;
             }
 
-            float farthestASlotCanBe = encounter.SlotRadius + encounter.SlotSampleRadius;
+            float farthestASlotCanBe = encounterSettings.SlotRadius + encounterSettings.SlotSampleRadius;
             if (archetype.CombatRange <= farthestASlotCanBe)
             {
                 Debug.LogError(
