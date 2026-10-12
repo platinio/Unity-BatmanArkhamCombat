@@ -51,6 +51,12 @@ namespace ArkhamCombat.Encounter
         [Tooltip("Seconds an agent has to ask again, with Try Acquire Attack Token, for a token it was granted before the token is taken back. 0 disables this.")]
         [SerializeField, Min(0f)] private float grantGraceSeconds = 0.5f;
 
+        [Tooltip("The fewest attacks a turn is worth. Each time a token is granted the number of attacks is picked at random between this and the most, and the token goes back once that many were made.")]
+        [SerializeField, Min(1)] private int minAttacksPerTurn = 1;
+
+        [Tooltip("The most attacks a turn is worth. At 1 an agent attacks once and gives its token back.")]
+        [SerializeField, Min(1)] private int maxAttacksPerTurn = 1;
+
         public int MaxMeleeTokens => Mathf.Max(0, maxMeleeTokens);
         public int MaxRangedTokens => Mathf.Max(0, maxRangedTokens);
         public float MaxTokenHoldSeconds => Mathf.Max(0.0f, maxTokenHoldSeconds);
@@ -66,6 +72,8 @@ namespace ArkhamCombat.Encounter
         public float FairnessHorizonSeconds => Mathf.Max(0.0f, fairnessHorizonSeconds);
         public float DistancePenalty => Mathf.Max(0.0f, distancePenalty);
         public float GrantGraceSeconds => Mathf.Max(0.0f, grantGraceSeconds);
+        public int MinAttacksPerTurn => Mathf.Clamp(minAttacksPerTurn, 1, MaxAttacksPerTurn);
+        public int MaxAttacksPerTurn => Mathf.Max(1, maxAttacksPerTurn);
 
         public EncounterDirectorSettings()
         {
@@ -86,7 +94,9 @@ namespace ArkhamCombat.Encounter
             float fairnessWeight = 0.6f,
             float fairnessHorizonSeconds = 6.0f,
             float distancePenalty = 0.3f,
-            float grantGraceSeconds = 0.5f)
+            float grantGraceSeconds = 0.5f,
+            int minAttacksPerTurn = 1,
+            int maxAttacksPerTurn = 1)
         {
             this.maxMeleeTokens = maxMeleeTokens;
             this.maxRangedTokens = maxRangedTokens;
@@ -103,6 +113,8 @@ namespace ArkhamCombat.Encounter
             this.fairnessHorizonSeconds = fairnessHorizonSeconds;
             this.distancePenalty = distancePenalty;
             this.grantGraceSeconds = grantGraceSeconds;
+            this.minAttacksPerTurn = minAttacksPerTurn;
+            this.maxAttacksPerTurn = maxAttacksPerTurn;
         }
     }
 }

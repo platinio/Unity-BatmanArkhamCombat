@@ -46,6 +46,14 @@ namespace ArkhamCombat.Encounter
             }
         }
 
+        public void SpendAnAttackOfItsTurn()
+        {
+            if (hasJoined)
+            {
+                Director.SpendAnAttackOfTheTurn(this);
+            }
+        }
+
         public void TelegraphAnAttack(bool isCounterable)
         {
             if (hasJoined)
