@@ -3,6 +3,7 @@ using System.Linq;
 using System.Reflection;
 using ArkhamCombat.Characters;
 using ArkhamCombat.Combat;
+using ArkhamCombat.Encounter;
 using ArkhamCombat.Enemies;
 using ArkhamCombat.Presentation;
 using NUnit.Framework;
@@ -21,10 +22,11 @@ namespace ArkhamCombat.Tests
         private static readonly Assembly PresentationAssembly = typeof(ProceduralPresentationDriver).Assembly;
         private static readonly Assembly CharactersAssembly = typeof(CombatActions).Assembly;
         private static readonly Assembly EnemiesAssembly = typeof(EnemyStatus).Assembly;
+        private static readonly Assembly EncounterAssembly = typeof(EncounterDirector).Assembly;
 
         private static readonly string[] GameplayAssemblies =
         {
-            "ArkhamCombat.Combat", "ArkhamCombat.Characters", "ArkhamCombat.Player", "ArkhamCombat.Enemies", "ArkhamCombat.Camera", "ArkhamCombat.Shell"
+            "ArkhamCombat.Combat", "ArkhamCombat.Characters", "ArkhamCombat.Player", "ArkhamCombat.Enemies", "ArkhamCombat.Encounter", "ArkhamCombat.Camera", "ArkhamCombat.Shell"
         };
 
         private static bool HasReferenceTo(Assembly assembly, string referencedName) =>
@@ -76,6 +78,13 @@ namespace ArkhamCombat.Tests
         public void TheEnemies_DoNotReferenceThePlayer()
         {
             Assert.IsFalse(HasReferenceTo(EnemiesAssembly, "ArkhamCombat.Player"), "what both sides share lives in ArkhamCombat.Characters");
+        }
+
+        [Test]
+        public void TheEncounter_ReferencesNeitherSideOfTheFight()
+        {
+            Assert.IsFalse(HasReferenceTo(EncounterAssembly, "ArkhamCombat.Player"), "the director knows agents and a target position, not the player");
+            Assert.IsFalse(HasReferenceTo(EncounterAssembly, "ArkhamCombat.Enemies"), "the enemies reference the encounter, never the other way round");
         }
 
         [Test]
