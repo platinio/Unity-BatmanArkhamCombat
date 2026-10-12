@@ -192,6 +192,45 @@ namespace ArkhamCombat.Tests
         }
 
         [Test]
+        public void GetFreePositionCloserToTarget_OutputsTheSpotStraightInFromTheAgent_AtTheDistanceItWasFed()
+        {
+            const float distanceFromTarget = 2f;
+            thug.transform.position = new Vector3(0f, 0f, 9f);
+            director.SetTarget(Vector3.zero, Vector3.forward);
+            director.Tick(AnyTick);
+            TreeOfOne(thug, out GetFreePositionCloserToTarget getFreePositionCloserToTarget);
+            getFreePositionCloserToTarget.DistanceFromTarget.SetDefaultValue(distanceFromTarget);
+
+            Assert.AreEqual(new Vector3(0f, 0f, distanceFromTarget), ValueOf<Vector3>(getFreePositionCloserToTarget.Output));
+        }
+
+        [Test]
+        public void GetFreePositionCloserToTarget_OutputsWhereTheAgentStands_WhenAnotherAgentIsWithinTheRoomItWasFed()
+        {
+            const float distanceFromTarget = 2f;
+            const float roomEachAgentKeeps = 1.5f;
+            thug.transform.position = new Vector3(0f, 0f, 9f);
+            otherThug.transform.position = new Vector3(1f, 0f, distanceFromTarget);
+            AgentInTheEncounter(otherThug);
+            director.SetTarget(Vector3.zero, Vector3.forward);
+            director.Tick(AnyTick);
+            TreeOfOne(thug, out GetFreePositionCloserToTarget getFreePositionCloserToTarget);
+            getFreePositionCloserToTarget.DistanceFromTarget.SetDefaultValue(distanceFromTarget);
+            getFreePositionCloserToTarget.RoomEachAgentKeeps.SetDefaultValue(roomEachAgentKeeps);
+
+            Assert.AreEqual(agent.StandingPosition, ValueOf<Vector3>(getFreePositionCloserToTarget.Output));
+        }
+
+        [Test]
+        public void GetFreePositionCloserToTarget_OutputsWhereTheAgentStands_OnAnObjectWithoutAnEncounterAgent()
+        {
+            loner.transform.position = new Vector3(3f, 0f, -2f);
+            TreeOfOne(loner, out GetFreePositionCloserToTarget getFreePositionCloserToTarget);
+
+            Assert.AreEqual(loner.transform.position, ValueOf<Vector3>(getFreePositionCloserToTarget.Output));
+        }
+
+        [Test]
         public void GetEncounterTarget_OutputsWhatTheEncounterRevolvesAround()
         {
             TreeOfOne(thug, out GetEncounterTarget getEncounterTarget);

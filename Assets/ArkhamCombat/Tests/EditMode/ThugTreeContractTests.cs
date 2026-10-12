@@ -8,6 +8,7 @@ using ArkhamCombat.Encounter;
 using ArkhamCombat.Enemies;
 using NUnit.Framework;
 using UnityEditor;
+using static ArkhamCombat.Tests.TreeAssets;
 
 namespace ArkhamCombat.Tests
 {
@@ -16,19 +17,11 @@ namespace ArkhamCombat.Tests
     public class ThugTreeContractTests
     {
         private const string RootPath = "Assets/ArkhamCombat/Trees/Roots/ThugRoot.asset";
-        private const string SubTreesFolder = "Assets/ArkhamCombat/Trees/SubTrees/";
         private const string KindOfReactionAskedAbout = "kind";
         private const string HasTargetInCombatRangePath = "Assets/ArkhamCombat/Trees/Functions/HasTargetInCombatRange.asset";
-        private const string TreesFolder = "Assets/ArkhamCombat/Trees";
         private const string SwitchedOnOrOff = "enabled";
         private const string AttackSubTree = "Attack";
-
-        private static BehaviorTreeGraphAsset Tree(string path)
-        {
-            BehaviorTreeGraphAsset tree = AssetDatabase.LoadAssetAtPath<BehaviorTreeGraphAsset>(path);
-            Assert.IsNotNull(tree, $"no behaviour tree at {path}");
-            return tree;
-        }
+        private const string ProwlSubTree = "Prowl";
 
         private static List<string> KindsTheRootAsksAbout()
         {
@@ -79,8 +72,6 @@ namespace ArkhamCombat.Tests
             return root.ChildrenInPriorityOrder(root.Nodes.OfType<Selector>().Single());
         }
 
-        private static string SubTreeRunBy(BehaviorTreeNode branch) => ((RunBehaviorTreeGraphNode)branch).BehaviorTreeGraphAsset.name;
-
         private static List<BehaviorTreeNode> StepsOf(string subTree)
         {
             BehaviorTreeGraph graph = Tree(SubTreesFolder + subTree + ".asset").graph;
@@ -98,7 +89,7 @@ namespace ArkhamCombat.Tests
         {
             string[] subTreesInPriorityOrder = BranchesOfTheRootInPriorityOrder().Select(SubTreeRunBy).ToArray();
 
-            CollectionAssert.AreEqual(new[] { "Death", "KnockedDown", "Stagger", "Flinch", "Attack", "HoldSlot", "Approach", "Idle" }, subTreesInPriorityOrder);
+            CollectionAssert.AreEqual(new[] { "Death", "KnockedDown", "Stagger", "Flinch", "Attack", ProwlSubTree, "Approach", "Idle" }, subTreesInPriorityOrder);
         }
 
         [Test]
@@ -111,7 +102,7 @@ namespace ArkhamCombat.Tests
 
         [Test]
         [TestCase(AttackSubTree)]
-        [TestCase("HoldSlot")]
+        [TestCase(ProwlSubTree)]
         public void TheAttackAndTheRing_AskTheSameFunctionWhetherTheTargetIsInCombatRange(string subTree)
         {
             FunctionGraphAsset hasTargetInCombatRange = AssetDatabase.LoadAssetAtPath<FunctionGraphAsset>(HasTargetInCombatRangePath);
@@ -143,15 +134,16 @@ namespace ArkhamCombat.Tests
         }
 
         [Test]
-        public void TheSwing_WalksIn_SquaresUp_AndAsksWhetherItIsStillItsTurn_BeforeItStrikes()
+        public void TheSwing_SetsItsSpeed_WalksIn_SquaresUp_AndAsksWhetherItIsStillItsTurn_BeforeItStrikes()
         {
             List<BehaviorTreeNode> stepsOfTheSwing = StepsOfTheSwing();
 
-            Assert.AreEqual(5, stepsOfTheSwing.Count);
-            Assert.IsInstanceOf<MoveToStrikeDistanceNode>(stepsOfTheSwing[0]);
-            Assert.AreEqual("FaceTarget", SubTreeRunBy(stepsOfTheSwing[1]));
-            Assert.IsInstanceOf<TryAcquireAttackToken>(stepsOfTheSwing[2], "a thug that lost the turn while it walked in must not swing");
-            Assert.IsInstanceOf<ParallelSelector>(stepsOfTheSwing[3]);
+            Assert.AreEqual(6, stepsOfTheSwing.Count);
+            Assert.IsInstanceOf<SetNavAgentSpeedNode>(stepsOfTheSwing[0], "a thug that was prowling must not walk in at its prowling speed");
+            Assert.IsInstanceOf<MoveToStrikeDistanceNode>(stepsOfTheSwing[1]);
+            Assert.AreEqual("FaceTarget", SubTreeRunBy(stepsOfTheSwing[2]));
+            Assert.IsInstanceOf<TryAcquireAttackToken>(stepsOfTheSwing[3], "a thug that lost the turn while it walked in must not swing");
+            Assert.IsInstanceOf<ParallelSelector>(stepsOfTheSwing[4]);
         }
 
         [Test]
@@ -237,16 +229,10 @@ namespace ArkhamCombat.Tests
             return attack.ChildrenInPriorityOrder(whileTheTurnLasts).Single();
         }
 
-        private static BehaviorTreeNode WhatFeeds(BehaviorTreeNode node, string port) =>
-            (BehaviorTreeNode)node.valueInputs[port].connection.source.behaviorTreeNode;
-
-        private static FunctionGraphAsset FunctionAsking(ConditionalExecution guard) =>
-            ((VisualScriptGraphVariable)WhatFeeds(guard, "Value")).Function;
-
         [Test]
         public void TheRingsGuards_WakeOnTheFactsTheUpdaterWrites()
         {
-            CollectionAssert.AreEquivalent(new[] { EnemyVariableNames.HasTarget, EnemyVariableNames.InCombatRange }, KeysThatWakeTheGuardOn("HoldSlot"));
+            CollectionAssert.AreEquivalent(new[] { EnemyVariableNames.HasTarget, EnemyVariableNames.InCombatRange }, KeysThatWakeTheGuardOn(ProwlSubTree));
             CollectionAssert.AreEquivalent(new[] { EnemyVariableNames.HasTarget }, KeysThatWakeTheGuardOn("Approach"));
         }
 
@@ -324,7 +310,7 @@ namespace ArkhamCombat.Tests
         [TestCase("KnockedDown", false)]
         [TestCase("Stagger", true)]
         [TestCase("Flinch", true)]
-        [TestCase("HoldSlot", true)]
+        [TestCase(ProwlSubTree, true)]
         [TestCase("Approach", true)]
         public void EveryGuardedBranch_TakesOverWhatIsBelowIt(string subTree, bool shouldAlsoStopItself)
         {
@@ -339,7 +325,7 @@ namespace ArkhamCombat.Tests
         {
             string[] guardedSubTrees = Tree(RootPath).graph.Nodes.OfType<ConditionalExecution>().Select(guard => SubTreeRunBy(guard.Owner)).ToArray();
 
-            CollectionAssert.AreEquivalent(new[] { "Death", "KnockedDown", "Stagger", "Flinch", AttackSubTree, "HoldSlot", "Approach" }, guardedSubTrees);
+            CollectionAssert.AreEquivalent(new[] { "Death", "KnockedDown", "Stagger", "Flinch", AttackSubTree, ProwlSubTree, "Approach" }, guardedSubTrees);
         }
 
         [Test]

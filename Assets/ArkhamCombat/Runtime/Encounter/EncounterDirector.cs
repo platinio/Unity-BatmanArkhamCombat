@@ -288,12 +288,49 @@ namespace ArkhamCombat.Encounter
             return isInTheEncounter && IsInsideTheRing(agent) ? agent.Position : GetSlotPosition(agent);
         }
 
-        private bool IsInsideTheRing(IEncounterAgent agent)
-        {
-            Vector3 fromTarget = agent.Position - targetPosition;
-            fromTarget.y = 0.0f;
+        private bool IsInsideTheRing(IEncounterAgent agent) =>
+            DistanceOnTheGround(agent.Position, targetPosition) < settings.SlotRadius;
 
-            return fromTarget.magnitude < settings.SlotRadius;
+        public Vector3 GetFreePositionCloserToTarget(IEncounterAgent agent, float distanceFromTarget, float roomEachAgentKeeps)
+        {
+            bool isInTheEncounter = agent != null && stateByAgent.ContainsKey(agent);
+            if (!isInTheEncounter || IsAlreadyThisCloseToTheTarget(agent, distanceFromTarget))
+            {
+                return GetStandingPosition(agent);
+            }
+
+            Vector3 positionCloserToTarget = PositionOnTheBearingOf(agent, distanceFromTarget);
+            bool canStandThere = slotValidator.TryValidate(positionCloserToTarget, out Vector3 walkablePosition)
+                                 && !IsAnotherAgentStandingWithin(roomEachAgentKeeps, walkablePosition, agent);
+
+            return canStandThere ? walkablePosition : GetStandingPosition(agent);
+        }
+
+        private bool IsAlreadyThisCloseToTheTarget(IEncounterAgent agent, float distanceFromTarget) =>
+            DistanceOnTheGround(agent.Position, targetPosition) <= distanceFromTarget;
+
+        private bool IsAnotherAgentStandingWithin(float metres, Vector3 position, IEncounterAgent agentThatWouldStandThere)
+        {
+            for (int i = 0; i < agentStates.Count; i++)
+            {
+                IEncounterAgent otherAgent = agentStates[i].Agent;
+                bool isAnotherAgent = !ReferenceEquals(otherAgent, agentThatWouldStandThere);
+
+                if (isAnotherAgent && DistanceOnTheGround(otherAgent.Position, position) < metres)
+                {
+                    return true;
+                }
+            }
+
+            return false;
+        }
+
+        private static float DistanceOnTheGround(Vector3 from, Vector3 to)
+        {
+            Vector3 offset = to - from;
+            offset.y = 0.0f;
+
+            return offset.magnitude;
         }
 
         public int GetSlot(IEncounterAgent agent)
@@ -314,7 +351,9 @@ namespace ArkhamCombat.Encounter
             return directionFromTarget * settings.SlotRadius;
         }
 
-        private Vector3 BearingPosition(IEncounterAgent agent)
+        private Vector3 BearingPosition(IEncounterAgent agent) => PositionOnTheBearingOf(agent, settings.SlotRadius);
+
+        private Vector3 PositionOnTheBearingOf(IEncounterAgent agent, float distanceFromTarget)
         {
             Vector3 bearing = agent.Position - targetPosition;
             bearing.y = 0.0f;
@@ -324,7 +363,7 @@ namespace ArkhamCombat.Encounter
                 bearing = Vector3.forward;
             }
 
-            return targetPosition + (bearing.normalized * settings.SlotRadius);
+            return targetPosition + (bearing.normalized * distanceFromTarget);
         }
 
         public void Tick(float deltaTime)
