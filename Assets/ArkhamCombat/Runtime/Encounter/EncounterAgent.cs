@@ -19,6 +19,7 @@ namespace ArkhamCombat.Encounter
         public event Action TokenReleased;
 
         public Vector3 Position => transform.position;
+        public GameObject Owner => gameObject;
         public Transform Target => hasJoined ? encounter.Target : null;
         public bool HasToken => hasJoined && Director.HasToken(this);
         public Vector3 SlotPosition => hasJoined ? Director.GetSlotPosition(this) : transform.position;
