@@ -11,11 +11,7 @@ namespace ArkhamCombat.Combat
         /// </param>
         IActionTarget PickTarget(Vector2 direction);
 
-        /// <summary>
-        /// Whoever is winding up an attack against this character that it could counter. Nobody,
-        /// unless the picker knows who attacks.
-        /// </summary>
-        IActionTarget PickAttacker() => null;
+        IActionTarget PickAttackerToCounter() => null;
     }
 
     public sealed class NullActionTargetPicker : IActionTargetPicker

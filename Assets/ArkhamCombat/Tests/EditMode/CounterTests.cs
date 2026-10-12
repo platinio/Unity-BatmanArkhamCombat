@@ -29,7 +29,7 @@ namespace ArkhamCombat.Tests
                 return WhereTheStickPoints;
             }
 
-            public IActionTarget PickAttacker()
+            public IActionTarget PickAttackerToCounter()
             {
                 TimesAskedForTheAttacker++;
                 return Attacker;
@@ -52,14 +52,14 @@ namespace ArkhamCombat.Tests
         private AttackDefinition jab;
         private PickerThatKnowsWhoAttacks picker;
         private EncounterDirector director;
-        private readonly List<GameObject> objects = new List<GameObject>();
+        private readonly List<GameObject> objectsToDestroy = new List<GameObject>();
 
         [SetUp]
         public void SetUp()
         {
             kinds = new TestIntentKinds();
             counter = Attack("Counter");
-            counter.AimAtTheAttacker();
+            counter.ConfigureAsAimedAtTheAttacker();
             jab = Attack("Jab");
             picker = new PickerThatKnowsWhoAttacks();
             director = new EncounterDirector(new EncounterDirectorSettings());
@@ -71,12 +71,12 @@ namespace ArkhamCombat.Tests
             kinds.Destroy();
             Object.DestroyImmediate(counter);
             Object.DestroyImmediate(jab);
-            foreach (GameObject created in objects)
+            foreach (GameObject created in objectsToDestroy)
             {
                 Object.DestroyImmediate(created);
             }
 
-            objects.Clear();
+            objectsToDestroy.Clear();
         }
 
         private ActionRunner ARunner() =>
@@ -95,12 +95,12 @@ namespace ArkhamCombat.Tests
         private EncounterAgent AThugInTheEncounterAt(Vector3 position, out EnemyStatus status)
         {
             GameObject encounterObject = HiddenObject("Encounter");
-            objects.Add(encounterObject);
+            objectsToDestroy.Add(encounterObject);
             EncounterDirectorBehaviour encounter = encounterObject.AddComponent<EncounterDirectorBehaviour>();
             encounter.Construct(director);
 
             GameObject thug = HiddenObject("Thug");
-            objects.Add(thug);
+            objectsToDestroy.Add(thug);
             thug.transform.position = position;
             status = thug.AddComponent<EnemyStatus>();
             EncounterAgent agent = thug.AddComponent<EncounterAgent>();
@@ -148,7 +148,7 @@ namespace ArkhamCombat.Tests
         {
             IActionTargetPicker pickerOfAnEnemy = new RecordingActionTargetPicker { TargetToGive = new PointTarget(Vector3.one) };
 
-            Assert.IsNull(pickerOfAnEnemy.PickAttacker());
+            Assert.IsNull(pickerOfAnEnemy.PickAttackerToCounter());
         }
 
         [Test]
@@ -205,7 +205,7 @@ namespace ArkhamCombat.Tests
         public void ThePlayersTargeting_AimsACounterAtWhoeverIsAttacking()
         {
             GameObject player = HiddenObject("Player");
-            objects.Add(player);
+            objectsToDestroy.Add(player);
             CombatTargeting targeting = player.AddComponent<CombatTargeting>();
             PointCombatTarget attacker = new PointCombatTarget(Near);
             DiContainer container = new DiContainer();
@@ -215,7 +215,7 @@ namespace ArkhamCombat.Tests
             container.Bind<IIncomingAttacks>().FromInstance(new OneAttacker { Attacker = attacker });
             container.Inject(targeting);
 
-            Assert.AreSame(attacker, targeting.PickAttacker());
+            Assert.AreSame(attacker, targeting.PickAttackerToCounter());
         }
     }
 }

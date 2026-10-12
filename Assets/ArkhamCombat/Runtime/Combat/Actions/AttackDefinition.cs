@@ -103,7 +103,7 @@ namespace ArkhamCombat.Combat
 
         public void ConfigurePairedReaction(ActionDefinition pairedReaction) => this.pairedReaction = pairedReaction;
 
-        public void AimAtTheAttacker() => isAimedAtTheAttacker = true;
+        public void ConfigureAsAimedAtTheAttacker() => isAimedAtTheAttacker = true;
 
         internal override void GiveItsWindowsTo(ActionRunner runner) => runner.TakeTheWindowsOf(this);
 

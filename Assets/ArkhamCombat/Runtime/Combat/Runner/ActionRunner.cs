@@ -376,8 +376,8 @@ namespace ArkhamCombat.Combat
 
         private IActionTarget PickTheTargetOfTheActionThatIsStarting(Vector2 directionAtPress)
         {
-            bool answersAnAttack = CurrentAttack != null && CurrentAttack.IsAimedAtTheAttacker;
-            return answersAnAttack ? targetPicker.PickAttacker() : targetPicker.PickTarget(directionAtPress);
+            bool isAimedAtTheAttacker = CurrentAttack != null && CurrentAttack.IsAimedAtTheAttacker;
+            return isAimedAtTheAttacker ? targetPicker.PickAttackerToCounter() : targetPicker.PickTarget(directionAtPress);
         }
 
         internal void TakeTheWindowsOf(AttackDefinition attack)
