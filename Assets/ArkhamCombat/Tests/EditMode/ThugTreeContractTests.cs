@@ -143,7 +143,7 @@ namespace ArkhamCombat.Tests
         }
 
         [Test]
-        public void AnAttackingThug_TracksItsTarget_WhileTheFactTheAnnouncerWritesIsTrue()
+        public void AnAttackingThug_TracksItsTarget_WhileTheFactTheRelayWritesIsTrue()
         {
             ReactiveGuard guard = Tree(SubTreesFolder + AttackSubTree + ".asset").graph.Nodes.OfType<ReactiveGuard>().Single();
 

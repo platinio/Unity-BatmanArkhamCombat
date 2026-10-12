@@ -30,7 +30,7 @@ namespace ArkhamCombat.Tests
         }
 
         [Test]
-        public void ACounterableAttackTelegraphedInTheEncounter_IsIncomingForTheCharacter()
+        public void TheIncomingAttackFact_FollowsTheCounterableAttacksTelegraphedInTheEncounter()
         {
             EncounterDirector director = new EncounterDirector(new EncounterDirectorSettings());
             StandingAgent attacker = new StandingAgent();
@@ -47,25 +47,10 @@ namespace ArkhamCombat.Tests
                 director.TelegraphAnAttack(attacker, isCounterable: true);
                 updater.MeasureIncomingAttack();
                 Assert.IsTrue(updater.Facts.IsIncomingAttackCounterable, "while the attack is telegraphed");
-            }
-            finally
-            {
-                Object.DestroyImmediate(character);
-            }
-        }
 
-        [Test]
-        public void ACharacterOutsideAnyEncounter_HasNoIncomingAttack()
-        {
-            GameObject character = HiddenObject("Character");
-            CombatFactsUpdater updater = character.AddComponent<CombatFactsUpdater>();
-            updater.Construct(runner: null, settings: null, frame: null, targetPicker: null);
-
-            try
-            {
+                director.StopTelegraphing(attacker);
                 updater.MeasureIncomingAttack();
-
-                Assert.IsFalse(updater.Facts.IsIncomingAttackCounterable);
+                Assert.IsFalse(updater.Facts.IsIncomingAttackCounterable, "once the telegraph is over");
             }
             finally
             {

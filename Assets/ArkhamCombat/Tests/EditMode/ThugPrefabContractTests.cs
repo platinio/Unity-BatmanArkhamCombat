@@ -33,7 +33,7 @@ namespace ArkhamCombat.Tests
             Assert.IsInstanceOf<EncounterFactsUpdater>(jobs.GetArrayElementAtIndex(0).objectReferenceValue);
             Assert.IsInstanceOf<CombatActions>(jobs.GetArrayElementAtIndex(1).objectReferenceValue);
             Assert.IsInstanceOf<NavMeshWarpMover>(jobs.GetArrayElementAtIndex(2).objectReferenceValue);
-            Assert.IsInstanceOf<TelegraphAnnouncer>(jobs.GetArrayElementAtIndex(3).objectReferenceValue);
+            Assert.IsInstanceOf<TelegraphRelay>(jobs.GetArrayElementAtIndex(3).objectReferenceValue);
         }
 
         [Test]

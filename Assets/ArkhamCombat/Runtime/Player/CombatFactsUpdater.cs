@@ -38,7 +38,7 @@ namespace ArkhamCombat.Player
             ICombatFactsSettings settings,
             IMovementFrame frame,
             IActionTargetPicker targetPicker,
-            [InjectOptional] EncounterDirector encounterDirector = null)
+            EncounterDirector encounterDirector)
         {
             this.runner = runner;
             this.settings = settings;
@@ -114,11 +114,8 @@ namespace ArkhamCombat.Player
         }
 
         // Everyone in the encounter fights this character, so any attack telegraphed there is aimed at it.
-        internal void MeasureIncomingAttack()
-        {
-            bool isInAnEncounter = encounterDirector != null;
-            Facts.IsIncomingAttackCounterable = isInAnEncounter && encounterDirector.IsACounterableAttackIncoming;
-        }
+        internal void MeasureIncomingAttack() =>
+            Facts.IsIncomingAttackCounterable = encounterDirector.IsACounterableAttackIncoming;
 
         private void DescribeTarget(IActionTarget target, AttackDefinition currentAttack)
         {

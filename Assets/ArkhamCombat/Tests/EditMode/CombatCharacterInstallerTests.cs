@@ -60,6 +60,8 @@ namespace ArkhamCombat.Tests
             sceneContainer = new DiContainer();
             sceneContainer.Bind<ICombatFactsSettings>().FromInstance(config);
             sceneContainer.Bind<IHitCheckSettings>().FromInstance(config);
+            sceneContainer.Bind<ArkhamCombat.Encounter.EncounterDirector>()
+                .FromInstance(new ArkhamCombat.Encounter.EncounterDirector(new ArkhamCombat.Encounter.EncounterDirectorSettings()));
             sceneContainer.Bind<InterruptKinds>().FromInstance(kinds.InterruptKinds);
             sceneContainer.Bind<ICharacterInput>().FromInstance(input);
             sceneContainer.Bind<IMovementFrame>().FromInstance(new WorldMovementFrame());

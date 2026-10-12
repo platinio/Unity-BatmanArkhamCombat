@@ -12,7 +12,7 @@ namespace ArkhamCombat.Enemies
     /// so an attack cut short can never leave a telegraph behind.
     /// </summary>
     [RequireComponent(typeof(CombatActions), typeof(EncounterAgent), typeof(AgentVariableWriter))]
-    public sealed class TelegraphAnnouncer : CharacterComponent
+    public sealed class TelegraphRelay : CharacterComponent
     {
         private CombatActions combatActions;
         private EncounterAgent encounterAgent;
@@ -24,7 +24,6 @@ namespace ArkhamCombat.Enemies
             encounterAgent = GetComponent<EncounterAgent>();
             agentVariables = GetComponent<AgentVariableWriter>();
 
-            // The tree may ask before the first tick: the machine enters its root in Start.
             TellTheTree(isTelegraphing: false);
         }
 
@@ -34,18 +33,22 @@ namespace ArkhamCombat.Enemies
             bool isTelegraphing = runner.IsTelegraphWindowOpen;
 
             TellTheTree(isTelegraphing);
+            TellTheEncounter(isTelegraphing, runner.CurrentAttack);
+        }
 
+        private void TellTheTree(bool isTelegraphing) =>
+            agentVariables.Write(this, EnemyVariableNames.Telegraphing, isTelegraphing);
+
+        private void TellTheEncounter(bool isTelegraphing, AttackDefinition telegraphedAttack)
+        {
             if (isTelegraphing)
             {
-                encounterAgent.TelegraphAnAttack(runner.CurrentAttack.IsCounterable);
+                encounterAgent.TelegraphAnAttack(telegraphedAttack.IsCounterable);
             }
             else
             {
                 encounterAgent.StopTelegraphing();
             }
         }
-
-        private void TellTheTree(bool isTelegraphing) =>
-            agentVariables.Write(this, EnemyVariableNames.Telegraphing, isTelegraphing);
     }
 }

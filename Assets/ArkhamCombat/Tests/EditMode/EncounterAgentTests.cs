@@ -149,15 +149,24 @@ namespace ArkhamCombat.Tests
         }
 
         [Test]
-        public void ItsTelegraph_ReachesTheDirector_AndIsWithdrawnAgain()
+        public void ItsTelegraph_ReachesTheDirector()
         {
             JoinTheEncounter();
 
             agent.TelegraphAnAttack(isCounterable: true);
+
             Assert.IsTrue(director.IsTelegraphing(agent));
             Assert.IsTrue(director.IsACounterableAttackIncoming);
+        }
+
+        [Test]
+        public void ItsTelegraph_IsWithdrawnFromTheDirector_WhenItStops()
+        {
+            JoinTheEncounter();
+            agent.TelegraphAnAttack(isCounterable: true);
 
             agent.StopTelegraphing();
+
             Assert.IsFalse(director.IsTelegraphing(agent));
         }
 
