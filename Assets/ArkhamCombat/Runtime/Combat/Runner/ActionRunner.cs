@@ -27,6 +27,7 @@ namespace ArkhamCombat.Combat
         private bool isHitWindowOpen;
         private bool isComboWindowOpen;
         private bool isWarpWindowOpen;
+        private bool isTelegraphWindowOpen;
         private bool isWarping;
         private float idleSeconds;
 
@@ -94,6 +95,7 @@ namespace ArkhamCombat.Combat
         public bool IsHitWindowOpen => isHitWindowOpen;
         public bool IsComboWindowOpen => isComboWindowOpen;
         public bool IsWarpWindowOpen => isWarpWindowOpen;
+        public bool IsTelegraphWindowOpen => isTelegraphWindowOpen;
 
         /// <summary>True when the current attack did not warp because the target was beyond its lunge limit.</summary>
         public bool WasWarpRefused { get; private set; }
@@ -302,6 +304,7 @@ namespace ArkhamCombat.Combat
             isHitWindowOpen = false;
             isComboWindowOpen = false;
             isWarpWindowOpen = false;
+            isTelegraphWindowOpen = false;
             isWarping = false;
         }
 
@@ -319,6 +322,7 @@ namespace ArkhamCombat.Combat
             HandleWarp(attack, previousTime, currentTime, position);
             HandleHitWindow(attack, previousTime, currentTime);
             HandleComboWindow(attack, previousTime, currentTime);
+            HandleTelegraphWindow(attack, previousTime, currentTime);
         }
 
         private void HandleWarp(AttackDefinition attack, float previousTime, float currentTime, Vector3 position)
@@ -365,6 +369,19 @@ namespace ArkhamCombat.Combat
             if (attack.ComboWindow.IsClosed(previousTime, currentTime))
             {
                 isComboWindowOpen = false;
+            }
+        }
+
+        private void HandleTelegraphWindow(AttackDefinition attack, float previousTime, float currentTime)
+        {
+            if (attack.TelegraphWindow.IsOpen(previousTime, currentTime))
+            {
+                isTelegraphWindowOpen = true;
+            }
+
+            if (attack.TelegraphWindow.IsClosed(previousTime, currentTime))
+            {
+                isTelegraphWindowOpen = false;
             }
         }
 

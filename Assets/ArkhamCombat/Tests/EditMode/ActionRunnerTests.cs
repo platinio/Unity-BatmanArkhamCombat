@@ -439,6 +439,73 @@ namespace ArkhamCombat.Tests
         }
 
         [Test]
+        public void TheTelegraphWindow_IsOpenFromItsStartToItsEnd()
+        {
+            jab.ConfigureTelegraph(new Window(0.1f, 0.3f));
+            ActionRunner runner = CreateRunner();
+            StartJab(runner);
+            Assert.IsFalse(runner.IsTelegraphWindowOpen, "at 0 the telegraph has not started");
+
+            TickFor(runner, 0.1f);
+            Assert.IsTrue(runner.IsTelegraphWindowOpen, "at 0.1 the telegraph opens");
+
+            TickFor(runner, 0.1f);
+            Assert.IsTrue(runner.IsTelegraphWindowOpen, "at 0.2 the telegraph is still open");
+
+            TickFor(runner, 0.1f);
+            Assert.IsFalse(runner.IsTelegraphWindowOpen, "at 0.3 the telegraph closes");
+        }
+
+        [Test]
+        public void ATelegraphWindowStartingAtZero_IsOpenAsTheAttackStarts()
+        {
+            jab.ConfigureTelegraph(new Window(0f, 0.3f));
+            ActionRunner runner = CreateRunner();
+
+            StartJab(runner);
+
+            Assert.IsTrue(runner.IsTelegraphWindowOpen);
+        }
+
+        [Test]
+        public void AnAttackWithoutATelegraphWindow_NeverTelegraphs()
+        {
+            ActionRunner runner = CreateRunner();
+            StartJab(runner);
+
+            for (int tick = 0; tick < TicksIn(AttackSeconds); tick++)
+            {
+                Assert.IsFalse(runner.IsTelegraphWindowOpen, $"tick {tick}");
+                Tick(runner);
+            }
+        }
+
+        [Test]
+        public void Cancel_ClosesTheTelegraphWindow()
+        {
+            jab.ConfigureTelegraph(new Window(0f, 0.5f));
+            ActionRunner runner = CreateRunner();
+            StartJab(runner);
+            Assert.IsTrue(runner.IsTelegraphWindowOpen);
+
+            runner.Cancel();
+
+            Assert.IsFalse(runner.IsTelegraphWindowOpen);
+        }
+
+        [Test]
+        public void AnActionThatReplacesATelegraphingAttack_ClosesItsTelegraphWindow()
+        {
+            jab.ConfigureTelegraph(new Window(0f, 0.5f));
+            ActionRunner runner = CreateRunner();
+            StartJab(runner);
+
+            runner.PlayAction(Action("Flinch", 0.5f), Vector3.zero);
+
+            Assert.IsFalse(runner.IsTelegraphWindowOpen);
+        }
+
+        [Test]
         public void PlayAction_RunsAPlainActionOutsideTheCombo()
         {
             ActionDefinition flinch = Action("Flinch", 0.5f);
