@@ -26,6 +26,7 @@ namespace ArkhamCombat.Tests
     {
         private const float TickSeconds = 0.1f;
         private const float PressLifetimeSeconds = 10f;
+        private const float WithinTheJabsReach = 1f;
 
         private static readonly Vector3 FarFromTheOtherCharacter = new Vector3(20f, 0f, 0f);
 
@@ -34,6 +35,7 @@ namespace ArkhamCombat.Tests
         private Stance stance;
         private FunctionGraphAsset function;
         private CombatConfig config;
+        private HitReceiverProfile profile;
         private StillCharacterInput input;
         private GameObject character;
         private GameObject anotherCharacter;
@@ -58,6 +60,8 @@ namespace ArkhamCombat.Tests
             sceneContainer = new DiContainer();
             sceneContainer.Bind<ICombatFactsSettings>().FromInstance(config);
             sceneContainer.Bind<IHitCheckSettings>().FromInstance(config);
+            sceneContainer.Bind<ArkhamCombat.Encounter.EncounterDirector>()
+                .FromInstance(new ArkhamCombat.Encounter.EncounterDirector(new ArkhamCombat.Encounter.EncounterDirectorSettings()));
             sceneContainer.Bind<InterruptKinds>().FromInstance(kinds.InterruptKinds);
             sceneContainer.Bind<ICharacterInput>().FromInstance(input);
             sceneContainer.Bind<IMovementFrame>().FromInstance(new WorldMovementFrame());
@@ -76,26 +80,15 @@ namespace ArkhamCombat.Tests
             Object.DestroyImmediate(jab);
             Object.DestroyImmediate(function);
             Object.DestroyImmediate(config);
+            Object.DestroyImmediate(profile);
             kinds.Destroy();
         }
 
-        [Test]
-        public void TheCharactersStrike_IsMeasuredFromThatCharacter_NotFromAnotherOneInTheScene()
-        {
-            character.transform.position = FarFromTheOtherCharacter;
-            GiveTheCharacterAStanceWithoutConditions();
-            InstallTheCharacter();
-            PointCombatTarget targetInFrontOfTheCharacter = new PointCombatTarget(FarFromTheOtherCharacter + Vector3.forward);
-
-            characterContainer.Resolve<IHitWindowListener>().HitWindowOpened(jab, targetInFrontOfTheCharacter);
-
-            Assert.AreEqual(1, targetInFrontOfTheCharacter.HitsTaken);
-        }
 
         [Test]
         public void TheHitReceiverProfile_IsBoundForTheCharacter_WhenOneIsAssigned()
         {
-            HitReceiverProfile profile = ReceiverProfile();
+            profile = ReceiverProfile();
             SerializedObject serializedInstaller = new SerializedObject(installer);
             serializedInstaller.FindProperty("hitReceiverProfile").objectReferenceValue = profile;
             serializedInstaller.ApplyModifiedPropertiesWithoutUndo();
@@ -104,7 +97,6 @@ namespace ArkhamCombat.Tests
             InstallTheCharacter();
 
             Assert.AreSame(profile, characterContainer.Resolve<HitReceiverProfile>());
-            Object.DestroyImmediate(profile);
         }
 
         [Test]
@@ -218,6 +210,19 @@ namespace ArkhamCombat.Tests
             InstallTheCharacter();
 
             Assert.AreSame(character.GetComponent<CharacterMotor>(), characterContainer.Resolve<CharacterMotor>());
+        }
+
+        [Test]
+        public void TheCharactersStrike_IsMeasuredFromThatCharacter_NotFromAnotherOneInTheScene()
+        {
+            character.transform.position = FarFromTheOtherCharacter;
+            GiveTheCharacterAStanceWithoutConditions();
+            InstallTheCharacter();
+            PointCombatTarget targetInFrontOfTheCharacter = new PointCombatTarget(FarFromTheOtherCharacter + Vector3.forward * WithinTheJabsReach);
+
+            characterContainer.Resolve<IHitWindowListener>().HitWindowOpened(jab, targetInFrontOfTheCharacter);
+
+            Assert.AreEqual(1, targetInFrontOfTheCharacter.HitsTaken);
         }
 
 #if HERMES_EVENTS_GENERATED

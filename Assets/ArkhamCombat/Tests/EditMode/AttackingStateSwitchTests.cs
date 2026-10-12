@@ -1,10 +1,11 @@
 using ArcaneOnyx.TPCharacterController.States;
+using ArkhamCombat.Combat;
 using ArkhamCombat.Player;
 using NUnit.Framework;
 
 namespace ArkhamCombat.Tests
 {
-    // The rule alone: the states are only looked at for their type, so they are built without a
+    // The rule alone: the states are only asked what they allow, so they are built without a
     // character. Entering the Attacking state needs the whole controller and is checked in play mode.
     public class AttackingStateSwitchTests
     {
@@ -14,6 +15,49 @@ namespace ArkhamCombat.Tests
         private static readonly ICharacterState Locomotion = new LocomotionState(null);
         private static readonly ICharacterState Airborne = new AirborneState(null);
         private static readonly ICharacterState Attacking = new AttackingState(null, null, null);
+        private static readonly ICharacterState Flinching = new FlinchState(null, null, null);
+        private static readonly ICharacterState OnTheFloor = new KnockedDownState(null, null, null);
+        private static readonly ICharacterState Dead = new DeadState(null, null, null);
+
+        [Test]
+        public void TheCharacterEntersAttacking_WhenAnAttackPlays()
+        {
+            AttackDefinition jab = CombatTestDoubles.Attack("Jab");
+
+            Assert.IsTrue(AttackingStateSwitch.ShouldEnterAttackingWhen(jab, Locomotion));
+
+            UnityEngine.Object.DestroyImmediate(jab);
+        }
+
+        [Test]
+        public void TheCharacterIsLeftWhereItIs_WhenWhatPlaysIsNotAnAttack()
+        {
+            Assert.IsFalse(AttackingStateSwitch.ShouldEnterAttackingWhen(currentAttack: null, Locomotion));
+        }
+
+        [Test]
+        public void ACharacterInAStateThatCannotBeInterrupted_IsNotPulledIntoAttacking()
+        {
+            AttackDefinition jab = CombatTestDoubles.Attack("Jab");
+
+            Assert.IsFalse(AttackingStateSwitch.ShouldEnterAttackingWhen(jab, OnTheFloor));
+
+            UnityEngine.Object.DestroyImmediate(jab);
+        }
+
+        [Test]
+        public void TheCharacterAlreadyAttacking_IsNotEnteredAgain()
+        {
+            CharacterStateMachine stateMachine = new CharacterStateMachine();
+            stateMachine.Register(Attacking);
+            int timesTheStateChanged = 0;
+            stateMachine.StateChanged += (previous, next) => timesTheStateChanged++;
+
+            stateMachine.Change<AttackingState>();
+            stateMachine.Change<AttackingState>();
+
+            Assert.AreEqual(1, timesTheStateChanged);
+        }
 
         [Test]
         public void AnActionCanStart_OnTheGroundInLocomotion()
@@ -28,9 +72,22 @@ namespace ArkhamCombat.Tests
         }
 
         [Test]
-        public void NoActionStarts_InAStateThatCannotAttack()
+        public void AnActionCanStart_OnTheFrameTheCharacterHasLandedButIsStillAirborne()
         {
-            Assert.IsFalse(AttackingStateSwitch.CanStartFromIdleWhen(Grounded, Airborne));
+            Assert.IsTrue(AttackingStateSwitch.CanStartFromIdleWhen(Grounded, Airborne));
+        }
+
+        [Test]
+        public void AnActionCanStart_FromAReactionThatCanBeInterrupted()
+        {
+            Assert.IsTrue(AttackingStateSwitch.CanStartFromIdleWhen(Grounded, Flinching));
+        }
+
+        [Test]
+        public void NoActionStarts_FromAStateThatCannotBeInterrupted()
+        {
+            Assert.IsFalse(AttackingStateSwitch.CanStartFromIdleWhen(Grounded, OnTheFloor));
+            Assert.IsFalse(AttackingStateSwitch.CanStartFromIdleWhen(Grounded, Dead));
         }
 
         [Test]

@@ -68,6 +68,32 @@ namespace ArkhamCombat.Tests
             WakeWith(profile);
 
             Assert.IsFalse(status.TryTakePendingReaction(out _));
+        }
+
+        [Test]
+        public void ThePlayer_IsTheObjectAnEventAboutItNames()
+        {
+            IActionTarget target = status;
+
+            Assert.AreSame(player, target.Owner);
+        }
+
+        [Test]
+        public void AHitHandedToThePlayerAsAnActionTarget_StillReachesIt()
+        {
+            WakeWith(profile);
+            IActionTarget target = status;
+
+            HitResult result = target.Receive(new HitInfo(jab, Vector3.forward));
+
+            Assert.IsTrue(result.HasLanded);
+        }
+
+        [Test]
+        public void ALivingPlayer_IsAValidTarget()
+        {
+            WakeWith(profile);
+
             Assert.IsTrue(status.IsValid);
         }
 
@@ -126,7 +152,7 @@ namespace ArkhamCombat.Tests
         }
 
         [Test]
-        public void TheHitThatKills_LeavesDeathToBeTaken_AndThePlayerIsNoLongerAValidTarget()
+        public void TheHitThatKills_LeavesDeathToBeTaken()
         {
             WakeWithHealthForOneHit();
 
@@ -134,8 +160,29 @@ namespace ArkhamCombat.Tests
 
             Assert.IsTrue(result.WasKilled);
             Assert.AreEqual(AppliedReaction.Death, TakePendingReaction());
+        }
+
+        [Test]
+        public void ADeadPlayer_IsNoLongerAValidTarget()
+        {
+            WakeWithHealthForOneHit();
+
+            Hit(jab);
+
             Assert.IsFalse(status.IsValid);
             Assert.AreEqual("Dead", status.State);
+        }
+
+        [Test]
+        public void AKnockdownStillPending_GivesWayToTheHitThatKills()
+        {
+            profile.Configure(2f * Damage);
+            WakeWith(profile);
+
+            Hit(kick);
+            Hit(jab);
+
+            Assert.AreEqual(AppliedReaction.Death, TakePendingReaction());
         }
 
         [Test]

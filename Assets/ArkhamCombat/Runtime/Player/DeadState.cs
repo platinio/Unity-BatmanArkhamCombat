@@ -14,7 +14,9 @@ namespace ArkhamCombat.Player
         {
         }
 
-        protected override bool ReturnsToLocomotionWhenTheReactionEnds => false;
+        public override bool CanBeInterrupted => false;
+
+        protected override bool ShouldReturnToLocomotionWhenTheReactionEnds => false;
     }
 
     [Serializable]
@@ -23,7 +25,11 @@ namespace ArkhamCombat.Player
         [Tooltip("What the character plays as it dies. It then stays where it fell.")]
         [SerializeField] private ActionDefinition deathAction;
 
-        public void Install(DiContainer container) =>
+        public void Install(DiContainer container)
+        {
+            ReactionState.ReportWhenMissing(deathAction, nameof(DeadStateBinding), nameof(deathAction));
+
             container.Bind<ICharacterState>().To<DeadState>().AsSingle().WithArguments(new[] { deathAction });
+        }
     }
 }

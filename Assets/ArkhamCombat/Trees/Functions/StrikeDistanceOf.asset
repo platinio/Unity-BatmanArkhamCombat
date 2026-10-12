@@ -1,0 +1,20 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: a0e48880e2ff4a747a37a932bb4aa5e5, type: 3}
+  m_Name: StrikeDistanceOf
+  m_EditorClassIdentifier: ArcaneOnyx.VisualScriptingExtension.Runtime::ArcaneOnyx.VisualScriptingExtension.FunctionGraphAsset
+  _data:
+    _json: '{"pure":true,"watchedKeys":[],"description":null,"graph":{"variables":{"Kind":"Flow","collection":{"$content":[],"$version":"A"},"$version":"A"},"controlInputDefinitions":[{"key":"Enter","label":"Enter","summary":null,"hideLabel":false}],"controlOutputDefinitions":[{"key":"Exit","label":"Exit","summary":null,"hideLabel":false}],"valueInputDefinitions":[{"hasDefaultValue":false,"defaultValue":null,"_type":"ArkhamCombat.Combat.AttackDefinition","key":"attack","label":"attack","summary":null,"hideLabel":false}],"valueOutputDefinitions":[{"_type":"System.Single","key":"Result","label":"Result","summary":null,"hideLabel":false}],"title":null,"summary":null,"pan":{"x":0.0,"y":0.0},"zoom":1.0,"elements":[{"defaultValues":{},"position":{"x":-320.0,"y":0.0},"guid":"a11840c7-9391-4d50-b103-90749e5ebac1","$version":"A","$type":"ArcaneOnyx.VisualScriptingExtension.ScriptGraphInput","$id":"14"},{"defaultValues":{},"position":{"x":320.0,"y":0.0},"guid":"2e24b1f0-4d0b-45af-aa84-5b20044e09bf","$version":"A","$type":"ArcaneOnyx.VisualScriptingExtension.ScriptGraphOutput","$id":"16"},{"member":{"name":"StrikeDistance","parameterTypes":null,"targetType":"ArkhamCombat.Combat.AttackDefinition","targetTypeName":"ArkhamCombat.Combat.AttackDefinition","$version":"A"},"defaultValues":{"target":null},"position":{"x":-40.0,"y":140.0},"guid":"b883f7aa-f272-4852-96c2-bb39de2537cc","$version":"A","$type":"Unity.VisualScripting.GetMember","$id":"18"},{"sourceUnit":{"$ref":"14"},"sourceKey":"Enter","destinationUnit":{"$ref":"16"},"destinationKey":"Exit","guid":"21461a11-465c-414b-85bf-970cc14258e8","$type":"Unity.VisualScripting.ControlConnection"},{"sourceUnit":{"$ref":"14"},"sourceKey":"attack","destinationUnit":{"$ref":"18"},"destinationKey":"target","guid":"70619bb2-e620-48b3-8906-061ff81d56f7","$type":"Unity.VisualScripting.ValueConnection"},{"sourceUnit":{"$ref":"18"},"sourceKey":"value","destinationUnit":{"$ref":"16"},"destinationKey":"Result","guid":"23e24cb4-2690-4575-9790-5ad6a1bdd261","$type":"Unity.VisualScripting.ValueConnection"}],"$version":"A"}}'
+    _objectReferences: []
+  pure: 1
+  watchedKeys: []
+  description: 

@@ -32,7 +32,7 @@ namespace ArkhamCombat.Combat
         [Tooltip("The character is moved toward the target over this span.")]
         [SerializeField] private Window warpWindow = new Window(0f, 0.3f);
 
-        [Tooltip("While open, the attack is announced before it can hit, so its target can answer it. Leave it empty for an attack that gives no warning.")]
+        [Tooltip("While open, the attack is announced before it can hit, so its target can answer it. Leave start and end equal for an attack that gives no warning.")]
         [SerializeField] private Window telegraphWindow = new Window(0f, 0f);
 
         [Header("Travel")]
@@ -88,7 +88,9 @@ namespace ArkhamCombat.Combat
             this.isUnblockable = isUnblockable;
         }
 
-        public void ConfigureTelegraph(Window telegraphWindow) => this.telegraphWindow = telegraphWindow;
+        public void ConfigureTelegraphWindow(Window telegraphWindow) => this.telegraphWindow = telegraphWindow;
+
+        internal override void GiveItsWindowsTo(ActionRunner runner) => runner.TakeTheWindowsOf(this);
 
         /// <summary>
         /// A character standing on the target backs off along -Z so the result is still defined.
@@ -122,38 +124,35 @@ namespace ArkhamCombat.Combat
 
         public override bool Validate(List<string> errors)
         {
-            bool isValid = base.Validate(errors);
+            int errorCountBefore = errors.Count;
 
-            isValid &= ValidateWindow(nameof(hitWindow), hitWindow, errors);
-            isValid &= ValidateWindow(nameof(comboWindow), comboWindow, errors);
-            isValid &= ValidateWindow(nameof(evadeWindow), evadeWindow, errors);
-            isValid &= ValidateWindow(nameof(warpWindow), warpWindow, errors);
-            isValid &= ValidateWindow(nameof(telegraphWindow), telegraphWindow, errors);
-            isValid &= ValidateLungeReachesStrikeDistance(errors);
+            base.Validate(errors);
+            ReportWhenWindowEndsBeforeItStarts(nameof(hitWindow), hitWindow, errors);
+            ReportWhenWindowEndsBeforeItStarts(nameof(comboWindow), comboWindow, errors);
+            ReportWhenWindowEndsBeforeItStarts(nameof(evadeWindow), evadeWindow, errors);
+            ReportWhenWindowEndsBeforeItStarts(nameof(warpWindow), warpWindow, errors);
+            ReportWhenWindowEndsBeforeItStarts(nameof(telegraphWindow), telegraphWindow, errors);
+            ReportWhenLungeCannotReachStrikeDistance(errors);
 
-            return isValid;
+            bool isWellFormed = errors.Count == errorCountBefore;
+            return isWellFormed;
         }
 
-        private bool ValidateWindow(string label, Window window, List<string> errors)
+        private void ReportWhenWindowEndsBeforeItStarts(string windowName, Window window, List<string> errors)
         {
-            if (window.IsValid(out string error))
+            if (!window.IsValid(out string whatIsWrong))
             {
-                return true;
+                errors.Add($"'{name}': {windowName} {whatIsWrong}.");
             }
-
-            errors.Add($"'{name}': {label} {error}.");
-            return false;
         }
 
-        private bool ValidateLungeReachesStrikeDistance(List<string> errors)
+        private void ReportWhenLungeCannotReachStrikeDistance(List<string> errors)
         {
-            if (maxLunge >= strikeDistance)
+            bool canLungeReachStrikeDistance = maxLunge >= strikeDistance;
+            if (!canLungeReachStrikeDistance)
             {
-                return true;
+                errors.Add($"'{name}': maxLunge ({maxLunge:0.00}) is shorter than strikeDistance ({strikeDistance:0.00}); the warp could never reach its own end point.");
             }
-
-            errors.Add($"'{name}': maxLunge ({maxLunge:0.00}) is shorter than strikeDistance ({strikeDistance:0.00}); the warp could never reach its own end point.");
-            return false;
         }
     }
 }

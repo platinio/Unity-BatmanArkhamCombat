@@ -73,8 +73,7 @@ namespace ArkhamCombat.Enemies
         private static bool CanPlay(Memory memory) => memory.Runner != null && memory.ActionToPlay != null;
 
         // The runner may by now be playing an action something else started. That one is not this node's to wait for or to cancel.
-        private static bool IsStillPlaying(Memory memory) =>
-            memory.Runner.IsPlaying && memory.Runner.CurrentAction == memory.ActionToPlay;
+        private static bool IsStillPlaying(Memory memory) => memory.Runner.IsStillPlaying(memory.ActionToPlay);
 
         private static ActionRunner RunnerOf(BTContext ctx)
         {

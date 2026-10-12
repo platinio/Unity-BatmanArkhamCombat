@@ -5,7 +5,7 @@ using UnityEngine;
 
 namespace ArkhamCombat.Tests
 {
-    public class CameraTargetForwardTests
+    public class MovementFrameTargetForwardTests
     {
         private const float Tolerance = 1e-4f;
 
@@ -19,7 +19,7 @@ namespace ArkhamCombat.Tests
         {
             TurnedMovementFrame lookingEast = new TurnedMovementFrame { Frame = Quaternion.Euler(0f, 90f, 0f) };
 
-            Vector3 forward = new CameraTargetForward(lookingEast).TargetForward;
+            Vector3 forward = new MovementFrameTargetForward(lookingEast).TargetForward;
 
             Assert.Less((forward - Vector3.right).magnitude, Tolerance);
         }

@@ -23,6 +23,7 @@ namespace ArkhamCombat.Enemies
         public string State => IsAlive ? ReactionAsTheTreeLeftIt : Dead;
         public bool IsValid => this != null && isActiveAndEnabled && IsAlive;
         public Vector3 Position => transform.position;
+        public GameObject Owner => gameObject;
 
         public bool IsAlive => receiver != null && receiver.IsAlive;
 

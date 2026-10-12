@@ -11,7 +11,7 @@ namespace ArkhamCombat.Player
     {
         private readonly ActionRunner runner;
         private readonly IReadOnlyList<ActionDefinition> actionsInOrder;
-        private int currentIndex;
+        private int currentActionIndex;
 
         public ReactionPlayback(ActionRunner runner, IReadOnlyList<ActionDefinition> actionsInOrder)
         {
@@ -21,41 +21,45 @@ namespace ArkhamCombat.Player
 
         public bool HasEnded { get; private set; }
 
-        private ActionDefinition CurrentAction => actionsInOrder[currentIndex];
+        private ActionDefinition CurrentAction => actionsInOrder[currentActionIndex];
 
         public void Start(Vector3 position)
         {
-            currentIndex = 0;
+            currentActionIndex = 0;
             HasEnded = false;
             PlayTheCurrentActionOrEnd(position);
         }
 
         public void PlayTheNextActionWhenTheCurrentOneEnds(Vector3 position)
         {
-            if (HasEnded || IsTheCurrentActionStillPlaying())
+            if (HasEnded || runner.IsStillPlaying(CurrentAction))
             {
                 return;
             }
 
-            currentIndex++;
+            currentActionIndex++;
             PlayTheCurrentActionOrEnd(position);
         }
 
         private void PlayTheCurrentActionOrEnd(Vector3 position)
         {
-            bool isThereAnActionLeft = currentIndex < actionsInOrder.Count;
-            if (isThereAnActionLeft)
+            bool isThereAnActionLeft = currentActionIndex < actionsInOrder.Count;
+            if (!isThereAnActionLeft)
+            {
+                HasEnded = true;
+                return;
+            }
+
+            if (CurrentAction != null)
             {
                 runner.PlayAction(CurrentAction, position);
             }
             else
             {
-                HasEnded = true;
+                // A missing action must still end what was playing: the reaction would otherwise sit on
+                // top of an attack that goes on hitting, and the attacking state would take the character back.
+                runner.Cancel();
             }
         }
-
-        // The runner may by now be playing an action something else started, and that one is not this reaction's.
-        private bool IsTheCurrentActionStillPlaying() =>
-            runner.IsPlaying && runner.CurrentAction == CurrentAction;
     }
 }

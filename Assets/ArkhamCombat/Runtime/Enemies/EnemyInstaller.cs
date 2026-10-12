@@ -74,7 +74,7 @@ namespace ArkhamCombat.Enemies
         private void BindWarpAndHits()
         {
             Container.Bind(typeof(PendingWarpMovement), typeof(IWarpMover)).To<PendingWarpMovement>().AsSingle();
-            Container.Bind<IHitWindowListener>().To<NullHitWindowListener>().AsSingle();
+            Container.Bind<IHitWindowListener>().To<TargetedHitWindowListener>().AsSingle().WithArguments(transform);
         }
 
         private void BindTargeting()

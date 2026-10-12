@@ -21,9 +21,13 @@ namespace ArkhamCombat.Tests
         private const float IdleMax = 0.9f;
         private const float Tolerance = 1e-5f;
 
+        private static readonly Vector3 FarFromTheOrigin = new Vector3(20f, 0f, 0f);
+        private static readonly Window AWindowThatEndsBeforeItStarts = new Window(0.6f, 0.4f);
+
         private TestIntentKinds kinds;
         private HitReceiverProfile profile;
         private EnemyArchetype archetype;
+        private AttackDefinition haymaker;
         private GameObject enemy;
         private EnemyInstaller installer;
         private DiContainer sceneContainer;
@@ -37,12 +41,16 @@ namespace ArkhamCombat.Tests
             archetype = ScriptableObject.CreateInstance<EnemyArchetype>();
             archetype.name = "TestArchetype";
             archetype.Configure(profile, IdleMin, IdleMax);
+            haymaker = Attack("Haymaker");
+            haymaker.ConfigureTelegraphWindow(new Window(0f, 0.2f));
+            archetype.ConfigureAttack(haymaker);
 
             enemy = HiddenObject("Enemy");
             installer = enemy.AddComponent<EnemyInstaller>();
 
             sceneContainer = new DiContainer();
             sceneContainer.Bind<InterruptKinds>().FromInstance(kinds.InterruptKinds);
+            sceneContainer.Bind<IHitCheckSettings>().FromInstance(new HitCheckSettings());
 #if HERMES_EVENTS_GENERATED
             sceneContainer.Bind<ISceneGameEvents>().FromInstance(new SceneGameEventsWith(null));
 #endif
@@ -53,6 +61,7 @@ namespace ArkhamCombat.Tests
         {
             Object.DestroyImmediate(enemy);
             Object.DestroyImmediate(archetype);
+            Object.DestroyImmediate(haymaker);
             Object.DestroyImmediate(profile);
             kinds.Destroy();
         }
@@ -107,7 +116,74 @@ namespace ArkhamCombat.Tests
             Assert.IsTrue(enemyContainer.Resolve<IActionStartGate>().CanStartFromIdle);
             Assert.IsInstanceOf<NullPresentationDriver>(enemyContainer.Resolve<IPresentationDriver>());
             Assert.IsInstanceOf<NullActionTargetPicker>(enemyContainer.Resolve<IActionTargetPicker>());
-            Assert.IsInstanceOf<NullHitWindowListener>(enemyContainer.Resolve<IHitWindowListener>());
+        }
+
+        [Test]
+        public void AnEnemysStrike_IsMeasuredFromThatEnemy()
+        {
+            enemy.transform.position = FarFromTheOrigin;
+            InstallTheEnemyWithItsArchetype();
+            PointCombatTarget targetInFrontOfTheEnemy = new PointCombatTarget(FarFromTheOrigin + Vector3.forward);
+
+            enemyContainer.Resolve<IHitWindowListener>().HitWindowOpened(haymaker, targetInFrontOfTheEnemy);
+
+            Assert.AreEqual(1, targetInFrontOfTheEnemy.HitsTaken);
+        }
+
+        [Test]
+        public void AnEnemyWithATargetPickerOfItsOwn_AimsItsActionsWithIt()
+        {
+            enemy.AddComponent<EncounterAgent>();
+            EncounterTargetPicker pickerOnTheEnemy = enemy.AddComponent<EncounterTargetPicker>();
+            InstallTheEnemyWithItsArchetype();
+
+            Assert.AreSame(pickerOnTheEnemy, enemyContainer.Resolve<IActionTargetPicker>());
+        }
+
+        [Test]
+        public void AnArchetypeThatNamesNoAttack_IsReported()
+        {
+            archetype.ConfigureAttack(null);
+            LogAssert.Expect(LogType.Error, new Regex("names no attack"));
+
+            InstallTheEnemyWithItsArchetype();
+        }
+
+        [Test]
+        public void AnArchetypeWhoseAttackIsBroken_IsReported()
+        {
+            haymaker.ConfigureTelegraphWindow(AWindowThatEndsBeforeItStarts);
+            LogAssert.Expect(LogType.Error, new Regex("telegraphWindow"));
+
+            InstallTheEnemyWithItsArchetype();
+        }
+
+        [Test]
+        public void AnArchetypeWhoseAttackGivesNoWarning_IsReported()
+        {
+            haymaker.ConfigureTelegraphWindow(new Window(0f, 0f));
+            LogAssert.Expect(LogType.Error, new Regex("has no telegraph window"));
+
+            InstallTheEnemyWithItsArchetype();
+        }
+
+        [Test]
+        public void AnArchetypeWhoseAttackStillTelegraphsAsItsHitWindowOpens_IsReported()
+        {
+            haymaker.ConfigureTelegraphWindow(new Window(0f, haymaker.HitWindow.Start + 0.1f));
+            LogAssert.Expect(LogType.Error, new Regex("The telegraph has to end by then"));
+
+            InstallTheEnemyWithItsArchetype();
+        }
+
+        [Test]
+        public void AnAttackThatTelegraphsRightUpToItsHit_IsFine()
+        {
+            haymaker.ConfigureTelegraphWindow(new Window(0f, haymaker.HitWindow.Start));
+
+            InstallTheEnemyWithItsArchetype();
+
+            LogAssert.NoUnexpectedReceived();
         }
 
         [Test]

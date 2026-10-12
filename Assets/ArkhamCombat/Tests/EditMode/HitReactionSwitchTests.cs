@@ -12,17 +12,24 @@ using static ArkhamCombat.Tests.CombatTestDoubles;
 
 namespace ArkhamCombat.Tests
 {
-    // The states are real and play on a real runner; the brain is left out, so the test ticks the
-    // runner and the state by hand, in the order the brain would.
+    // The states are real and play on a real runner and motor. The brain is left out, so the test
+    // ticks the runner and then the state machine by hand.
     public class HitReactionSwitchTests
     {
         private const float ReactionSeconds = 0.5f;
         private const float TickSeconds = 0.1f;
+        private const float PartWayThroughTheReaction = 2 * TickSeconds;
+        private const float LongAfterTheReactionEnded = 4 * ReactionSeconds;
+        private const float MaxHealth = 100f;
 
         private GameObject character;
+        private CharacterMotor motor;
+        private PlayerStatus status;
+        private HitReceiverProfile profile;
         private MotorConfig motorConfig;
         private ActionRunner runner;
         private CharacterStateMachine stateMachine;
+        private LocomotionState locomotion;
         private CharacterContext context;
         private CombatActions combatActions;
         private ActionDefinition flinch;
@@ -42,8 +49,13 @@ namespace ArkhamCombat.Tests
 
             character = HiddenObject("Character");
             motorConfig = ScriptableObject.CreateInstance<MotorConfig>();
-            CharacterMotor motor = character.AddComponent<CharacterMotor>();
+            motor = character.AddComponent<CharacterMotor>();
             motor.Initialize(motorConfig);
+
+            profile = ReceiverProfile(MaxHealth);
+            status = character.AddComponent<PlayerStatus>();
+            status.Construct(profile);
+            status.Awake();
 
             PendingWarpMovement pendingWarpMovement = new PendingWarpMovement();
             runner = new ActionRunner(
@@ -54,7 +66,8 @@ namespace ArkhamCombat.Tests
 
             stateMachine = new CharacterStateMachine();
             context = new CharacterContext(motor, input: null, profile: null, movementFrame: null) { StateMachine = stateMachine };
-            stateMachine.Register(new LocomotionState(context));
+            locomotion = new LocomotionState(context);
+            stateMachine.Register(locomotion);
             stateMachine.Register(new FlinchState(context, combatActions, new[] { flinch }));
             stateMachine.Register(new StaggerState(context, combatActions, new[] { stagger }));
             stateMachine.Register(new KnockedDownState(context, combatActions, new[] { knockdown, getUp }));
@@ -67,6 +80,7 @@ namespace ArkhamCombat.Tests
         {
             Object.DestroyImmediate(character);
             Object.DestroyImmediate(motorConfig);
+            Object.DestroyImmediate(profile);
             Object.DestroyImmediate(flinch);
             Object.DestroyImmediate(stagger);
             Object.DestroyImmediate(knockdown);
@@ -76,18 +90,51 @@ namespace ArkhamCombat.Tests
 
         private void ReactTo(AppliedReaction reaction) => HitReactionSwitch.EnterTheStateFor(reaction, stateMachine);
 
-        // Stops once the character is back in locomotion: that state needs a floor and an input, and the test has neither.
-        private void TickTheCharacterFor(float seconds)
+        // Locomotion needs a floor and an input, and the test has neither, so the ticking stops there.
+        private void TickTheCharacterWhileItReactsFor(float seconds)
         {
             int ticks = Mathf.RoundToInt(seconds / TickSeconds);
-            for (int i = 0; i < ticks && !(stateMachine.Current is LocomotionState); i++)
+            for (int i = 0; i < ticks && stateMachine.Current != locomotion; i++)
             {
                 combatActions.Tick(TickSeconds);
                 stateMachine.Tick(TickSeconds);
             }
         }
 
-        private void TickTheCharacterPastTheEndOfOneAction() => TickTheCharacterFor(ReactionSeconds + TickSeconds);
+        private void TickTheCharacterPastTheEndOfOneAction() => TickTheCharacterWhileItReactsFor(ReactionSeconds + TickSeconds);
+
+        [Test]
+        public void AHitOnThePlayer_BecomesItsReactionState_WhenTheSwitchNextTicks()
+        {
+            AttackDefinition cross = Attack("Cross", reaction: HitReaction.Stagger);
+            status.Receive(new HitInfo(cross, Vector3.forward));
+            Assert.IsInstanceOf<LocomotionState>(stateMachine.Current, "the hit itself changes no state");
+
+            HitReactionSwitch.EnterTheStateForThePendingReaction(status, stateMachine);
+
+            Assert.IsInstanceOf<StaggerState>(stateMachine.Current);
+            Object.DestroyImmediate(cross);
+        }
+
+        [Test]
+        public void WithNoHitPending_TheSwitchLeavesTheStateAlone()
+        {
+            HitReactionSwitch.EnterTheStateForThePendingReaction(status, stateMachine);
+
+            Assert.IsInstanceOf<LocomotionState>(stateMachine.Current);
+        }
+
+        [Test]
+        public void WhileItReacts_TheCharacterStandsStill()
+        {
+            motor.Tick(new MotionIntent { PlanarVelocity = Vector3.forward, Rotation = Quaternion.identity }, TickSeconds);
+            Assert.AreNotEqual(Vector3.zero, motor.PlanarVelocity, "sanity: it was moving before the hit");
+
+            ReactTo(AppliedReaction.Flinch);
+            TickTheCharacterWhileItReactsFor(TickSeconds);
+
+            Assert.AreEqual(Vector3.zero, motor.PlanarVelocity);
+        }
 
         [Test]
         public void AFlinch_EntersTheFlinchState_WhichPlaysItsAction()
@@ -130,7 +177,7 @@ namespace ArkhamCombat.Tests
         public void TheSameReactionAgain_DoesNotStartItOver()
         {
             ReactTo(AppliedReaction.Flinch);
-            TickTheCharacterFor(2 * TickSeconds);
+            TickTheCharacterWhileItReactsFor(PartWayThroughTheReaction);
             float timeBeforeTheSecondHit = runner.NormalizedTime;
 
             ReactTo(AppliedReaction.Flinch);
@@ -169,7 +216,7 @@ namespace ArkhamCombat.Tests
         public void ACharacterOnTheFloor_ShrugsOffEveryReactionButDeath(AppliedReaction reaction)
         {
             ReactTo(AppliedReaction.Knockdown);
-            TickTheCharacterFor(2 * TickSeconds);
+            TickTheCharacterWhileItReactsFor(PartWayThroughTheReaction);
             float timeBeforeTheSecondHit = runner.NormalizedTime;
 
             ReactTo(reaction);
@@ -195,18 +242,34 @@ namespace ArkhamCombat.Tests
         {
             ReactTo(AppliedReaction.Death);
 
-            TickTheCharacterFor(4 * ReactionSeconds);
+            TickTheCharacterWhileItReactsFor(LongAfterTheReactionEnded);
 
             Assert.IsInstanceOf<DeadState>(stateMachine.Current);
             Assert.IsFalse(runner.IsPlaying);
         }
 
-        [Test]
-        public void AStateWithAMissingAction_SaysSoWhenItIsBuilt()
+        [TestCase(AppliedReaction.Flinch)]
+        [TestCase(AppliedReaction.Stagger)]
+        [TestCase(AppliedReaction.Knockdown)]
+        [TestCase(AppliedReaction.Death)]
+        public void TheDead_ReactToNothing(AppliedReaction reaction)
         {
-            LogAssert.Expect(LogType.Error, new Regex("FlinchState.*Action 0 of this reaction is not assigned"));
+            ReactTo(AppliedReaction.Death);
+            TickTheCharacterWhileItReactsFor(LongAfterTheReactionEnded);
 
-            new FlinchState(context, combatActions, new ActionDefinition[] { null });
+            ReactTo(reaction);
+
+            Assert.IsInstanceOf<DeadState>(stateMachine.Current);
+            Assert.IsFalse(runner.IsPlaying, "the death is not played again either");
+        }
+
+        [Test]
+        public void ABindingWithAnEmptyActionSlot_SaysWhichOne()
+        {
+            LogAssert.Expect(LogType.Error, new Regex("KnockedDownStateBinding.*knockdownAction"));
+            LogAssert.Expect(LogType.Error, new Regex("KnockedDownStateBinding.*getUpAction"));
+
+            new KnockedDownStateBinding().Install(new Zenject.DiContainer());
         }
     }
 }

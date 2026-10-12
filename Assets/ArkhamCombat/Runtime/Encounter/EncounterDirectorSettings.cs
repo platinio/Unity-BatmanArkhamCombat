@@ -42,13 +42,13 @@ namespace ArkhamCombat.Encounter
         [Tooltip("How much a long wait since its last token counts when several agents ask for the same token.")]
         [SerializeField, Min(0f)] private float fairnessWeight = 0.6f;
 
-        [Tooltip("Seconds without a token after which waiting longer no longer counts for more.")]
+        [Tooltip("Seconds without a token after which waiting longer no longer counts for more. 0 switches the fairness weight off.")]
         [SerializeField, Min(0f)] private float fairnessHorizonSeconds = 6.0f;
 
         [Tooltip("How much being far from the target counts against an agent asking for a token. A full ring radius away costs all of it.")]
         [SerializeField, Min(0f)] private float distancePenalty = 0.3f;
 
-        [Tooltip("Seconds an agent has to come back for a token it was granted before the token is taken back. 0 disables this.")]
+        [Tooltip("Seconds an agent has to ask again, with Try Acquire Attack Token, for a token it was granted before the token is taken back. 0 disables this.")]
         [SerializeField, Min(0f)] private float grantGraceSeconds = 0.5f;
 
         public int MaxMeleeTokens => Mathf.Max(0, maxMeleeTokens);

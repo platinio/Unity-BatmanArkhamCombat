@@ -24,11 +24,11 @@ namespace ArkhamCombat.Player
             this.context = context;
             this.combatActions = combatActions;
             this.actionsInOrder = actionsInOrder;
-
-            ReportMissingActions();
         }
 
-        protected virtual bool ReturnsToLocomotionWhenTheReactionEnds => true;
+        public virtual bool CanBeInterrupted => true;
+
+        protected virtual bool ShouldReturnToLocomotionWhenTheReactionEnds => true;
 
         public void Enter()
         {
@@ -40,7 +40,7 @@ namespace ArkhamCombat.Player
         {
             playback.PlayTheNextActionWhenTheCurrentOneEnds(context.Transform.position);
 
-            if (playback.HasEnded && ReturnsToLocomotionWhenTheReactionEnds)
+            if (playback.HasEnded && ShouldReturnToLocomotionWhenTheReactionEnds)
             {
                 context.StateMachine.Change<LocomotionState>();
                 return;
@@ -51,15 +51,13 @@ namespace ArkhamCombat.Player
 
         public void Exit() { }
 
-        private void ReportMissingActions()
+        internal static void ReportWhenMissing(ActionDefinition action, string bindingName, string fieldName)
         {
-            for (int i = 0; i < actionsInOrder.Count; i++)
+            if (action == null)
             {
-                if (actionsInOrder[i] == null)
-                {
-                    Debug.LogError(
-                        $"[{GetType().Name}] Action {i} of this reaction is not assigned on the state's binding, so that part of the reaction will not play.");
-                }
+                Debug.LogError(
+                    $"[{bindingName}] No {fieldName} is assigned in the player installer's state list. " +
+                    "That part of the reaction will not play, and whatever the character was playing is cut short.");
             }
         }
     }

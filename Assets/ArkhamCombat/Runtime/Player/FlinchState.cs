@@ -21,7 +21,11 @@ namespace ArkhamCombat.Player
         [Tooltip("What the character plays when a light hit lands.")]
         [SerializeField] private ActionDefinition flinchAction;
 
-        public void Install(DiContainer container) =>
+        public void Install(DiContainer container)
+        {
+            ReactionState.ReportWhenMissing(flinchAction, nameof(FlinchStateBinding), nameof(flinchAction));
+
             container.Bind<ICharacterState>().To<FlinchState>().AsSingle().WithArguments(new[] { flinchAction });
+        }
     }
 }

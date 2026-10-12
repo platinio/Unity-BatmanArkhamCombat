@@ -100,10 +100,33 @@ namespace ArkhamCombat.Presentation
     [Serializable]
     public sealed class FlashCue : ICueKind
     {
+        private const int OneFlash = 1;
+
+        public void Play(ICueTarget target, PresentationCue cue) => BodyTint.Flash(target, cue, OneFlash, cue.Duration);
+    }
+
+    /// <summary>Strength scales how far the colour goes, as for a flash.</summary>
+    [Serializable]
+    public sealed class PulseCue : ICueKind
+    {
+        [Tooltip("About how long one flash takes, there and back. The cue plays the nearest whole number of flashes and stretches them to fill its duration exactly, so the pulse ends when the cue does.")]
+        [SerializeField, Min(0.05f)] private float secondsPerFlash = 0.2f;
+
+        public void Play(ICueTarget target, PresentationCue cue)
+        {
+            int flashes = Mathf.Max(1, Mathf.RoundToInt(cue.Duration / secondsPerFlash));
+            float secondsPerFlashToFillTheCue = cue.Duration / flashes;
+
+            BodyTint.Flash(target, cue, flashes, secondsPerFlashToFillTheCue);
+        }
+    }
+
+    internal static class BodyTint
+    {
         private const float FullTint = 1f;
         private const int TintThenUntint = 2;
 
-        public void Play(ICueTarget target, PresentationCue cue)
+        public static void Flash(ICueTarget target, PresentationCue cue, int flashes, float secondsPerFlash)
         {
             Renderer renderer = target.BodyRenderer;
             Material material = renderer != null ? renderer.sharedMaterial : null;
@@ -115,7 +138,7 @@ namespace ArkhamCombat.Presentation
             int colourProperty = MaterialColourProperty.Of(material);
             Color restColour = material.GetColor(colourProperty);
             MaterialPropertyBlock propertyBlock = new MaterialPropertyBlock();
-            float halfDuration = cue.Duration * 0.5f;
+            float secondsToFullTint = secondsPerFlash * 0.5f;
             float tint = 0f;
 
             void ApplyTint(float value)
@@ -138,9 +161,9 @@ namespace ArkhamCombat.Presentation
                 }
             }
 
-            DOTween.To(() => tint, ApplyTint, FullTint, halfDuration)
+            DOTween.To(() => tint, ApplyTint, FullTint, secondsToFullTint)
                 .SetEase(cue.Ease)
-                .SetLoops(TintThenUntint, LoopType.Yoyo)
+                .SetLoops(TintThenUntint * flashes, LoopType.Yoyo)
                 .SetId(target.TweenId)
                 .OnKill(ClearTint);
         }

@@ -120,6 +120,27 @@ namespace ArkhamCombat.Tests
         }
 
         [Test]
+        public void AStrikeInASceneWhoseDispatcherIsGone_StillLands_AndAnnouncesNothing()
+        {
+            GameObject sceneEventsObject = HiddenObject("Hermes whose dispatcher is gone");
+            GameEventDispatcher dispatcherThatIsGone = sceneEventsObject.AddComponent<GameEventDispatcher>();
+            Object.DestroyImmediate(dispatcherThatIsGone);
+            TargetedHitWindowListener listenerInThatScene = new TargetedHitWindowListener(
+                new HitCheckSettings(), character.transform, pendingWarpMovement, new SceneGameEventsWith(dispatcherThatIsGone));
+            PointCombatTarget target = TargetAhead(WithinReach);
+
+            try
+            {
+                Assert.DoesNotThrow(() => listenerInThatScene.HitWindowOpened(jab, target));
+                Assert.AreEqual(1, target.HitsTaken);
+            }
+            finally
+            {
+                Object.DestroyImmediate(sceneEventsObject);
+            }
+        }
+
+        [Test]
         public void AStrikeThatLands_IsAnnouncedAsLanded()
         {
             listener.HitWindowOpened(jab, TargetAhead(WithinReach));
@@ -128,6 +149,37 @@ namespace ArkhamCombat.Tests
             Assert.AreSame(character, landedStrikes[0].Attacker);
             Assert.AreSame(jab, landedStrikes[0].Attack);
             Assert.IsEmpty(whiffedStrikes);
+        }
+
+        [Test]
+        public void AStrikeThatLands_NamesTheObjectItsTargetLivesOn()
+        {
+            GameObject victimObject = HiddenObject("Victim");
+            PointCombatTarget target = TargetAhead(WithinReach);
+            target.Owner = victimObject;
+
+            listener.HitWindowOpened(jab, target);
+
+            Assert.AreSame(victimObject, landedStrikes[0].Target);
+            Object.DestroyImmediate(victimObject);
+        }
+
+        [Test]
+        public void AStrikeThatLandsOnATargetLivingOnNoObject_NamesNone()
+        {
+            listener.HitWindowOpened(jab, TargetAhead(WithinReach));
+
+            Assert.AreEqual(1, landedStrikes.Count);
+            Assert.IsNull(landedStrikes[0].Target);
+        }
+
+        [Test]
+        public void AStrikeAtNoTarget_IsAWhiff()
+        {
+            listener.HitWindowOpened(jab, target: null);
+
+            Assert.AreEqual(1, whiffedStrikes.Count);
+            Assert.IsEmpty(landedStrikes);
         }
 
         [Test]

@@ -81,7 +81,7 @@ namespace ArkhamCombat.Combat
         public ActionDefinition CurrentAction { get; private set; }
 
         /// <summary>Null while idle or while a plain action plays.</summary>
-        public AttackDefinition CurrentAttack => CurrentAction as AttackDefinition;
+        public AttackDefinition CurrentAttack { get; private set; }
 
         /// <summary>
         /// Who the current action is aimed at, picked when it started and kept until it ends, so the
@@ -91,6 +91,8 @@ namespace ArkhamCombat.Combat
         public IActionTarget CurrentActionTarget { get; private set; }
 
         public bool IsPlaying => isPlaying;
+
+        public bool IsStillPlaying(ActionDefinition action) => isPlaying && CurrentAction == action;
         public float NormalizedTime => isPlaying ? driver.NormalizedTime : 0f;
         public bool IsHitWindowOpen => isHitWindowOpen;
         public bool IsComboWindowOpen => isComboWindowOpen;
@@ -103,8 +105,7 @@ namespace ArkhamCombat.Combat
         private bool HasValidTarget => CurrentActionTarget != null && CurrentActionTarget.IsValid;
 
         /// <summary>
-        /// <paramref name="canStartFromIdle"/> is false while the character is airborne or in a hit
-        /// reaction; a press then waits instead of starting an action.
+        /// While <paramref name="canStartFromIdle"/> is false a press waits instead of starting an action.
         /// </summary>
         public void Tick(float deltaTime, Vector3 position, bool canStartFromIdle)
         {
@@ -199,6 +200,11 @@ namespace ArkhamCombat.Combat
                 return false;
             }
 
+            if (IsPlayingAnActionNoPressCanReplace)
+            {
+                return false;
+            }
+
             Resolution resolution = resolver.Resolve(stance, DescribeCurrentSituation(), intents, facts);
             if (!resolution.HasMatch)
             {
@@ -210,6 +216,9 @@ namespace ArkhamCombat.Combat
             StartAction(nextNode, PickAttack(nextNode), position, resolution.IsInterrupt, directionAtPress);
             return true;
         }
+
+        // An action that is not an attack, a reaction for one, has no window a press could be taken in.
+        private bool IsPlayingAnActionNoPressCanReplace => isPlaying && CurrentAttack == null;
 
         private ComboSituation DescribeCurrentSituation()
         {
@@ -257,18 +266,28 @@ namespace ArkhamCombat.Combat
             }
 
             CurrentAction = action;
+            action.GiveItsWindowsTo(this);
             CurrentActionTarget = targetPicker.PickTarget(targetDirection);
             isPlaying = true;
             idleSeconds = 0f;
             WasWarpRefused = false;
 
             driver.Play(action);
-            Trace.BeginAction(node, action);
+            Trace.BeginAction(node, action, CurrentAttack);
             ActionStarted?.Invoke(action, isInterrupt);
 
-            if (action is AttackDefinition attack)
+            if (CurrentAttack != null)
             {
-                HandleWindowsStartingAtZero(attack, position);
+                HandleWindowsStartingAtZero(CurrentAttack, position);
+            }
+        }
+
+        internal void TakeTheWindowsOf(AttackDefinition attack)
+        {
+            bool isTheActionThatIsStarting = ReferenceEquals(attack, CurrentAction);
+            if (isTheActionThatIsStarting)
+            {
+                CurrentAttack = attack;
             }
         }
 
@@ -285,6 +304,7 @@ namespace ArkhamCombat.Combat
             CloseAllWindows();
             isPlaying = false;
             CurrentAction = null;
+            CurrentAttack = null;
             CurrentActionTarget = null;
             idleSeconds = 0f;
 
@@ -320,9 +340,9 @@ namespace ArkhamCombat.Combat
         private void HandleAttackWindows(AttackDefinition attack, float previousTime, float currentTime, Vector3 position)
         {
             HandleWarp(attack, previousTime, currentTime, position);
+            HandleTelegraphWindow(attack, previousTime, currentTime);
             HandleHitWindow(attack, previousTime, currentTime);
             HandleComboWindow(attack, previousTime, currentTime);
-            HandleTelegraphWindow(attack, previousTime, currentTime);
         }
 
         private void HandleWarp(AttackDefinition attack, float previousTime, float currentTime, Vector3 position)
@@ -374,6 +394,12 @@ namespace ArkhamCombat.Combat
 
         private void HandleTelegraphWindow(AttackDefinition attack, float previousTime, float currentTime)
         {
+            bool givesNoWarning = attack.TelegraphWindow.IsZeroLength;
+            if (givesNoWarning)
+            {
+                return;
+            }
+
             if (attack.TelegraphWindow.IsOpen(previousTime, currentTime))
             {
                 isTelegraphWindowOpen = true;

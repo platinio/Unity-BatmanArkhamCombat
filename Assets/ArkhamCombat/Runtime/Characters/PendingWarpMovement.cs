@@ -4,9 +4,8 @@ using UnityEngine;
 namespace ArkhamCombat.Characters
 {
     /// <summary>
-    /// The runner asks for movement here and never touches a transform. Whoever moves the
-    /// character takes the movement once the runner has ticked, so until then the transform is
-    /// behind by <see cref="Movement"/>.
+    /// Until whoever moves the character takes the movement, the transform is behind by
+    /// <see cref="Movement"/>.
     /// </summary>
     public sealed class PendingWarpMovement : IWarpMover
     {

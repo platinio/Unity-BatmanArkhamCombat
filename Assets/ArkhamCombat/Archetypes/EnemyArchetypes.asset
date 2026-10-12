@@ -21,6 +21,7 @@ MonoBehaviour:
   combatRange: 5
   moveSpeed: 3.5
   tokenType: 0
+  attack: {fileID: 11400000, guid: 6a4778f432f6b5a4880d064477e30186, type: 2}
 --- !u!114 &11400000
 MonoBehaviour:
   m_ObjectHideFlags: 0

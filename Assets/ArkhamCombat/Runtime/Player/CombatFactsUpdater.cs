@@ -38,7 +38,7 @@ namespace ArkhamCombat.Player
             ICombatFactsSettings settings,
             IMovementFrame frame,
             IActionTargetPicker targetPicker,
-            [InjectOptional] EncounterDirector encounterDirector = null)
+            EncounterDirector encounterDirector)
         {
             this.runner = runner;
             this.settings = settings;
@@ -114,11 +114,8 @@ namespace ArkhamCombat.Player
         }
 
         // Everyone in the encounter fights this character, so any attack telegraphed there is aimed at it.
-        internal void MeasureIncomingAttack()
-        {
-            bool isInAnEncounter = encounterDirector != null;
-            Facts.IsIncomingAttackCounterable = isInAnEncounter && encounterDirector.IsACounterableAttackIncoming;
-        }
+        internal void MeasureIncomingAttack() =>
+            Facts.IsIncomingAttackCounterable = encounterDirector.IsACounterableAttackIncoming;
 
         private void DescribeTarget(IActionTarget target, AttackDefinition currentAttack)
         {
@@ -130,7 +127,7 @@ namespace ArkhamCombat.Player
 
             Facts.TargetDistance = toTarget.magnitude;
             Facts.TargetSide = SideOf(forward, toTarget, settings.DeadAheadAngle);
-            Facts.TargetState = target is ICombatTarget combatant ? combatant.State : string.Empty;
+            Facts.TargetState = target.State;
 
             // The same lunge rule the warp refuses by; the fact describes the next press's target, the warp the current action's.
             Facts.IsTargetBeyondLunge = currentAttack != null

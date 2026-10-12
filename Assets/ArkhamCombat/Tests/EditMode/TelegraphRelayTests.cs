@@ -12,7 +12,7 @@ namespace ArkhamCombat.Tests
 {
     // The attack lasts one second and telegraphs over its first half, so seconds played and
     // normalized time are the same number.
-    public class TelegraphAnnouncerTests
+    public class TelegraphRelayTests
     {
         private const float AttackSeconds = 1f;
         private const float TickSeconds = 0.1f;
@@ -25,7 +25,7 @@ namespace ArkhamCombat.Tests
         private GameObject thug;
         private EncounterAgent agent;
         private CombatActions combatActions;
-        private TelegraphAnnouncer announcer;
+        private TelegraphRelay relay;
         private VariableDeclarations facts;
         private AttackDefinition haymaker;
 
@@ -38,7 +38,7 @@ namespace ArkhamCombat.Tests
             encounter.Construct(director);
 
             haymaker = Attack("Haymaker", AttackSeconds);
-            haymaker.ConfigureTelegraph(TelegraphWindow);
+            haymaker.ConfigureTelegraphWindow(TelegraphWindow);
 
             thug = HiddenObject("Thug");
             PendingWarpMovement pendingWarpMovement = new PendingWarpMovement();
@@ -48,12 +48,12 @@ namespace ArkhamCombat.Tests
             combatActions = thug.AddComponent<CombatActions>();
             combatActions.Construct(runner, pendingWarpMovement, new AlwaysOpenActionStartGate(), null);
             agent = thug.AddComponent<EncounterAgent>();
-            announcer = thug.AddComponent<TelegraphAnnouncer>();
+            relay = thug.AddComponent<TelegraphRelay>();
             facts = Variables.Object(thug);
 
             agent.Construct(encounter);
             agent.OnEnable();
-            announcer.Awake();
+            relay.Awake();
         }
 
         [TearDown]
@@ -74,7 +74,7 @@ namespace ArkhamCombat.Tests
             for (int i = 0; i < ticks; i++)
             {
                 combatActions.Tick(TickSeconds);
-                announcer.Tick(TickSeconds);
+                relay.Tick(TickSeconds);
             }
         }
 
@@ -132,16 +132,17 @@ namespace ArkhamCombat.Tests
         }
 
         [Test]
-        public void TheTelegraphingFact_IsWrittenOnlyWhenItChanges()
+        public void TheTelegraphingFact_IsWrittenThroughTheWriter_AndOnlyWhenItChanges()
         {
             AgentVariableWriter agentVariables = thug.GetComponent<AgentVariableWriter>();
+            int versionBeforeTheAttack = agentVariables.VersionOf(EnemyVariableNames.Telegraphing);
             StartTheAttack();
+
             TickTheThugFor(TickSeconds);
-            int versionWhileTelegraphing = agentVariables.VersionOf(EnemyVariableNames.Telegraphing);
+            Assert.AreEqual(versionBeforeTheAttack + 1, agentVariables.VersionOf(EnemyVariableNames.Telegraphing), "written once as the telegraph opens, through the writer a guard listens to");
 
             TickTheThugFor(2 * TickSeconds);
-
-            Assert.AreEqual(versionWhileTelegraphing, agentVariables.VersionOf(EnemyVariableNames.Telegraphing));
+            Assert.AreEqual(versionBeforeTheAttack + 1, agentVariables.VersionOf(EnemyVariableNames.Telegraphing), "not written again while it holds");
         }
 
         private void MakeTheAttackImpossibleToCounter()

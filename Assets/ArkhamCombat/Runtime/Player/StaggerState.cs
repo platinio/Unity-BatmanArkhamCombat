@@ -21,7 +21,11 @@ namespace ArkhamCombat.Player
         [Tooltip("What the character plays when a heavy hit lands.")]
         [SerializeField] private ActionDefinition staggerAction;
 
-        public void Install(DiContainer container) =>
+        public void Install(DiContainer container)
+        {
+            ReactionState.ReportWhenMissing(staggerAction, nameof(StaggerStateBinding), nameof(staggerAction));
+
             container.Bind<ICharacterState>().To<StaggerState>().AsSingle().WithArguments(new[] { staggerAction });
+        }
     }
 }

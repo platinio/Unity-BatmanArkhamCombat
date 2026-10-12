@@ -4,7 +4,7 @@ using UnityEngine;
 
 namespace ArkhamCombat.Tests
 {
-    // The target stands at the origin and looks north. Each test switches on one term of the score.
+    // Each test switches on one term of the score.
     public class TokenRequestScorerTests
     {
         private const float FairnessHorizonSeconds = 6f;
@@ -14,6 +14,7 @@ namespace ArkhamCombat.Tests
 
         private static readonly Vector3 Target = Vector3.zero;
         private static readonly Vector3 North = Vector3.forward;
+        private static readonly Vector3 WhereTheTargetLooks = North;
 
         private static TokenRequestScorer Scorer(float frontWeight = 0f, float fairnessWeight = 0f, float distancePenalty = 0f, float fairnessHorizonSeconds = FairnessHorizonSeconds)
         {
@@ -49,6 +50,26 @@ namespace ArkhamCombat.Tests
         public void AnAgentStandingOnTheTarget_IsNotInFrontOfIt()
         {
             float score = Scorer(frontWeight: 1f).Score(Target, NoWait, Target, North);
+
+            Assert.AreEqual(0f, score, Tolerance);
+        }
+
+        [Test]
+        public void ATargetLookingUpOrDown_HasItsFrontMeasuredOnTheGround()
+        {
+            Vector3 lookingNorthAndSteeplyDown = North + Vector3.down * 3f;
+
+            float score = Scorer(frontWeight: 1f).Score(North, NoWait, Target, lookingNorthAndSteeplyDown);
+
+            Assert.AreEqual(1f, score, Tolerance);
+        }
+
+        [Test]
+        public void WithoutARing_DistanceCostsNothing()
+        {
+            TokenRequestScorer scorerWithoutARing = new TokenRequestScorer(new EncounterDirectorSettings(slotRadius: 0f, frontWeight: 0f, fairnessWeight: 0f, distancePenalty: 1f));
+
+            float score = scorerWithoutARing.Score(Target, NoWait, Target, WhereTheTargetLooks);
 
             Assert.AreEqual(0f, score, Tolerance);
         }

@@ -27,12 +27,16 @@ namespace ArkhamCombat.Enemies
         [Tooltip("Which attack turns it waits for: melee attackers and ranged attackers each have their own tokens.")]
         [SerializeField] private AttackTokenType tokenType = AttackTokenType.Melee;
 
+        [Tooltip("What it swings when it is its turn to attack.")]
+        [SerializeField] private AttackDefinition attack;
+
         public HitReceiverProfile HitReceiverProfile => hitReceiverProfile;
         public float IdleMin => idleMin;
         public float IdleMax => idleMax;
         public float CombatRange => combatRange;
         public float MoveSpeed => moveSpeed;
         public AttackTokenType TokenType => tokenType;
+        public AttackDefinition Attack => attack;
 
         public void Configure(HitReceiverProfile hitReceiverProfile, float idleMin, float idleMax)
         {
@@ -48,6 +52,8 @@ namespace ArkhamCombat.Enemies
         }
 
         public void ConfigureTokenType(AttackTokenType tokenType) => this.tokenType = tokenType;
+
+        public void ConfigureAttack(AttackDefinition attack) => this.attack = attack;
 
         public bool Validate(List<string> errors)
         {
@@ -68,7 +74,38 @@ namespace ArkhamCombat.Enemies
                 errors.Add($"Archetype '{name}' has no move speed, so its enemies cannot walk to their target.");
             }
 
+            if (attack == null)
+            {
+                errors.Add($"Archetype '{name}' names no attack, so its enemies take their turn and swing nothing.");
+            }
+            else
+            {
+                bool isTheAttackWellFormed = attack.Validate(errors);
+                if (isTheAttackWellFormed)
+                {
+                    ValidateTheAttackTelegraphsBeforeItCanHit(errors);
+                }
+            }
+
             return errors.Count == errorCountBefore;
+        }
+
+        // An enemy's tree tracks its target while the attack telegraphs, and the player's answers open on the telegraph.
+        private void ValidateTheAttackTelegraphsBeforeItCanHit(List<string> errors)
+        {
+            if (attack.TelegraphWindow.IsZeroLength)
+            {
+                errors.Add($"Archetype '{name}': its attack '{attack.name}' has no telegraph window, so its enemies swing without warning and never track their target.");
+                return;
+            }
+
+            bool isStillTelegraphingAsTheHitOpens = attack.TelegraphWindow.End > attack.HitWindow.Start;
+            if (isStillTelegraphingAsTheHitOpens)
+            {
+                errors.Add(
+                    $"Archetype '{name}': its attack '{attack.name}' telegraphs until {attack.TelegraphWindow.End:0.00}, " +
+                    $"after its hit window opens at {attack.HitWindow.Start:0.00}. The telegraph has to end by then.");
+            }
         }
     }
 }

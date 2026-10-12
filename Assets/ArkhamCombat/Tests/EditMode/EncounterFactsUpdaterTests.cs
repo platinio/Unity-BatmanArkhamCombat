@@ -1,5 +1,6 @@
 using System.Text.RegularExpressions;
 using ArcaneOnyx.BehaviorTree;
+using ArkhamCombat.Combat;
 using ArkhamCombat.Encounter;
 using ArkhamCombat.Enemies;
 using NUnit.Framework;
@@ -28,6 +29,8 @@ namespace ArkhamCombat.Tests
         private VariableDeclarations facts;
         private EncounterFactsUpdater updater;
         private EnemyArchetype archetype;
+        private HitReceiverProfile targetsProfile;
+        private AttackDefinition jab;
 
         [SetUp]
         public void SetUp()
@@ -59,6 +62,8 @@ namespace ArkhamCombat.Tests
             Object.DestroyImmediate(target);
             Object.DestroyImmediate(encounterObject);
             Object.DestroyImmediate(archetype);
+            Object.DestroyImmediate(targetsProfile);
+            Object.DestroyImmediate(jab);
         }
 
         private void JoinTheEncounter()
@@ -81,6 +86,33 @@ namespace ArkhamCombat.Tests
             Tick();
 
             Assert.IsTrue(Fact(EnemyVariableNames.HasTarget));
+        }
+
+        [Test]
+        public void ATargetThatWasKilled_IsNoLongerATarget()
+        {
+            EnemyStatus targetsStatus = MakeTheTargetAFighterOneHitFromDeath();
+            JoinTheEncounter();
+            Tick();
+            Assert.IsTrue(Fact(EnemyVariableNames.HasTarget), "while the target lives");
+
+            targetsStatus.Receive(new HitInfo(jab, Vector3.forward));
+            Tick();
+
+            Assert.IsFalse(Fact(EnemyVariableNames.HasTarget));
+            Assert.IsFalse(Fact(EnemyVariableNames.InCombatRange));
+        }
+
+        private EnemyStatus MakeTheTargetAFighterOneHitFromDeath()
+        {
+            const float healthForOneHit = 10f;
+            targetsProfile = ReceiverProfile(healthForOneHit);
+            jab = Attack("Jab", damage: healthForOneHit);
+
+            EnemyStatus targetsStatus = target.AddComponent<EnemyStatus>();
+            targetsStatus.Construct(targetsProfile);
+            targetsStatus.Awake();
+            return targetsStatus;
         }
 
         [Test]

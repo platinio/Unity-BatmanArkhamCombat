@@ -94,6 +94,16 @@ namespace ArkhamCombat.Tests
         }
 
         [Test]
+        public void AnAgentLivingOnNoObject_IsNotATarget()
+        {
+            EncounterTargetRoster roster = new EncounterTargetRoster(director);
+
+            director.Register(new StandingAgent(), AttackTokenType.Melee);
+
+            Assert.IsEmpty(roster.Targets);
+        }
+
+        [Test]
         public void AnAgentWithNothingOnItToHit_IsNotATarget()
         {
             EncounterTargetRoster roster = new EncounterTargetRoster(director);

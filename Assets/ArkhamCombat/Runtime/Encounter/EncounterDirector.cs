@@ -147,8 +147,10 @@ namespace ArkhamCombat.Encounter
         }
 
         /// <summary>
-        /// True only while the agent holds a token. Otherwise the ask is remembered until the tick
-        /// ends, when the free tokens go to the best of those who asked, so the agent asks again.
+        /// True only while the agent holds a token, and asking while holding is what keeps a granted
+        /// token past the grace time. From anyone else it is an ask, remembered until the tick ends,
+        /// when the free tokens go to the best of those who asked: an agent that still wants the turn
+        /// asks again.
         /// </summary>
         public bool TryAcquireToken(IEncounterAgent agent)
         {
@@ -284,6 +286,7 @@ namespace ArkhamCombat.Encounter
             TakeBackTokensHeldTooLong();
             TakeBackTokensNobodyCameBackFor();
             GrantFreeTokensToTheBestRequests();
+            ForgetEveryRequest();
             AssignSlotsWhenDue(deltaTime);
         }
 
@@ -320,16 +323,32 @@ namespace ArkhamCombat.Encounter
             }
         }
 
-        // An agent that was interrupted between asking and attacking would otherwise sit on its token until the hold timeout.
-        private void TakeBackTokensNobodyCameBackFor()
+        private void TakeBackTokensHeldTooLong()
         {
-            bool mustATokenBeComeBackFor = settings.GrantGraceSeconds > 0.0f;
+            bool canATokenBeHeldTooLong = settings.MaxTokenHoldSeconds > 0.0f;
 
             for (int i = 0; i < agentStates.Count; i++)
             {
                 AgentState state = agentStates[i];
 
-                bool hasNotComeBackInTime = mustATokenBeComeBackFor
+                bool hasHeldItTooLong = canATokenBeHeldTooLong && state.HasToken && state.TokenHeldFor >= settings.MaxTokenHoldSeconds;
+                if (hasHeldItTooLong)
+                {
+                    Release(state);
+                }
+            }
+        }
+
+        // An agent that asked and then turned to something else would otherwise hold a turn it never took until the hold timeout.
+        private void TakeBackTokensNobodyCameBackFor()
+        {
+            bool isThereAGraceTime = settings.GrantGraceSeconds > 0.0f;
+
+            for (int i = 0; i < agentStates.Count; i++)
+            {
+                AgentState state = agentStates[i];
+
+                bool hasNotComeBackInTime = isThereAGraceTime
                                             && state.HasToken
                                             && !state.HasComeBackForItsToken
                                             && state.TokenHeldFor >= settings.GrantGraceSeconds;
@@ -344,7 +363,6 @@ namespace ArkhamCombat.Encounter
         {
             GrantFreeTokensOf(AttackTokenType.Melee);
             GrantFreeTokensOf(AttackTokenType.Ranged);
-            ForgetEveryRequest();
         }
 
         private void GrantFreeTokensOf(AttackTokenType tokenType)
@@ -408,22 +426,6 @@ namespace ArkhamCombat.Encounter
             for (int i = 0; i < agentStates.Count; i++)
             {
                 agentStates[i].IsAskingForAToken = false;
-            }
-        }
-
-        private void TakeBackTokensHeldTooLong()
-        {
-            bool canATokenBeHeldTooLong = settings.MaxTokenHoldSeconds > 0.0f;
-
-            for (int i = 0; i < agentStates.Count; i++)
-            {
-                AgentState state = agentStates[i];
-
-                bool hasHeldItTooLong = canATokenBeHeldTooLong && state.HasToken && state.TokenHeldFor >= settings.MaxTokenHoldSeconds;
-                if (hasHeldItTooLong)
-                {
-                    Release(state);
-                }
             }
         }
 

@@ -33,12 +33,12 @@ namespace ArkhamCombat.Tests
             float slotRadius = 4.0f)
         {
             return new EncounterDirector(new EncounterDirectorSettings(
-                maxMeleeTokens,
-                maxRangedTokens,
-                maxTokenHoldSeconds,
-                reacquireCooldownSeconds,
-                slotCount,
-                slotRadius,
+                maxMeleeTokens: maxMeleeTokens,
+                maxRangedTokens: maxRangedTokens,
+                maxTokenHoldSeconds: maxTokenHoldSeconds,
+                reacquireCooldownSeconds: reacquireCooldownSeconds,
+                slotCount: slotCount,
+                slotRadius: slotRadius,
                 slotReassignIntervalSeconds: 1.0f));
         }
 

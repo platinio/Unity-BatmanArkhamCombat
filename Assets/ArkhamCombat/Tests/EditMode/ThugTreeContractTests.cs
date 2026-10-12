@@ -21,6 +21,7 @@ namespace ArkhamCombat.Tests
         private const string HasTargetInCombatRangePath = "Assets/ArkhamCombat/Trees/Functions/HasTargetInCombatRange.asset";
         private const string TreesFolder = "Assets/ArkhamCombat/Trees";
         private const string SwitchedOnOrOff = "enabled";
+        private const string AttackSubTree = "Attack";
 
         private static BehaviorTreeGraphAsset Tree(string path)
         {
@@ -93,12 +94,119 @@ namespace ArkhamCombat.Tests
         }
 
         [Test]
-        public void TheRoot_TriesEveryReactionBeforeTheRing_AndIdleLast()
+        public void TheRoot_TriesEveryReactionFirst_ThenTheAttack_ThenTheRing_AndIdleLast()
         {
             string[] subTreesInPriorityOrder = BranchesOfTheRootInPriorityOrder().Select(SubTreeRunBy).ToArray();
 
-            CollectionAssert.AreEqual(new[] { "Death", "KnockedDown", "Stagger", "Flinch", "HoldSlot", "Approach", "Idle" }, subTreesInPriorityOrder);
+            CollectionAssert.AreEqual(new[] { "Death", "KnockedDown", "Stagger", "Flinch", "Attack", "HoldSlot", "Approach", "Idle" }, subTreesInPriorityOrder);
         }
+
+        [Test]
+        public void TheAttacksGuard_ChecksOnlyAtTheDoor_SoASwingIsNeverCutShortByIt()
+        {
+            ConditionalExecution guard = Tree(RootPath).graph.Nodes.OfType<ConditionalExecution>().Single(candidate => SubTreeRunBy(candidate.Owner) == AttackSubTree);
+
+            Assert.IsNotInstanceOf<ReactiveGuard>(guard);
+        }
+
+        [Test]
+        [TestCase(AttackSubTree)]
+        [TestCase("HoldSlot")]
+        public void TheAttackAndTheRing_AskTheSameFunctionWhetherTheTargetIsInCombatRange(string subTree)
+        {
+            FunctionGraphAsset hasTargetInCombatRange = AssetDatabase.LoadAssetAtPath<FunctionGraphAsset>(HasTargetInCombatRangePath);
+            ConditionalExecution guard = Tree(RootPath).graph.Nodes.OfType<ConditionalExecution>().Single(candidate => SubTreeRunBy(candidate.Owner) == subTree);
+
+            Assert.AreSame(hasTargetInCombatRange, FunctionAsking(guard));
+        }
+
+        [Test]
+        public void TheRoot_HandsTheAttackBranchTheAttackTheArchetypeWriterWrites()
+        {
+            BehaviorTreeNode attackBranch = BranchesOfTheRootInPriorityOrder().Single(branch => SubTreeRunBy(branch) == AttackSubTree);
+
+            GetVariable read = (GetVariable)WhatFeeds(attackBranch, EnemyVariableNames.Attack);
+
+            Assert.AreEqual(EnemyVariableNames.Attack, read.defaultValues[nameof(GetVariable.Key)]);
+            Assert.IsTrue(AttackTree().requiredDeclarations.IsDefined(EnemyVariableNames.Attack));
+        }
+
+        [Test]
+        public void AnAttack_AsksForTheTurnFirst_AndGivesItBackLast_EvenWhenTheSwingFails()
+        {
+            List<BehaviorTreeNode> steps = StepsOfTheAttack();
+
+            Assert.AreEqual(3, steps.Count);
+            Assert.IsInstanceOf<TryAcquireAttackToken>(steps[0]);
+            Assert.IsInstanceOf<ReturnSuccess>(steps[1], "a walk-in that times out must not skip giving the turn back");
+            Assert.IsInstanceOf<ReleaseAttackToken>(steps[2]);
+        }
+
+        [Test]
+        public void TheSwing_WalksIn_SquaresUp_AndAsksWhetherItIsStillItsTurn_BeforeItStrikes()
+        {
+            List<BehaviorTreeNode> stepsOfTheSwing = StepsOfTheSwing();
+
+            Assert.AreEqual(4, stepsOfTheSwing.Count);
+            Assert.IsInstanceOf<MoveToStrikeDistanceNode>(stepsOfTheSwing[0]);
+            Assert.AreEqual("FaceTarget", SubTreeRunBy(stepsOfTheSwing[1]));
+            Assert.IsInstanceOf<TryAcquireAttackToken>(stepsOfTheSwing[2], "a thug that lost the turn while it walked in must not swing");
+            Assert.IsInstanceOf<ParallelSelector>(stepsOfTheSwing[3]);
+        }
+
+        [Test]
+        public void TheStrike_EndsWhenItsActionDoes_EvenWhenTheActionCouldNotPlay()
+        {
+            BehaviorTreeGraph attack = AttackTree().graph;
+            BehaviorTreeNode strike = StepsOfTheSwing().OfType<ParallelSelector>().Single();
+
+            BehaviorTreeNode sideThatEndsTheStrike = attack.ChildrenInPriorityOrder(strike).First();
+
+            Assert.IsInstanceOf<ReturnSuccess>(sideThatEndsTheStrike, "a Play Action that fails would otherwise leave the tracking side running for ever");
+            Assert.IsInstanceOf<PlayActionNode>(attack.ChildrenInPriorityOrder(sideThatEndsTheStrike).Single());
+        }
+
+        [Test]
+        public void AnAttackingThug_TracksItsTarget_ExactlyWhileTheFactTheRelayWritesIsTrue()
+        {
+            ReactiveGuard guard = AttackTree().graph.Nodes.OfType<ReactiveGuard>().Single();
+
+            Assert.AreEqual("FaceTarget", SubTreeRunBy(guard.Owner));
+            CollectionAssert.AreEquivalent(new[] { EnemyVariableNames.Telegraphing }, FunctionAsking(guard).DeriveReadKeys(), "what the guard asks");
+            CollectionAssert.AreEquivalent(new[] { EnemyVariableNames.Telegraphing }, guard.Triggers.SelectMany(trigger => trigger.Keys).ToArray(), "what wakes it");
+        }
+
+        [Test]
+        public void TheTrackingGuard_StartsTheMomentTheTelegraphOpens_AndStopsTheMomentItCloses()
+        {
+            ReactiveGuard guard = AttackTree().graph.Nodes.OfType<ReactiveGuard>().Single();
+
+            Assert.IsTrue(guard.TakesOverLowerPriority);
+            Assert.IsTrue(guard.StopsItsOwnBranch);
+        }
+
+        private static BehaviorTreeGraphAsset AttackTree() => Tree(SubTreesFolder + AttackSubTree + ".asset");
+
+        private static List<BehaviorTreeNode> StepsOfTheAttack()
+        {
+            BehaviorTreeGraph attack = AttackTree().graph;
+            BehaviorTreeNode spine = attack.ChildrenInPriorityOrder(attack.EntryNode).Single();
+            return attack.ChildrenInPriorityOrder(spine);
+        }
+
+        private static List<BehaviorTreeNode> StepsOfTheSwing()
+        {
+            BehaviorTreeGraph attack = AttackTree().graph;
+            BehaviorTreeNode swingOrGiveUp = StepsOfTheAttack().OfType<ReturnSuccess>().Single();
+            BehaviorTreeNode swing = attack.ChildrenInPriorityOrder(swingOrGiveUp).Single();
+            return attack.ChildrenInPriorityOrder(swing);
+        }
+
+        private static BehaviorTreeNode WhatFeeds(BehaviorTreeNode node, string port) =>
+            (BehaviorTreeNode)node.valueInputs[port].connection.source.behaviorTreeNode;
+
+        private static FunctionGraphAsset FunctionAsking(ConditionalExecution guard) =>
+            ((VisualScriptGraphVariable)WhatFeeds(guard, "Value")).Function;
 
         [Test]
         public void TheRingsGuards_WakeOnTheFactsTheUpdaterWrites()
@@ -196,7 +304,7 @@ namespace ArkhamCombat.Tests
         {
             string[] guardedSubTrees = Tree(RootPath).graph.Nodes.OfType<ConditionalExecution>().Select(guard => SubTreeRunBy(guard.Owner)).ToArray();
 
-            CollectionAssert.AreEquivalent(new[] { "Death", "KnockedDown", "Stagger", "Flinch", "HoldSlot", "Approach" }, guardedSubTrees);
+            CollectionAssert.AreEquivalent(new[] { "Death", "KnockedDown", "Stagger", "Flinch", AttackSubTree, "HoldSlot", "Approach" }, guardedSubTrees);
         }
 
         [Test]

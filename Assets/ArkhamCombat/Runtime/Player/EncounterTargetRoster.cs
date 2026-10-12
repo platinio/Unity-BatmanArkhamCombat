@@ -35,7 +35,8 @@ namespace ArkhamCombat.Player
         private static bool TryGetTheTargetOn(IEncounterAgent agent, out ICombatTarget target)
         {
             target = null;
-            return agent is Component agentComponent && agentComponent.TryGetComponent(out target);
+            GameObject agentObject = agent.Owner;
+            return agentObject != null && agentObject.TryGetComponent(out target);
         }
 
         private void RemoveTheTargetOf(IEncounterAgent agent)
