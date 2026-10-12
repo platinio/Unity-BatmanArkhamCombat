@@ -3,8 +3,8 @@ using UnityEngine;
 namespace ArkhamCombat.Combat
 {
     /// <summary>
-    /// The runner never touches a transform: the player's mover turns the offset into the frame's
-    /// motion intent, an enemy's into a NavMeshAgent move.
+    /// The runner never touches a transform: it asks for the movement here, and whoever moves the
+    /// character applies it.
     /// </summary>
     public interface IWarpMover
     {

@@ -120,6 +120,27 @@ namespace ArkhamCombat.Tests
         }
 
         [Test]
+        public void AStrikeInASceneWhoseDispatcherIsGone_StillLands_AndAnnouncesNothing()
+        {
+            GameObject sceneEventsObject = HiddenObject("Hermes whose dispatcher is gone");
+            GameEventDispatcher dispatcherThatIsGone = sceneEventsObject.AddComponent<GameEventDispatcher>();
+            Object.DestroyImmediate(dispatcherThatIsGone);
+            TargetedHitWindowListener listenerInThatScene = new TargetedHitWindowListener(
+                new HitCheckSettings(), character.transform, pendingWarpMovement, new SceneGameEventsWith(dispatcherThatIsGone));
+            PointCombatTarget target = TargetAhead(WithinReach);
+
+            try
+            {
+                Assert.DoesNotThrow(() => listenerInThatScene.HitWindowOpened(jab, target));
+                Assert.AreEqual(1, target.HitsTaken);
+            }
+            finally
+            {
+                Object.DestroyImmediate(sceneEventsObject);
+            }
+        }
+
+        [Test]
         public void AStrikeThatLands_IsAnnouncedAsLanded()
         {
             listener.HitWindowOpened(jab, TargetAhead(WithinReach));

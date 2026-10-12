@@ -60,16 +60,27 @@ namespace ArkhamCombat.Characters
         private void AnnounceStrikeLanded(AttackDefinition attack, ICombatTarget victim)
         {
 #if HERMES_EVENTS_GENERATED
-            sceneGameEvents?.GameEventDispatcher?.StrikeLandedGameEvent.Raise(character.gameObject, attack, GameObjectOf(victim));
+            if (CanAnnounceStrikes)
+            {
+                sceneGameEvents.GameEventDispatcher.StrikeLandedGameEvent.Raise(character.gameObject, attack, GameObjectOf(victim));
+            }
 #endif
         }
 
         private void AnnounceStrikeWhiffed(AttackDefinition attack)
         {
 #if HERMES_EVENTS_GENERATED
-            sceneGameEvents?.GameEventDispatcher?.StrikeWhiffedGameEvent.Raise(character.gameObject, attack);
+            if (CanAnnounceStrikes)
+            {
+                sceneGameEvents.GameEventDispatcher.StrikeWhiffedGameEvent.Raise(character.gameObject, attack);
+            }
 #endif
         }
+
+#if HERMES_EVENTS_GENERATED
+        // Compared with != and not skipped with ?.: a dispatcher that was destroyed or never added is not a C# null.
+        private bool CanAnnounceStrikes => sceneGameEvents != null && sceneGameEvents.GameEventDispatcher != null;
+#endif
 
         // A target that is not a component has no object to name, and the event carries null for it.
         private static GameObject GameObjectOf(ICombatTarget victim) =>

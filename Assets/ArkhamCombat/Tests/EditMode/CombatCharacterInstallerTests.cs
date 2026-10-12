@@ -26,6 +26,7 @@ namespace ArkhamCombat.Tests
     {
         private const float TickSeconds = 0.1f;
         private const float PressLifetimeSeconds = 10f;
+        private const float WithinTheJabsReach = 1f;
 
         private static readonly Vector3 FarFromTheOtherCharacter = new Vector3(20f, 0f, 0f);
 
@@ -79,18 +80,6 @@ namespace ArkhamCombat.Tests
             kinds.Destroy();
         }
 
-        [Test]
-        public void TheCharactersStrike_IsMeasuredFromThatCharacter_NotFromAnotherOneInTheScene()
-        {
-            character.transform.position = FarFromTheOtherCharacter;
-            GiveTheCharacterAStanceWithoutConditions();
-            InstallTheCharacter();
-            PointCombatTarget targetInFrontOfTheCharacter = new PointCombatTarget(FarFromTheOtherCharacter + Vector3.forward);
-
-            characterContainer.Resolve<IHitWindowListener>().HitWindowOpened(jab, targetInFrontOfTheCharacter);
-
-            Assert.AreEqual(1, targetInFrontOfTheCharacter.HitsTaken);
-        }
 
         [Test]
         public void TheHitReceiverProfile_IsBoundForTheCharacter_WhenOneIsAssigned()
@@ -218,6 +207,19 @@ namespace ArkhamCombat.Tests
             InstallTheCharacter();
 
             Assert.AreSame(character.GetComponent<CharacterMotor>(), characterContainer.Resolve<CharacterMotor>());
+        }
+
+        [Test]
+        public void TheCharactersStrike_IsMeasuredFromThatCharacter_NotFromAnotherOneInTheScene()
+        {
+            character.transform.position = FarFromTheOtherCharacter;
+            GiveTheCharacterAStanceWithoutConditions();
+            InstallTheCharacter();
+            PointCombatTarget targetInFrontOfTheCharacter = new PointCombatTarget(FarFromTheOtherCharacter + Vector3.forward * WithinTheJabsReach);
+
+            characterContainer.Resolve<IHitWindowListener>().HitWindowOpened(jab, targetInFrontOfTheCharacter);
+
+            Assert.AreEqual(1, targetInFrontOfTheCharacter.HitsTaken);
         }
 
 #if HERMES_EVENTS_GENERATED
