@@ -1,0 +1,26 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: a0e48880e2ff4a747a37a932bb4aa5e5, type: 3}
+  m_Name: ReactionOrDefault
+  m_EditorClassIdentifier: ArcaneOnyx.VisualScriptingExtension.Runtime::ArcaneOnyx.VisualScriptingExtension.FunctionGraphAsset
+  _data:
+    _json: '{"pure":true,"watchedKeys":["reactionOverride"],"description":"The action
+      a paired attack brought for this agent to play (its reactionOverride), or ''default''
+      when there is none. A reaction branch feeds its Play Action through it, so
+      a counter can borrow the branch for its own reaction.","graph":{"variables":{"Kind":"Flow","collection":{"$content":[],"$version":"A"},"$version":"A"},"controlInputDefinitions":[{"key":"Enter","label":"Enter","summary":null,"hideLabel":false}],"controlOutputDefinitions":[{"key":"Exit","label":"Exit","summary":null,"hideLabel":false}],"valueInputDefinitions":[{"hasDefaultValue":false,"defaultValue":null,"_type":"ArkhamCombat.Combat.ActionDefinition","key":"default","label":"default","summary":null,"hideLabel":false}],"valueOutputDefinitions":[{"_type":"ArkhamCombat.Combat.ActionDefinition","key":"Result","label":"Result","summary":null,"hideLabel":false}],"title":null,"summary":null,"pan":{"x":0.0,"y":0.0},"zoom":1.0,"elements":[{"defaultValues":{},"position":{"x":-420.0,"y":0.0},"guid":"c8d1ea91-7eff-4ef9-9837-14f673ef458b","$version":"A","$type":"ArcaneOnyx.VisualScriptingExtension.ScriptGraphInput","$id":"14"},{"defaultValues":{},"position":{"x":420.0,"y":0.0},"guid":"8527e30d-016b-4a78-ad60-f2e9063912d5","$version":"A","$type":"ArcaneOnyx.VisualScriptingExtension.ScriptGraphOutput","$id":"16"},{"specifyFallback":true,"kind":"Object","defaultValues":{"name":{"$content":"reactionOverride","$type":"System.String"},"object":null},"position":{"x":-300.0,"y":180.0},"guid":"35baa0ec-4d29-4492-9367-b256018a17c5","$version":"A","$type":"Unity.VisualScripting.GetVariable","$id":"18"},{"defaultValues":{},"position":{"x":60.0,"y":140.0},"guid":"3eed8c38-f705-4e3a-a459-dda408c54c56","$version":"A","$type":"Unity.VisualScripting.NullCoalesce","$id":"20"},{"defaultValues":{},"position":{"x":-560.0,"y":300.0},"guid":"2fc53c09-20ec-4716-b518-5c433e181d62","$version":"A","$type":"Unity.VisualScripting.Null","$id":"22"},{"sourceUnit":{"$ref":"14"},"sourceKey":"Enter","destinationUnit":{"$ref":"16"},"destinationKey":"Exit","guid":"568ec898-e3a0-4f6e-b7af-1bb9e8f5ea61","$type":"Unity.VisualScripting.ControlConnection"},{"sourceUnit":{"$ref":"14"},"sourceKey":"default","destinationUnit":{"$ref":"20"},"destinationKey":"fallback","guid":"aa528ade-cc31-469c-a257-aa8e51796baa","$type":"Unity.VisualScripting.ValueConnection"},{"sourceUnit":{"$ref":"20"},"sourceKey":"result","destinationUnit":{"$ref":"16"},"destinationKey":"Result","guid":"3bdf3630-f95b-46b2-998e-eb5e88843418","$type":"Unity.VisualScripting.ValueConnection"},{"sourceUnit":{"$ref":"18"},"sourceKey":"value","destinationUnit":{"$ref":"20"},"destinationKey":"input","guid":"0a3cc867-b331-473e-a3bc-09f9b2d9ba63","$type":"Unity.VisualScripting.ValueConnection"},{"sourceUnit":{"$ref":"22"},"sourceKey":"null","destinationUnit":{"$ref":"18"},"destinationKey":"fallback","guid":"372d221f-4f77-474c-9a74-38fb4fda2f36","$type":"Unity.VisualScripting.ValueConnection"}],"$version":"A"}}'
+    _objectReferences: []
+  pure: 1
+  watchedKeys:
+  - reactionOverride
+  description: The action a paired attack brought for this agent to play (its reactionOverride),
+    or 'default' when there is none. A reaction branch feeds its Play Action through
+    it, so a counter can borrow the branch for its own reaction.

@@ -20,5 +20,11 @@ namespace ArkhamCombat.Combat
 
         /// <summary>A target nothing can hurt ignores every hit.</summary>
         HitResult Receive(HitInfo hit) => HitResult.Ignored;
+
+        /// <summary>
+        /// Told as a paired attack aimed at it starts, so it can react from that moment rather than
+        /// when the hit lands. A target that plays no reactions lets the attack start without it.
+        /// </summary>
+        void BeginPairedReaction(AttackDefinition attack) { }
     }
 }
