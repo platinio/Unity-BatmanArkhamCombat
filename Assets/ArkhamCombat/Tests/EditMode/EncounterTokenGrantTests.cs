@@ -1,5 +1,8 @@
+using System.Collections.Generic;
 using ArkhamCombat.Encounter;
+using ArkhamCombat.Player;
 using NUnit.Framework;
+using UnityEditor;
 using UnityEngine;
 using static ArkhamCombat.Tests.CombatTestDoubles;
 
@@ -132,7 +135,7 @@ namespace ArkhamCombat.Tests
         [Test]
         public void AnAgentThatWaitedLong_IsGrantedBeforeABetterPlacedOneThatJustHadItsTurn()
         {
-            EncounterDirector director = Director(fairnessWeight: 2f);
+            EncounterDirector director = Director();
             StandingAgent inFront = Join(director, North);
             StandingAgent behind = Join(director, South);
             director.Tick(FairnessHorizonSeconds);
@@ -146,6 +149,69 @@ namespace ArkhamCombat.Tests
             director.Tick(NoTime);
 
             Assert.IsTrue(director.HasToken(behind));
+        }
+
+        private const string CombatConfigPath = "Assets/ArkhamCombat/Settings/CombatConfig.asset";
+        private const float FightSeconds = 60f;
+        private const float FightTickSeconds = 0.1f;
+        private const float SecondsToWalkInAndSwing = 2f;
+
+        // The arena as it was when one thug never got a turn: two thugs ahead of the camera and one behind it.
+        [Test]
+        public void InAFightWithTheShippedTuning_EveryAgentGetsATurn_AndTheOnesInFrontGetMore()
+        {
+            EncounterDirectorSettings shippedTuning = AssetDatabase.LoadAssetAtPath<CombatConfig>(CombatConfigPath).Encounter;
+            EncounterDirector director = new EncounterDirector(shippedTuning);
+            director.SetTarget(Vector3.zero, WhereTheTargetLooks);
+            StandingAgent aheadOnTheLeft = Join(director, OnTheRing(shippedTuning, degreesOffTheFront: -45f));
+            StandingAgent aheadOnTheRight = Join(director, OnTheRing(shippedTuning, degreesOffTheFront: 45f));
+            StandingAgent behind = Join(director, OnTheRing(shippedTuning, degreesOffTheFront: 180f));
+
+            Dictionary<IEncounterAgent, int> turns = FightAndCountTheTurns(director, aheadOnTheLeft, aheadOnTheRight, behind);
+
+            Assert.Greater(turns[behind], 0, "the agent behind the target is never left out");
+            Assert.Greater(turns[aheadOnTheLeft], turns[behind]);
+            Assert.Greater(turns[aheadOnTheRight], turns[behind]);
+        }
+
+        private static Vector3 OnTheRing(EncounterDirectorSettings settings, float degreesOffTheFront) =>
+            Quaternion.Euler(0f, degreesOffTheFront, 0f) * WhereTheTargetLooks * settings.SlotRadius;
+
+        // Every agent asks on every tick, as a tree does, and whoever has the turn keeps it for the time an attack takes.
+        private static Dictionary<IEncounterAgent, int> FightAndCountTheTurns(EncounterDirector director, params StandingAgent[] agents)
+        {
+            Dictionary<IEncounterAgent, int> turns = new Dictionary<IEncounterAgent, int>();
+            Dictionary<IEncounterAgent, float> secondsIntoItsTurn = new Dictionary<IEncounterAgent, float>();
+            foreach (StandingAgent agent in agents)
+            {
+                turns[agent] = 0;
+                secondsIntoItsTurn[agent] = 0f;
+            }
+
+            director.TokenGranted += agent => turns[agent]++;
+
+            for (float elapsed = 0f; elapsed < FightSeconds; elapsed += FightTickSeconds)
+            {
+                foreach (StandingAgent agent in agents)
+                {
+                    bool isItsTurn = director.TryAcquireToken(agent);
+                    if (!isItsTurn)
+                    {
+                        continue;
+                    }
+
+                    secondsIntoItsTurn[agent] += FightTickSeconds;
+                    if (secondsIntoItsTurn[agent] >= SecondsToWalkInAndSwing)
+                    {
+                        director.ReleaseToken(agent);
+                        secondsIntoItsTurn[agent] = 0f;
+                    }
+                }
+
+                director.Tick(FightTickSeconds);
+            }
+
+            return turns;
         }
 
         [Test]

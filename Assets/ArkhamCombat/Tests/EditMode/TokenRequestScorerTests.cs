@@ -87,8 +87,8 @@ namespace ArkhamCombat.Tests
         [TestCase(0f, 0f, TestName = "NoWait_ScoresNoneOfTheFairnessWeight")]
         [TestCase(3f, 0.5f, TestName = "HalfTheHorizon_ScoresHalfTheFairnessWeight")]
         [TestCase(6f, 1f, TestName = "TheWholeHorizon_ScoresAllOfTheFairnessWeight")]
-        [TestCase(60f, 1f, TestName = "WaitingPastTheHorizon_CountsForNoMore")]
-        public void TheFairnessTerm_GrowsWithTheWaitUpToTheHorizon(float secondsWithoutAToken, float expectedScore)
+        [TestCase(60f, 10f, TestName = "TenHorizons_ScoreTenTimesTheFairnessWeight")]
+        public void TheFairnessTerm_GrowsWithTheWait_AndNeverStops(float secondsWithoutAToken, float expectedScore)
         {
             float score = Scorer(fairnessWeight: 1f).Score(North, secondsWithoutAToken, Target, North);
 

@@ -39,10 +39,10 @@ namespace ArkhamCombat.Encounter
         [Tooltip("How much standing in front of the target counts when several agents ask for the same token.")]
         [SerializeField, Min(0f)] private float frontWeight = 1.0f;
 
-        [Tooltip("How much a long wait since its last token counts when several agents ask for the same token.")]
+        [Tooltip("How much each fairness horizon waited since its last token counts when several agents ask for the same token. The wait never stops counting, so every agent gets a turn in the end; a higher weight brings it sooner.")]
         [SerializeField, Min(0f)] private float fairnessWeight = 0.6f;
 
-        [Tooltip("Seconds without a token after which waiting longer no longer counts for more. 0 switches the fairness weight off.")]
+        [Tooltip("Seconds without a token that are worth one fairness weight. 0 switches the fairness weight off.")]
         [SerializeField, Min(0f)] private float fairnessHorizonSeconds = 6.0f;
 
         [Tooltip("How much being far from the target counts against an agent asking for a token. A full ring radius away costs all of it.")]
