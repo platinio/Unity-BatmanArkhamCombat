@@ -40,7 +40,6 @@ namespace ArkhamCombat.Enemies
             Write(EnemyVariableNames.HasToken, encounterAgent.HasToken);
         }
 
-        // A target that can be struck and no longer is, the dead, is nobody to walk up to or swing at.
         private static bool IsOutOfTheFight(Transform target) =>
             target.TryGetComponent(out ICombatTarget combatTarget) && !combatTarget.IsValid;
 

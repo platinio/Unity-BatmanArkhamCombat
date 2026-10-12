@@ -20,6 +20,7 @@ namespace ArkhamCombat.Tests
         private VariableDeclarations facts;
         private EnemyArchetypeWriter writer;
         private EnemyArchetype archetype;
+        private AttackDefinition haymaker;
 
         [SetUp]
         public void SetUp()
@@ -27,6 +28,7 @@ namespace ArkhamCombat.Tests
             archetype = ScriptableObject.CreateInstance<EnemyArchetype>();
             archetype.Configure(ReceiverProfile(), IdleMin, IdleMax);
             archetype.ConfigureMovement(CombatRange, MoveSpeed);
+            haymaker = Attack("Haymaker");
 
             enemy = HiddenObject("Enemy");
             enemy.AddComponent<Variables>();
@@ -39,6 +41,7 @@ namespace ArkhamCombat.Tests
         {
             Object.DestroyImmediate(archetype.HitReceiverProfile);
             Object.DestroyImmediate(archetype);
+            Object.DestroyImmediate(haymaker);
             Object.DestroyImmediate(enemy);
         }
 
@@ -66,14 +69,12 @@ namespace ArkhamCombat.Tests
         [Test]
         public void WritesTheArchetypesAttackOntoTheAgent()
         {
-            AttackDefinition haymaker = Attack("Haymaker");
             archetype.ConfigureAttack(haymaker);
             writer.Construct(archetype);
 
             writer.WriteTunables();
 
             Assert.AreSame(haymaker, facts.Get(EnemyVariableNames.Attack));
-            Object.DestroyImmediate(haymaker);
         }
 
         [Test]

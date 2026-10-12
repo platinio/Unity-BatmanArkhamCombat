@@ -80,10 +80,32 @@ namespace ArkhamCombat.Enemies
             }
             else
             {
-                attack.Validate(errors);
+                bool isTheAttackWellFormed = attack.Validate(errors);
+                if (isTheAttackWellFormed)
+                {
+                    ValidateTheAttackTelegraphsBeforeItCanHit(errors);
+                }
             }
 
             return errors.Count == errorCountBefore;
+        }
+
+        // An enemy's tree tracks its target while the attack telegraphs, and the player's answers open on the telegraph.
+        private void ValidateTheAttackTelegraphsBeforeItCanHit(List<string> errors)
+        {
+            if (attack.TelegraphWindow.IsZeroLength)
+            {
+                errors.Add($"Archetype '{name}': its attack '{attack.name}' has no telegraph window, so its enemies swing without warning and never track their target.");
+                return;
+            }
+
+            bool isStillTelegraphingAsTheHitOpens = attack.TelegraphWindow.End > attack.HitWindow.Start;
+            if (isStillTelegraphingAsTheHitOpens)
+            {
+                errors.Add(
+                    $"Archetype '{name}': its attack '{attack.name}' telegraphs until {attack.TelegraphWindow.End:0.00}, " +
+                    $"after its hit window opens at {attack.HitWindow.Start:0.00}. The telegraph has to end by then.");
+            }
         }
     }
 }

@@ -29,6 +29,8 @@ namespace ArkhamCombat.Tests
         private VariableDeclarations facts;
         private EncounterFactsUpdater updater;
         private EnemyArchetype archetype;
+        private HitReceiverProfile targetsProfile;
+        private AttackDefinition jab;
 
         [SetUp]
         public void SetUp()
@@ -60,6 +62,8 @@ namespace ArkhamCombat.Tests
             Object.DestroyImmediate(target);
             Object.DestroyImmediate(encounterObject);
             Object.DestroyImmediate(archetype);
+            Object.DestroyImmediate(targetsProfile);
+            Object.DestroyImmediate(jab);
         }
 
         private void JoinTheEncounter()
@@ -87,7 +91,7 @@ namespace ArkhamCombat.Tests
         [Test]
         public void ATargetThatWasKilled_IsNoLongerATarget()
         {
-            EnemyStatus targetsStatus = MakeTheTargetAFighterOneHitFromDeath(out HitReceiverProfile profile, out AttackDefinition jab);
+            EnemyStatus targetsStatus = MakeTheTargetAFighterOneHitFromDeath();
             JoinTheEncounter();
             Tick();
             Assert.IsTrue(Fact(EnemyVariableNames.HasTarget), "while the target lives");
@@ -97,18 +101,16 @@ namespace ArkhamCombat.Tests
 
             Assert.IsFalse(Fact(EnemyVariableNames.HasTarget));
             Assert.IsFalse(Fact(EnemyVariableNames.InCombatRange));
-            Object.DestroyImmediate(profile);
-            Object.DestroyImmediate(jab);
         }
 
-        private EnemyStatus MakeTheTargetAFighterOneHitFromDeath(out HitReceiverProfile profile, out AttackDefinition jab)
+        private EnemyStatus MakeTheTargetAFighterOneHitFromDeath()
         {
             const float healthForOneHit = 10f;
-            profile = ReceiverProfile(healthForOneHit);
+            targetsProfile = ReceiverProfile(healthForOneHit);
             jab = Attack("Jab", damage: healthForOneHit);
 
             EnemyStatus targetsStatus = target.AddComponent<EnemyStatus>();
-            targetsStatus.Construct(profile);
+            targetsStatus.Construct(targetsProfile);
             targetsStatus.Awake();
             return targetsStatus;
         }

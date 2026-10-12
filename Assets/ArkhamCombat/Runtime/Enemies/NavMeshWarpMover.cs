@@ -26,7 +26,8 @@ namespace ArkhamCombat.Enemies
         {
             Vector3 warpMovement = combatActions.TakePendingWarpMovement();
 
-            if (navMeshAgent.isOnNavMesh)
+            bool isThereAnythingToWalk = warpMovement != Vector3.zero;
+            if (isThereAnythingToWalk && navMeshAgent.isOnNavMesh)
             {
                 navMeshAgent.Move(warpMovement);
             }

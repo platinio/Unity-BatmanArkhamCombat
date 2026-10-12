@@ -52,19 +52,38 @@ namespace ArkhamCombat.Tests
         }
 
         [Test]
-        public void APulse_FlashesAsManyTimesAsFitTheCuesDuration()
+        public void APulse_FlashesOncePerFlashLength_WhenTheCueIsAWholeNumberOfThem()
         {
-            const int flashesThatFit = 3;
+            const int flashes = 3;
 
-            Tween pulse = TheTweenStartedBy(new PulseCue(), flashesThatFit * DefaultSecondsPerPulseFlash + 0.05f);
+            Tween pulse = TheTweenStartedBy(new PulseCue(), flashes * DefaultSecondsPerPulseFlash);
 
-            Assert.AreEqual(LoopsPerFlash * flashesThatFit, pulse.Loops());
+            Assert.AreEqual(LoopsPerFlash * flashes, pulse.Loops());
+        }
+
+        [TestCase(0.45f, 2, TestName = "APulseALittleOverTwoFlashLengths_FlashesTwice")]
+        [TestCase(0.75f, 4, TestName = "APulseOfNearlyFourFlashLengths_FlashesFourTimes")]
+        public void APulseThatIsNotAWholeNumberOfFlashes_PlaysTheNearestWholeNumber(float cueSeconds, int expectedFlashes)
+        {
+            Tween pulse = TheTweenStartedBy(new PulseCue(), cueSeconds);
+
+            Assert.AreEqual(LoopsPerFlash * expectedFlashes, pulse.Loops());
+        }
+
+        [TestCase(0.45f)]
+        [TestCase(0.6f)]
+        [TestCase(0.75f)]
+        public void APulse_EndsWhenItsCueDoes(float cueSeconds)
+        {
+            Tween pulse = TheTweenStartedBy(new PulseCue(), cueSeconds);
+
+            Assert.AreEqual(cueSeconds, pulse.Duration(includeLoops: true), 1e-4f);
         }
 
         [Test]
         public void APulseShorterThanOneFlash_StillFlashesOnce()
         {
-            Tween pulse = TheTweenStartedBy(new PulseCue(), DefaultSecondsPerPulseFlash / 2f);
+            Tween pulse = TheTweenStartedBy(new PulseCue(), DefaultSecondsPerPulseFlash / 4f);
 
             Assert.AreEqual(LoopsPerFlash, pulse.Loops());
         }

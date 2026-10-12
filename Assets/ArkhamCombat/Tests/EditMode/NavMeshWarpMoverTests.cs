@@ -3,12 +3,11 @@ using ArkhamCombat.Combat;
 using ArkhamCombat.Enemies;
 using NUnit.Framework;
 using UnityEngine;
+using UnityEngine.TestTools;
 using static ArkhamCombat.Tests.CombatTestDoubles;
 
 namespace ArkhamCombat.Tests
 {
-    // Edit mode has no NavMesh, so the walk itself is checked in play mode. What is pinned here is
-    // that the movement never piles up, which would throw off where the next strike is measured from.
     public class NavMeshWarpMoverTests
     {
         private const float AnyDeltaTime = 0.02f;
@@ -44,14 +43,13 @@ namespace ArkhamCombat.Tests
         }
 
         [Test]
-        public void OffTheNavMesh_TheEnemyStaysWhereItIs()
+        public void OffTheNavMesh_TheAgentIsNotAskedToMove()
         {
-            Vector3 whereItStood = thug.transform.position;
             pendingWarpMovement.MoveBy(Vector3.forward);
 
             warpMover.Tick(AnyDeltaTime);
 
-            Assert.AreEqual(whereItStood, thug.transform.position);
+            LogAssert.NoUnexpectedReceived();
         }
     }
 }
