@@ -120,6 +120,18 @@ namespace ArkhamCombat.Tests
         }
 
         [Test]
+        public void TheEnemysEncounterAgent_WaitsForTheKindOfTokenItsArchetypeNames()
+        {
+            archetype.ConfigureTokenType(AttackTokenType.Ranged);
+            InstallTheEnemyWithItsArchetype();
+
+            IEncounterAgentSettings agentSettings = enemyContainer.Resolve<IEncounterAgentSettings>();
+
+            Assert.AreSame(archetype, agentSettings);
+            Assert.AreEqual(AttackTokenType.Ranged, agentSettings.TokenType);
+        }
+
+        [Test]
         public void TheWarpMoverIsOneObjectUnderBothNames()
         {
             InstallTheEnemyWithItsArchetype();
@@ -168,6 +180,7 @@ namespace ArkhamCombat.Tests
 
             Assert.IsNotNull(enemyContainer.Resolve<ActionRunner>());
             Assert.DoesNotThrow(() => AddToTheEnemyAndInject<EnemyArchetypeWriter>(), "what needs the archetype goes without it");
+            Assert.DoesNotThrow(() => AddToTheEnemyAndInject<EncounterAgent>(), "and so does its encounter agent");
         }
 
         [Test]

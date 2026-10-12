@@ -49,6 +49,7 @@ namespace ArkhamCombat.Enemies
             if (hasArchetype)
             {
                 Container.Bind<EnemyArchetype>().FromInstance(archetype);
+                Container.Bind<IEncounterAgentSettings>().FromInstance(archetype);
             }
 
             bool hasProfile = hasArchetype && archetype.HitReceiverProfile != null;

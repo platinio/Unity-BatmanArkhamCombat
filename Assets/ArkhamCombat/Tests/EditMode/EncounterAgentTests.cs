@@ -21,7 +21,7 @@ namespace ArkhamCombat.Tests
         [SetUp]
         public void SetUp()
         {
-            director = new EncounterDirector(new EncounterDirectorSettings(maxMeleeTokens: 1, maxRangedTokens: 0));
+            director = new EncounterDirector(new EncounterDirectorSettings(maxMeleeTokens: 1, maxRangedTokens: 1));
 
             encounterObject = HiddenObject("Encounter");
             encounter = encounterObject.AddComponent<EncounterDirectorBehaviour>();
@@ -57,6 +57,11 @@ namespace ArkhamCombat.Tests
             otherAgent.Construct(encounter);
             otherAgent.OnEnable();
             return otherAgent;
+        }
+
+        private sealed class SettingsOfARangedAttacker : IEncounterAgentSettings
+        {
+            public AttackTokenType TokenType => AttackTokenType.Ranged;
         }
 
         private void WakeInASceneWithNoEncounter()
@@ -101,11 +106,34 @@ namespace ArkhamCombat.Tests
         public void ReleasingItsToken_GivesTheTurnBack()
         {
             JoinTheEncounter();
-            Assert.IsTrue(agent.TryAcquireToken(), "sanity: it draws from the melee pool, the only one with a token");
+            Assert.IsTrue(agent.TryAcquireToken(), "sanity: the melee token is free");
 
             agent.ReleaseToken();
 
             Assert.IsFalse(agent.HasToken);
+            Assert.AreEqual(0, director.HeldTokenCount(AttackTokenType.Melee));
+        }
+
+        [Test]
+        public void WithNoSettings_ItWaitsForAMeleeToken()
+        {
+            JoinTheEncounter();
+
+            Assert.IsTrue(agent.TryAcquireToken());
+
+            Assert.AreEqual(1, director.HeldTokenCount(AttackTokenType.Melee));
+            Assert.AreEqual(0, director.HeldTokenCount(AttackTokenType.Ranged));
+        }
+
+        [Test]
+        public void ItWaitsForTheKindOfTokenItsSettingsName()
+        {
+            agent.Construct(encounter, new SettingsOfARangedAttacker());
+            agent.OnEnable();
+
+            Assert.IsTrue(agent.TryAcquireToken());
+
+            Assert.AreEqual(1, director.HeldTokenCount(AttackTokenType.Ranged));
             Assert.AreEqual(0, director.HeldTokenCount(AttackTokenType.Melee));
         }
 

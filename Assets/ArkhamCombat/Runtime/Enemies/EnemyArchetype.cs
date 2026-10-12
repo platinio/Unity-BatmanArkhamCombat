@@ -1,11 +1,12 @@
 using System.Collections.Generic;
 using ArcaneOnyx.ScriptableObjectDatabase;
 using ArkhamCombat.Combat;
+using ArkhamCombat.Encounter;
 using UnityEngine;
 
 namespace ArkhamCombat.Enemies
 {
-    public sealed class EnemyArchetype : ScriptableItem
+    public sealed class EnemyArchetype : ScriptableItem, IEncounterAgentSettings
     {
         [Tooltip("How much health this enemy has and which hits it shrugs off.")]
         [SerializeField, ScriptableItemDatabaseSelector(typeof(HitReceiverProfileDatabase))]
@@ -23,11 +24,15 @@ namespace ArkhamCombat.Enemies
         [Tooltip("Metres per second it walks at.")]
         [SerializeField, Min(0f)] private float moveSpeed = 3.5f;
 
+        [Tooltip("Which attack turns it waits for: melee attackers and ranged attackers each have their own tokens.")]
+        [SerializeField] private AttackTokenType tokenType = AttackTokenType.Melee;
+
         public HitReceiverProfile HitReceiverProfile => hitReceiverProfile;
         public float IdleMin => idleMin;
         public float IdleMax => idleMax;
         public float CombatRange => combatRange;
         public float MoveSpeed => moveSpeed;
+        public AttackTokenType TokenType => tokenType;
 
         public void Configure(HitReceiverProfile hitReceiverProfile, float idleMin, float idleMax)
         {
@@ -41,6 +46,8 @@ namespace ArkhamCombat.Enemies
             this.combatRange = combatRange;
             this.moveSpeed = moveSpeed;
         }
+
+        public void ConfigureTokenType(AttackTokenType tokenType) => this.tokenType = tokenType;
 
         public bool Validate(List<string> errors)
         {

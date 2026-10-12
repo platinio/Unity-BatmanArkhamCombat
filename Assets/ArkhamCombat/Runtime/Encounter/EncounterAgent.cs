@@ -8,10 +8,10 @@ namespace ArkhamCombat.Encounter
     [AddComponentMenu("ArkhamCombat/Encounter Agent")]
     public sealed class EncounterAgent : MonoBehaviour, IEncounterAgent
     {
-        [Tooltip("Which token pool this agent competes in.")]
-        [SerializeField] private AttackTokenType tokenType = AttackTokenType.Melee;
+        private const AttackTokenType TokenTypeWithoutSettings = AttackTokenType.Melee;
 
         private EncounterDirectorBehaviour encounter;
+        private IEncounterAgentSettings settings;
         private bool wasInjected;
         private bool hasJoined;
 
@@ -26,9 +26,12 @@ namespace ArkhamCombat.Encounter
         private EncounterDirector Director => encounter.Director;
 
         [Inject]
-        internal void Construct([InjectOptional] EncounterDirectorBehaviour encounter)
+        internal void Construct(
+            [InjectOptional] EncounterDirectorBehaviour encounter,
+            [InjectOptional] IEncounterAgentSettings settings = null)
         {
             this.encounter = encounter;
+            this.settings = settings;
             wasInjected = true;
         }
 
@@ -55,8 +58,10 @@ namespace ArkhamCombat.Encounter
             hasJoined = true;
             Director.TokenGranted += RaiseTokenGrantedWhenItIsMine;
             Director.TokenReleased += RaiseTokenReleasedWhenItIsMine;
-            Director.Register(this, tokenType);
+            Director.Register(this, TokenType);
         }
+
+        private AttackTokenType TokenType => settings != null ? settings.TokenType : TokenTypeWithoutSettings;
 
         private string WhyItJoinsNoEncounter() =>
             wasInjected
