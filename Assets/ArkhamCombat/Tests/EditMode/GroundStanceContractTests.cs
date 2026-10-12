@@ -83,6 +83,40 @@ namespace ArkhamCombat.Tests
             Assert.IsTrue(evade.Validate(errors), string.Join("\n", errors));
         }
 
+        private static AttackDefinition TheCounter()
+        {
+            ActionDefinition counter = WhatThePressPlaysFromAnywhere(Ground(), Config().CounterKind);
+            Assert.IsInstanceOf<AttackDefinition>(counter, "a counter strikes, so it has to be an attack");
+            return (AttackDefinition)counter;
+        }
+
+        [Test]
+        public void TheCounterPress_PlaysAnAttackAimedAtWhoeverIsAttacking()
+        {
+            Assert.IsTrue(TheCounter().IsAimedAtTheAttacker);
+        }
+
+        [Test]
+        public void TheCounter_BringsTheReactionItsTargetPlays_FromItsFirstFrame()
+        {
+            Assert.IsTrue(TheCounter().IsPaired);
+        }
+
+        [Test]
+        public void TheCounter_AndTheReactionItBrings_AreActionsThatCanPlay()
+        {
+            List<string> errors = new List<string>();
+
+            Assert.IsTrue(TheCounter().Validate(errors), string.Join("\n", errors));
+            Assert.IsTrue(TheCounter().PairedReaction.Validate(errors), string.Join("\n", errors));
+        }
+
+        [Test]
+        public void TheCounter_GivesNoWarning_SoNoEnemyTreatsItAsATelegraph()
+        {
+            Assert.IsTrue(TheCounter().TelegraphWindow.IsZeroLength);
+        }
+
         [Test]
         public void ThePlayer_HasAStateToEvadeIn()
         {

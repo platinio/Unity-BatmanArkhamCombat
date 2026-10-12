@@ -231,7 +231,13 @@ namespace ArkhamCombat.Encounter
             return agent != null && stateByAgent.TryGetValue(agent, out AgentState state) && state.IsTelegraphing;
         }
 
-        public bool TryGetNearestTelegraphingAgent(Vector3 position, out IEncounterAgent nearestAgent)
+        public bool TryGetNearestTelegraphingAgent(Vector3 position, out IEncounterAgent nearestAgent) =>
+            TryGetNearestAgent(position, state => state.IsTelegraphing, out nearestAgent);
+
+        public bool TryGetNearestAgentTelegraphingACounterableAttack(Vector3 position, out IEncounterAgent nearestAgent) =>
+            TryGetNearestAgent(position, state => state.IsTelegraphingACounterableAttack, out nearestAgent);
+
+        private bool TryGetNearestAgent(Vector3 position, Func<AgentState, bool> isWhoIsAskedFor, out IEncounterAgent nearestAgent)
         {
             nearestAgent = null;
             float nearestDistance = float.MaxValue;
@@ -239,7 +245,7 @@ namespace ArkhamCombat.Encounter
             for (int i = 0; i < agentStates.Count; i++)
             {
                 AgentState state = agentStates[i];
-                if (!state.IsTelegraphing)
+                if (!isWhoIsAskedFor(state))
                 {
                     continue;
                 }

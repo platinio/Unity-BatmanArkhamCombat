@@ -11,14 +11,19 @@ namespace ArkhamCombat.Player
         private ITargetScorer scorer;
         private ITargetingSettings settings;
         private IMovementFrame frame;
+        private IIncomingAttacks incomingAttacks;
 
         [Inject]
-        private void Construct(ITargetScorer scorer, ITargetingSettings settings, IMovementFrame frame)
+        private void Construct(ITargetScorer scorer, ITargetingSettings settings, IMovementFrame frame, IIncomingAttacks incomingAttacks)
         {
             this.scorer = scorer;
             this.settings = settings;
             this.frame = frame;
+            this.incomingAttacks = incomingAttacks;
         }
+
+        public IActionTarget PickAttacker() =>
+            incomingAttacks.TryGetNearestAttackerThatCanBeCountered(transform.position, out ICombatTarget attacker) ? attacker : null;
 
         public IActionTarget PickTarget(Vector2 direction) =>
             scorer.BestTarget(transform.position, WorldDirection(direction));

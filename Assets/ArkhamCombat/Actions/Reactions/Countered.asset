@@ -1,0 +1,124 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 15201ef82d4ec4c40b72308c8d54b83d, type: 3}
+  m_Name: Countered
+  m_EditorClassIdentifier: ArkhamCombat.Combat::ArkhamCombat.Combat.ActionDefinition
+  duration: 1
+  cues:
+  - firesAt: 0
+    kind:
+      rid: 3135146639645999333
+    duration: 0.18
+    strength: 0.35
+    ease:
+      serializedVersion: 2
+      m_Curve:
+      - serializedVersion: 3
+        time: 0
+        value: 0
+        inSlope: 0
+        outSlope: 0
+        tangentMode: 0
+        weightedMode: 0
+        inWeight: 0
+        outWeight: 0
+      - serializedVersion: 3
+        time: 1
+        value: 1
+        inSlope: 0
+        outSlope: 0
+        tangentMode: 0
+        weightedMode: 0
+        inWeight: 0
+        outWeight: 0
+      m_PreInfinity: 2
+      m_PostInfinity: 2
+      m_RotationOrder: 4
+    colour: {r: 1, g: 1, b: 1, a: 1}
+  - firesAt: 0.05
+    kind:
+      rid: 3135146639645999334
+    duration: 0.55
+    strength: 360
+    ease:
+      serializedVersion: 2
+      m_Curve:
+      - serializedVersion: 3
+        time: 0
+        value: 0
+        inSlope: 0
+        outSlope: 0
+        tangentMode: 0
+        weightedMode: 0
+        inWeight: 0
+        outWeight: 0
+      - serializedVersion: 3
+        time: 1
+        value: 1
+        inSlope: 0
+        outSlope: 0
+        tangentMode: 0
+        weightedMode: 0
+        inWeight: 0
+        outWeight: 0
+      m_PreInfinity: 2
+      m_PostInfinity: 2
+      m_RotationOrder: 4
+    colour: {r: 1, g: 1, b: 1, a: 1}
+  - firesAt: 0
+    kind:
+      rid: 3135146639645999335
+    duration: 0.2
+    strength: 1
+    ease:
+      serializedVersion: 2
+      m_Curve:
+      - serializedVersion: 3
+        time: 0
+        value: 0
+        inSlope: 0
+        outSlope: 0
+        tangentMode: 0
+        weightedMode: 0
+        inWeight: 0
+        outWeight: 0
+      - serializedVersion: 3
+        time: 1
+        value: 1
+        inSlope: 0
+        outSlope: 0
+        tangentMode: 0
+        weightedMode: 0
+        inWeight: 0
+        outWeight: 0
+      m_PreInfinity: 2
+      m_PostInfinity: 2
+      m_RotationOrder: 4
+    colour: {r: 1, g: 1, b: 1, a: 1}
+  tags: []
+  invulnerableWindow:
+    start: 0
+    end: 0
+  references:
+    version: 2
+    RefIds:
+    - rid: 3135146639645999333
+      type: {class: CrumpleCue, ns: ArkhamCombat.Presentation, asm: ArkhamCombat.Presentation}
+      data:
+        tiltDegrees: 25
+    - rid: 3135146639645999334
+      type: {class: SpinCue, ns: ArkhamCombat.Presentation, asm: ArkhamCombat.Presentation}
+      data:
+        turns: 1
+    - rid: 3135146639645999335
+      type: {class: FlashCue, ns: ArkhamCombat.Presentation, asm: ArkhamCombat.Presentation}
+      data: 
