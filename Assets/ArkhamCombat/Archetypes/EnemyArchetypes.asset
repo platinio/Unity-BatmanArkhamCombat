@@ -64,7 +64,32 @@ MonoBehaviour:
   - {fileID: -4506345148178389099}
   - {fileID: -5390072830440781213}
   - {fileID: 8589400000854732524}
-  id: 3
+  - {fileID: 1421227786600201058}
+  id: 4
+--- !u!114 &1421227786600201058
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 0543b86f072271443adb3c8a0d70c9b5, type: 3}
+  m_Name: EliteThug
+  m_EditorClassIdentifier: ArkhamCombat.Enemies::ArkhamCombat.Enemies.EnemyArchetype
+  Name: EliteThug
+  icon: {fileID: 0}
+  id: e6bad4264868d24438e21f8006a89738_3
+  hitReceiverProfile: {fileID: -5642910508033006765, guid: e1d889d01db7699409079ff9f9515ac3, type: 2}
+  idleMin: 0.2
+  idleMax: 0.5
+  combatRange: 5
+  moveSpeed: 3.8
+  tokenType: 0
+  attack: {fileID: 11400000, guid: 47d4189264801a441bd8971441d241b2, type: 2}
+  tauntChance: 0.1
+  dodgeChance: 0
 --- !u!114 &8589400000854732524
 MonoBehaviour:
   m_ObjectHideFlags: 0

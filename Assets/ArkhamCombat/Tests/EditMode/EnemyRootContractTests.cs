@@ -16,6 +16,7 @@ namespace ArkhamCombat.Tests
     {
         private const string RootsFolder = TreesFolder + "/Roots";
         private const string PrefabsFolder = "Assets/ArkhamCombat/Prefabs/";
+        private const string ArchetypesPath = "Assets/ArkhamCombat/Archetypes/EnemyArchetypes.asset";
         private const string KindOfReactionAskedAbout = "kind";
         private const int JobsEveryEnemyTicks = 4;
 
@@ -61,6 +62,15 @@ namespace ArkhamCombat.Tests
             GameObject prefab = AssetDatabase.LoadAssetAtPath<GameObject>(PrefabsFolder + prefabName + ".prefab");
             Assert.IsNotNull(prefab, $"no prefab named {prefabName}");
             return prefab;
+        }
+
+        private static EnemyArchetype[] EveryArchetype() => AssetDatabase.LoadAllAssetsAtPath(ArchetypesPath).OfType<EnemyArchetype>().ToArray();
+
+        private static EnemyArchetype ArchetypeNamed(string archetypeName)
+        {
+            EnemyArchetype archetype = EveryArchetype().SingleOrDefault(candidate => candidate.Name == archetypeName);
+            Assert.IsNotNull(archetype, $"no archetype named {archetypeName} in {ArchetypesPath}");
+            return archetype;
         }
 
         private static EnemyArchetype ArchetypeOf(GameObject prefab) =>
@@ -186,6 +196,36 @@ namespace ArkhamCombat.Tests
             Assert.IsNotNull(archetype, $"{prefabName} names no archetype");
             Assert.AreEqual(prefabName, archetype.Name);
             Assert.IsTrue(archetype.Validate(errors), string.Join("\n", errors));
+        }
+
+        [Test]
+        public void EveryArchetypeInTheDatabase_IsWellFormed()
+        {
+            foreach (EnemyArchetype archetype in EveryArchetype())
+            {
+                List<string> errors = new List<string>();
+
+                Assert.IsTrue(archetype.Validate(errors), string.Join("\n", errors));
+            }
+        }
+
+        [Test]
+        public void TheEliteThug_IsOnlyAnotherArchetype_WithNoPrefabAndNoRootOfItsOwn()
+        {
+            Assert.IsNotNull(ArchetypeNamed("EliteThug"));
+            Assert.IsNull(AssetDatabase.LoadAssetAtPath<GameObject>(PrefabsFolder + "EliteThug.prefab"));
+            CollectionAssert.DoesNotContain(EveryRoot(), "EliteThugRoot");
+        }
+
+        [Test]
+        public void TheEliteThug_HasMoreHealthThanAThug_HitsHarder_AndTauntsLess()
+        {
+            EnemyArchetype elite = ArchetypeNamed("EliteThug");
+            EnemyArchetype thug = ArchetypeNamed("Thug");
+
+            Assert.Greater(elite.HitReceiverProfile.MaxHealth, thug.HitReceiverProfile.MaxHealth);
+            Assert.Greater(elite.Attack.Damage, thug.Attack.Damage);
+            Assert.Less(elite.TauntChance, thug.TauntChance);
         }
 
         [Test]
