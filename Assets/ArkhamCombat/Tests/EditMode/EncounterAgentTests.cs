@@ -149,6 +149,28 @@ namespace ArkhamCombat.Tests
         }
 
         [Test]
+        public void ItsTelegraph_ReachesTheDirector_AndIsWithdrawnAgain()
+        {
+            JoinTheEncounter();
+
+            agent.TelegraphAnAttack(isCounterable: true);
+            Assert.IsTrue(director.IsTelegraphing(agent));
+            Assert.IsTrue(director.IsACounterableAttackIncoming);
+
+            agent.StopTelegraphing();
+            Assert.IsFalse(director.IsTelegraphing(agent));
+        }
+
+        [Test]
+        public void OutsideAnEncounter_ItsTelegraphGoesNowhere()
+        {
+            WakeInASceneWithNoEncounter();
+
+            Assert.DoesNotThrow(() => agent.TelegraphAnAttack(isCounterable: true));
+            Assert.DoesNotThrow(() => agent.StopTelegraphing());
+        }
+
+        [Test]
         public void ItAnnouncesItsOwnToken_AndNobodyElses()
         {
             EncounterDirector twoTokens = new EncounterDirector(new EncounterDirectorSettings(maxMeleeTokens: 2));

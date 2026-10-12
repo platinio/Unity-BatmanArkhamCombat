@@ -45,6 +45,22 @@ namespace ArkhamCombat.Encounter
             }
         }
 
+        public void TelegraphAnAttack(bool isCounterable)
+        {
+            if (hasJoined)
+            {
+                Director.TelegraphAnAttack(this, isCounterable);
+            }
+        }
+
+        public void StopTelegraphing()
+        {
+            if (hasJoined)
+            {
+                Director.StopTelegraphing(this);
+            }
+        }
+
         internal void OnEnable()
         {
             bool isThereAnEncounter = encounter != null && encounter.Director != null;

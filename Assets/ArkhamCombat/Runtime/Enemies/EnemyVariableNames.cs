@@ -12,5 +12,6 @@ namespace ArkhamCombat.Enemies
         public const string TargetDistance = "targetDistance";
         public const string InCombatRange = "inCombatRange";
         public const string HasToken = "hasToken";
+        public const string Telegraphing = "telegraphing";
     }
 }
