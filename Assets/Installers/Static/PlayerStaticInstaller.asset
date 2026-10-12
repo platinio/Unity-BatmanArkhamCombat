@@ -17,6 +17,7 @@ MonoBehaviour:
   - rid: 1000
   - rid: 1001
   - rid: 3135146534942277833
+  - rid: 3135146639645999322
   - rid: 3135146639645999206
   - rid: 3135146639645999207
   - rid: 3135146639645999208
@@ -50,3 +51,6 @@ MonoBehaviour:
       type: {class: DeadStateBinding, ns: ArkhamCombat.Player, asm: ArkhamCombat.Player}
       data:
         deathAction: {fileID: 11400000, guid: 7769e75d9697a44469d3a98b945a53b3, type: 2}
+    - rid: 3135146639645999322
+      type: {class: EvadingStateBinding, ns: ArkhamCombat.Player, asm: ArkhamCombat.Player}
+      data: 

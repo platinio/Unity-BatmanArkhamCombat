@@ -178,6 +178,7 @@ namespace ArkhamCombat.Tests
             InstallTheCharacter();
 
             Assert.IsInstanceOf<NullActionTargetPicker>(characterContainer.Resolve<IActionTargetPicker>());
+            Assert.IsInstanceOf<NullTravelDirectionPicker>(characterContainer.Resolve<ITravelDirectionPicker>());
             Assert.IsInstanceOf<NullPresentationDriver>(characterContainer.Resolve<IPresentationDriver>());
             Assert.IsInstanceOf<AlwaysOpenActionStartGate>(characterContainer.Resolve<IActionStartGate>());
             Assert.IsNotNull(characterContainer.Resolve<CombatFacts>());
@@ -192,10 +193,12 @@ namespace ArkhamCombat.Tests
             CombatFactsUpdater factsUpdater = character.AddComponent<CombatFactsUpdater>();
             AttackingStateSwitch stateSwitch = character.AddComponent<AttackingStateSwitch>();
             ProceduralPresentationDriver driver = character.AddComponent<ProceduralPresentationDriver>();
+            EvadeDirection evadeDirection = character.AddComponent<EvadeDirection>();
 
             InstallTheCharacter();
 
             Assert.AreSame(targeting, characterContainer.Resolve<IActionTargetPicker>());
+            Assert.AreSame(evadeDirection, characterContainer.Resolve<ITravelDirectionPicker>());
             Assert.AreSame(factsUpdater, characterContainer.Resolve<CombatFactsUpdater>());
             Assert.AreSame(factsUpdater.Facts, characterContainer.Resolve<CombatFacts>());
             Assert.AreSame(stateSwitch, characterContainer.Resolve<IActionStartGate>());

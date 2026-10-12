@@ -25,13 +25,7 @@ namespace ArkhamCombat.Player
 
         private Vector3 WorldDirection(Vector2 direction)
         {
-            bool isStickPushed = direction.magnitude > settings.StickPushedMagnitude;
-            if (isStickPushed)
-            {
-                return frame.Frame * new Vector3(direction.x, 0f, direction.y);
-            }
-
-            return transform.forward;
+            return StickDirection.IsPushed(direction, settings) ? StickDirection.InTheWorld(direction, frame) : transform.forward;
         }
     }
 }

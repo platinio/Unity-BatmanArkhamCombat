@@ -1,0 +1,93 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 77581ea21e3f6114b9846d3333b8e47b, type: 3}
+  m_Name: Evade
+  m_EditorClassIdentifier: ArkhamCombat.Combat::ArkhamCombat.Combat.DashDefinition
+  duration: 0.5
+  cues:
+  - firesAt: 0
+    kind:
+      rid: 3135146639645999320
+    duration: 0.28
+    strength: 0.3
+    ease:
+      serializedVersion: 2
+      m_Curve:
+      - serializedVersion: 3
+        time: 0
+        value: 0
+        inSlope: 0
+        outSlope: 0
+        tangentMode: 0
+        weightedMode: 0
+        inWeight: 0
+        outWeight: 0
+      - serializedVersion: 3
+        time: 1
+        value: 1
+        inSlope: 0
+        outSlope: 0
+        tangentMode: 0
+        weightedMode: 0
+        inWeight: 0
+        outWeight: 0
+      m_PreInfinity: 2
+      m_PostInfinity: 2
+      m_RotationOrder: 4
+    colour: {r: 1, g: 1, b: 1, a: 1}
+  - firesAt: 0
+    kind:
+      rid: 3135146639645999321
+    duration: 0.28
+    strength: 16
+    ease:
+      serializedVersion: 2
+      m_Curve:
+      - serializedVersion: 3
+        time: 0
+        value: 0
+        inSlope: 0
+        outSlope: 0
+        tangentMode: 0
+        weightedMode: 0
+        inWeight: 0
+        outWeight: 0
+      - serializedVersion: 3
+        time: 1
+        value: 1
+        inSlope: 0
+        outSlope: 0
+        tangentMode: 0
+        weightedMode: 0
+        inWeight: 0
+        outWeight: 0
+      m_PreInfinity: 2
+      m_PostInfinity: 2
+      m_RotationOrder: 4
+    colour: {r: 1, g: 1, b: 1, a: 1}
+  tags: []
+  invulnerableWindow:
+    start: 0
+    end: 0.6
+  travelWindow:
+    start: 0
+    end: 0.6
+  travelDistance: 3
+  references:
+    version: 2
+    RefIds:
+    - rid: 3135146639645999320
+      type: {class: SquashCue, ns: ArkhamCombat.Presentation, asm: ArkhamCombat.Presentation}
+      data: 
+    - rid: 3135146639645999321
+      type: {class: LeanCue, ns: ArkhamCombat.Presentation, asm: ArkhamCombat.Presentation}
+      data: 

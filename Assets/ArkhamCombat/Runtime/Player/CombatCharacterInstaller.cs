@@ -39,6 +39,7 @@ namespace ArkhamCombat.Player
             BindPresentation();
             BindWarpAndHits();
             BindTargeting();
+            BindTravelDirection();
             BindStartGate();
             BindRunner();
         }
@@ -112,6 +113,14 @@ namespace ArkhamCombat.Player
 
             Container.Bind<IActionTargetPicker>()
                 .FromInstance(hasTargeting ? targetPickerOnTheCharacter : new NullActionTargetPicker());
+        }
+
+        private void BindTravelDirection()
+        {
+            bool picksItsTravelDirection = TryGetComponent(out ITravelDirectionPicker travelDirectionPickerOnTheCharacter);
+
+            Container.Bind<ITravelDirectionPicker>()
+                .FromInstance(picksItsTravelDirection ? travelDirectionPickerOnTheCharacter : new NullTravelDirectionPicker());
         }
 
         private void BindStartGate()
