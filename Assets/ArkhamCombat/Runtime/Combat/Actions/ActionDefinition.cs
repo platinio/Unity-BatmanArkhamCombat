@@ -31,24 +31,38 @@ namespace ArkhamCombat.Combat
             this.tags = tags != null ? new List<string>(tags) : new List<string>();
         }
 
+        /// <summary>
+        /// Adds one line to <paramref name="errors"/> for each authoring mistake in this asset, and
+        /// answers whether it added none.
+        /// </summary>
         public virtual bool Validate(List<string> errors)
         {
             int errorCountBefore = errors.Count;
 
+            ReportWhenDurationIsNotPositive(errors);
+            ReportEveryBrokenCue(errors);
+
+            bool isWellFormed = errors.Count == errorCountBefore;
+            return isWellFormed;
+        }
+
+        private void ReportWhenDurationIsNotPositive(List<string> errors)
+        {
             if (duration <= 0f)
             {
                 errors.Add($"'{name}': duration must be positive.");
             }
-
-            for (int i = 0; i < cues.Count; i++)
-            {
-                ValidateCue(i, cues[i], errors);
-            }
-
-            return errors.Count == errorCountBefore;
         }
 
-        private void ValidateCue(int index, PresentationCue cue, List<string> errors)
+        private void ReportEveryBrokenCue(List<string> errors)
+        {
+            for (int i = 0; i < cues.Count; i++)
+            {
+                ReportWhenCueIsBroken(i, cues[i], errors);
+            }
+        }
+
+        private void ReportWhenCueIsBroken(int index, PresentationCue cue, List<string> errors)
         {
             if (cue == null)
             {
