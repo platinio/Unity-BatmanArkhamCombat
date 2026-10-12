@@ -36,6 +36,36 @@ namespace ArkhamCombat.Tests
         private List<ActionStartedEventArgs> startedActions;
         private List<ActionEndedEventArgs> endedActions;
 
+        private static Vector3 WarpVelocityOf(Vector3 movementOfTheFrame, float frameSeconds)
+        {
+            PendingWarpMovement pendingWarpMovement = new PendingWarpMovement();
+            GameObject character = HiddenObject("Character");
+            CombatActions actions = character.AddComponent<CombatActions>();
+            actions.Construct(runner: null, pendingWarpMovement, new AlwaysOpenActionStartGate(), sceneGameEvents: null);
+            pendingWarpMovement.MoveBy(movementOfTheFrame);
+
+            Vector3 velocity = actions.TakeWarpVelocity(frameSeconds);
+            Object.DestroyImmediate(character);
+            return velocity;
+        }
+
+        [Test]
+        public void TheWarpVelocity_CoversThePendingMovementInTheFrame()
+        {
+            const float frameSeconds = 0.02f;
+            Vector3 movementOfTheFrame = new Vector3(0.1f, 0f, -0.3f);
+
+            Vector3 velocity = WarpVelocityOf(movementOfTheFrame, frameSeconds);
+
+            Assert.Less(Vector3.Distance(movementOfTheFrame / frameSeconds, velocity), 1e-3f, $"was {velocity}");
+        }
+
+        [Test]
+        public void InAFrameOfNoLength_TheWarpVelocityIsZero()
+        {
+            Assert.AreEqual(Vector3.zero, WarpVelocityOf(Vector3.forward, frameSeconds: 0f));
+        }
+
         [SetUp]
         public void SetUp()
         {

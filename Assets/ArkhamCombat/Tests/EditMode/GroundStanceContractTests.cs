@@ -38,7 +38,9 @@ namespace ArkhamCombat.Tests
 
         private static List<string> StatesThePlayerCanBeIn()
         {
-            SerializedProperty states = new SerializedObject(AssetDatabase.LoadAssetAtPath<PlayerStaticInstaller>(PlayerInstallerPath)).FindProperty("states");
+            PlayerStaticInstaller installer = AssetDatabase.LoadAssetAtPath<PlayerStaticInstaller>(PlayerInstallerPath);
+            Assert.IsNotNull(installer, $"no player installer at {PlayerInstallerPath}");
+            SerializedProperty states = new SerializedObject(installer).FindProperty("states");
             List<string> bindings = new List<string>();
             for (int i = 0; i < states.arraySize; i++)
             {
@@ -54,6 +56,22 @@ namespace ArkhamCombat.Tests
             List<string> errors = new List<string>();
 
             Assert.IsTrue(Ground().Validate(errors), string.Join("\n", errors));
+        }
+
+        [Test]
+        public void AfterAnythingAPressStartsFromAnywhere_AStrikeStartsTheChainAgain()
+        {
+            Stance ground = Ground();
+            Edge firstStrike = ground.Root.Edges.Single();
+
+            foreach (Edge fromAnywhere in ground.GlobalEdges)
+            {
+                Assert.IsTrue(ground.TryGetNode(fromAnywhere.DestinationId, out ChainNode node));
+                bool hasTheSameStrikeEdge = node.Edges.Any(edge =>
+                    edge.IntentKind == firstStrike.IntentKind && edge.DestinationId == firstStrike.DestinationId);
+
+                Assert.IsTrue(hasTheSameStrikeEdge, $"a strike pressed after '{node.Id}' would be dropped until the chain resets");
+            }
         }
 
         [Test]

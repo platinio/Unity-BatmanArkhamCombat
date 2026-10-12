@@ -486,7 +486,7 @@ cut short on that frame, it folds and spins, and the counter lands on it and cou
 Pressed with nobody winding up, the press waits a quarter of a second and is dropped. Middle mouse, Q
 or the east button is the cape stun: a swirl that deals no damage and leaves its target dazed and
 flickering yellow for three seconds, during which any hit staggers it, a jab included. It counts
-toward the combo, and a strike after it continues the chain. A swing that arrives during the dash passes through, and each one counts toward the
+toward the combo, and a strike after it continues the chain. A swing that arrives while the dash cannot be hit, its first six tenths, passes through, and each one counts toward the
 combo. An evade can cut an attack short while that attack's evade window is open. The arena holds four
 enemies under `DemoEnemies`: a thug, an elite thug (the same prefab with the `EliteThug` archetype:
 more health, an Uppercut that knocks down, fewer taunts), a knife enemy (thin, orange) and an armored

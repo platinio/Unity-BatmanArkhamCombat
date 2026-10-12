@@ -29,8 +29,8 @@ namespace ArkhamCombat.Player
                 return StickDirection.InTheWorld(direction, frame);
             }
 
-            bool isSomeoneWindingUp = encounterDirector.TryGetNearestTelegraphingAgent(transform.position, out IEncounterAgent attacker);
-            return isSomeoneWindingUp ? AwayFrom(attacker.Position) : StraightBack;
+            bool isSomeoneAttacking = encounterDirector.TryGetNearestAttacker(transform.position, out IEncounterAgent attacker);
+            return isSomeoneAttacking ? AwayFrom(attacker.Position) : StraightBack;
         }
 
         private Vector3 StraightBack => -transform.forward;

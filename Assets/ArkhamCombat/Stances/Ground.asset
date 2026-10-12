@@ -74,7 +74,13 @@ MonoBehaviour:
       attacks: []
       policy:
         rid: 3135146639645999323
-    edges: []
+    edges:
+    - intentKind: {fileID: 11400000, guid: ba9cd6679aa44c144bb87a8e99f640be, type: 2}
+      condition:
+        function: {fileID: 0}
+        arguments: []
+      priority: 0
+      destinationId: S1
   - id: Counter
     action: {fileID: 11400000, guid: 0a772da1a0b9f4445a0fdfa95501ff59, type: 2}
     pool:

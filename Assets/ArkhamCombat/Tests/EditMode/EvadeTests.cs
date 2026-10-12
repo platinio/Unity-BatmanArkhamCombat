@@ -96,13 +96,54 @@ namespace ArkhamCombat.Tests
         }
 
         [Test]
-        public void OfTwoAgentsWindingUp_TheDirectorNamesTheNearerOne()
+        public void OfTwoAgentsWindingUp_TheDirectorNamesTheNearerOne_WhicheverJoinedFirst()
         {
-            AnAgentWindingUpAt(East * 6f);
             StandingAgent nearer = AnAgentWindingUpAt(West * 2f);
+            AnAgentWindingUpAt(East * 6f);
+            StandingAgent nearest = AnAgentWindingUpAt(West);
 
-            Assert.IsTrue(director.TryGetNearestTelegraphingAgent(Vector3.zero, out IEncounterAgent nearest));
-            Assert.AreSame(nearer, nearest);
+            Assert.IsTrue(director.TryGetNearestTelegraphingAgent(Vector3.zero, out IEncounterAgent named));
+            Assert.AreSame(nearest, named);
+            director.StopTelegraphing(nearest);
+            Assert.IsTrue(director.TryGetNearestTelegraphingAgent(Vector3.zero, out named));
+            Assert.AreSame(nearer, named);
+        }
+
+        [Test]
+        public void OnceTheWindUpIsOver_TheAttackerIsWhoeverHasTheTurn()
+        {
+            StandingAgent agent = AnAgentWindingUpAt(East);
+            director.TryAcquireToken(agent);
+            director.Tick(AnyTick);
+            Assert.IsTrue(director.HasToken(agent), "the only agent that asks is given the turn");
+
+            director.StopTelegraphing(agent);
+
+            Assert.IsTrue(director.TryGetNearestAttacker(Vector3.zero, out IEncounterAgent attacker));
+            Assert.AreSame(agent, attacker);
+        }
+
+        [Test]
+        public void AnAgentWindingUp_IsTheAttacker_BeforeOneThatOnlyHasTheTurn()
+        {
+            StandingAgent hasTheTurn = AnAgentWindingUpAt(East);
+            director.TryAcquireToken(hasTheTurn);
+            director.Tick(AnyTick);
+            director.StopTelegraphing(hasTheTurn);
+            StandingAgent windsUpFartherAway = AnAgentWindingUpAt(West * 6f);
+
+            Assert.IsTrue(director.TryGetNearestAttacker(Vector3.zero, out IEncounterAgent attacker));
+            Assert.AreSame(windsUpFartherAway, attacker);
+        }
+
+        [Test]
+        public void WithNobodyWindingUpAndNobodyOnTheirTurn_ThereIsNoAttacker()
+        {
+            StandingAgent agent = AnAgentWindingUpAt(East);
+            director.StopTelegraphing(agent);
+
+            Assert.IsFalse(director.TryGetNearestAttacker(Vector3.zero, out IEncounterAgent nobody));
+            Assert.IsNull(nobody);
         }
 
         [Test]

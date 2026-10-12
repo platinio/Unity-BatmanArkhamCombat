@@ -234,6 +234,11 @@ namespace ArkhamCombat.Encounter
         public bool TryGetNearestTelegraphingAgent(Vector3 position, out IEncounterAgent nearestAgent) =>
             TryGetNearestAgent(position, state => state.IsTelegraphing, out nearestAgent);
 
+        // A telegraph ends before the swing lands, so once nobody winds up the attacker is whoever has the turn.
+        public bool TryGetNearestAttacker(Vector3 position, out IEncounterAgent nearestAttacker) =>
+            TryGetNearestTelegraphingAgent(position, out nearestAttacker)
+            || TryGetNearestAgent(position, state => state.HasToken, out nearestAttacker);
+
         public bool TryGetNearestAgentTelegraphingACounterableAttack(Vector3 position, out IEncounterAgent nearestAgent) =>
             TryGetNearestAgent(position, state => state.IsTelegraphingACounterableAttack, out nearestAgent);
 
