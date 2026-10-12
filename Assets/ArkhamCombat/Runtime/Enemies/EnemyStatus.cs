@@ -55,7 +55,7 @@ namespace ArkhamCombat.Enemies
                 return;
             }
 
-            runner = CombatActions.RunnerOn(gameObject);
+            runner = CombatActions.RunnerOnOrNull(gameObject);
             receiver = new HitReceiver(profile, runner);
         }
 
@@ -118,7 +118,6 @@ namespace ArkhamCombat.Enemies
             return result;
         }
 
-        // The tree clears the reaction when the stun has played out, which is what ends it.
         private bool IsStunned => ReactionAsTheTreeLeftIt == Stunned;
 
         private void PublishHit(AppliedReaction appliedReaction)

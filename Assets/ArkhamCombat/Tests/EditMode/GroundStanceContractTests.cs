@@ -7,8 +7,6 @@ using UnityEditor;
 
 namespace ArkhamCombat.Tests
 {
-    // The stance, the config and the player's state list are authored assets that have to agree
-    // with each other and with the code, and nothing compiles them together. So these read them.
     public class GroundStanceContractTests
     {
         private const string StancePath = "Assets/ArkhamCombat/Stances/Ground.asset";

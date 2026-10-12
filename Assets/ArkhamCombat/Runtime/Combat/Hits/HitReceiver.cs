@@ -10,7 +10,6 @@ namespace ArkhamCombat.Combat
         private readonly HitReceiverProfile profile;
         private readonly ActionRunner runnerOfWhoeverIsHit;
 
-        /// <summary>Without a runner the receiver plays no actions, so it is never invulnerable.</summary>
         public HitReceiver(HitReceiverProfile profile, ActionRunner runnerOfWhoeverIsHit = null)
         {
             this.profile = profile != null ? profile : throw new ArgumentNullException(nameof(profile));
@@ -24,10 +23,8 @@ namespace ArkhamCombat.Combat
 
         public HitResult Receive(HitInfo hit) => TakeTheHit(hit, ReactionRules.Resolve);
 
-        /// <summary>For a receiver whose owner knows it is stunned: the hit lands heavier.</summary>
         public HitResult ReceiveWhileStunned(HitInfo hit) => TakeTheHit(hit, ReactionRules.ResolveForAStunnedReceiver);
 
-        /// <summary>What a paired attack asks its target to play the moment it starts, before any hit of it lands.</summary>
         public AppliedReaction ReactionToAPairedAttack(AttackDefinition attack) =>
             ReactionRules.ResolveForAPairedAttack(attack.Reaction, Health);
 

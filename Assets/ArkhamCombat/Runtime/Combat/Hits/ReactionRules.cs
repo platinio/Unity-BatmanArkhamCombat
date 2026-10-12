@@ -30,9 +30,6 @@ namespace ArkhamCombat.Combat
             }
         }
 
-        /// <summary>
-        /// A stunned receiver cannot brace: armor lightens nothing, and even a light hit staggers.
-        /// </summary>
         public static AppliedReaction ResolveForAStunnedReceiver(HitReaction requestedReaction, HitReceiverProfile profile, float healthAfterDamage)
         {
             if (healthAfterDamage <= 0f)
@@ -57,10 +54,7 @@ namespace ArkhamCombat.Combat
             }
         }
 
-        /// <summary>
-        /// The target of a paired attack reacts as the attack starts, with the reaction that was
-        /// asked for: neither armor nor sure footing changes it. Only death does.
-        /// </summary>
+        // Its target started this reaction as the attack started. A lighter one now would cut that short.
         public static AppliedReaction ResolveForAPairedAttack(HitReaction requestedReaction, float health)
         {
             if (health <= 0f)

@@ -15,7 +15,6 @@ using Variables = Unity.VisualScripting.Variables;
 
 namespace ArkhamCombat.Tests
 {
-    // The two Functions and the branch are drawn on canvases, so these run and read the authored assets.
     public class DodgeTests
     {
         private const string CanDodgePath = "Assets/ArkhamCombat/Trees/Functions/CanDodge.asset";

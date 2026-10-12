@@ -8,9 +8,7 @@ using UnityEngine;
 
 namespace ArkhamCombat.Tests
 {
-    // A minute of a messy fight on the shipped tuning: agents attack, are hit out of their attacks,
-    // die and are replaced, while the target wanders and turns. The fight is played once and each
-    // test asks one thing of what was seen.
+    // The fight is played once, and each test asks one thing of what was seen in it.
     public class EncounterDirectorSoakTests
     {
         private const string CombatConfigPath = "Assets/ArkhamCombat/Settings/CombatConfig.asset";
@@ -97,7 +95,7 @@ namespace ArkhamCombat.Tests
                 foreach (Fighter fighter in fighters)
                 {
                     WalkTowardWhereItStands(director, fighter);
-                    FightForATick(director, fighter, random);
+                    AskForTheTurnAndAttackWhileItLasts(director, fighter, random);
                 }
 
                 director.Tick(TickSeconds);
@@ -127,8 +125,7 @@ namespace ArkhamCombat.Tests
             }
         }
 
-        // What an enemy's tree does with its turn: ask every tick, wind up, strike, spend the attack; and stop at once when the turn is gone.
-        private static void FightForATick(EncounterDirector director, Fighter fighter, System.Random random)
+        private static void AskForTheTurnAndAttackWhileItLasts(EncounterDirector director, Fighter fighter, System.Random random)
         {
             bool isItsTurn = director.TryAcquireToken(fighter);
             bool wasHitOutOfItsAttack = fighter.IsAttacking && random.NextDouble() < ChanceAnAttackerIsHitEachTick;

@@ -35,7 +35,7 @@ namespace ArkhamCombat.Player
                 return;
             }
 
-            receiver = new HitReceiver(profile, CombatActions.RunnerOn(gameObject));
+            receiver = new HitReceiver(profile, CombatActions.RunnerOnOrNull(gameObject));
         }
 
         public HitResult Receive(HitInfo hit)

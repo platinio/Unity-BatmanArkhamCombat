@@ -3,10 +3,6 @@ using UnityEngine;
 
 namespace ArkhamCombat.Combat
 {
-    /// <summary>
-    /// A move that carries its character a set distance in a direction, where an attack carries it
-    /// to a target: an evade, a dodge.
-    /// </summary>
     [CreateAssetMenu(menuName = "ArkhamCombat/Dash", fileName = "Dash")]
     public sealed class DashDefinition : ActionDefinition
     {

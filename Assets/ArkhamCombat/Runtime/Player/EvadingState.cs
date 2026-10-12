@@ -7,10 +7,7 @@ using Zenject;
 
 namespace ArkhamCombat.Player
 {
-    /// <summary>
-    /// Movement input never moves it: the frame's planar velocity is whatever the runner's dash
-    /// produced. Gravity is held while the dash travels so an evade does not dip.
-    /// </summary>
+    /// <summary>Gravity is held while the dash travels so an evade does not dip.</summary>
     public sealed class EvadingState : ICharacterState
     {
         private readonly CharacterContext context;
@@ -48,7 +45,6 @@ namespace ArkhamCombat.Player
         }
     }
 
-    /// <summary>Picked in the player installer's state list, next to Attacking.</summary>
     [Serializable]
     public sealed class EvadingStateBinding : ICharacterStateBinding
     {

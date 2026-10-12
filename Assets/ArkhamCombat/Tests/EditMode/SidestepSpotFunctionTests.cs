@@ -8,7 +8,6 @@ using static ArkhamCombat.Tests.CombatTestDoubles;
 
 namespace ArkhamCombat.Tests
 {
-    // The Function is a graph on a canvas, so these run the authored asset.
     public class SidestepSpotFunctionTests
     {
         private const string FunctionPath = "Assets/ArkhamCombat/Trees/Functions/SidestepSpot.asset";

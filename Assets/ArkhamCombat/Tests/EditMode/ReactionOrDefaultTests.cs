@@ -14,7 +14,6 @@ using static ArkhamCombat.Tests.TreeAssets;
 
 namespace ArkhamCombat.Tests
 {
-    // The Function and the branches that call it are drawn on canvases, so these run and read the authored assets.
     public class ReactionOrDefaultTests
     {
         private const string FunctionPath = "Assets/ArkhamCombat/Trees/Functions/ReactionOrDefault.asset";

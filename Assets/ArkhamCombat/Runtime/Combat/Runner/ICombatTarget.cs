@@ -16,9 +16,6 @@ namespace ArkhamCombat.Combat
         new HitResult Receive(HitInfo hit);
     }
 
-    /// <summary>
-    /// Who is winding up an attack that can be countered, for a character that answers attacks.
-    /// </summary>
     public interface IIncomingAttacks
     {
         bool TryGetNearestAttackerThatCanBeCountered(Vector3 position, out ICombatTarget attacker);

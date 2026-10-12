@@ -8,7 +8,6 @@ using static ArkhamCombat.Tests.TreeAssets;
 
 namespace ArkhamCombat.Tests
 {
-    // What a prowl promises the rest of the tree is drawn on a canvas, so these read the authored assets.
     public class ProwlTreeContractTests
     {
         private const string RootPath = "Assets/ArkhamCombat/Trees/Roots/ThugRoot.asset";

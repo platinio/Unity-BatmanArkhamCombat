@@ -22,8 +22,7 @@ namespace ArkhamCombat.Characters
 
         public ActionRunner Runner => runner;
 
-        /// <summary>Null on a character that plays no actions.</summary>
-        public static ActionRunner RunnerOn(GameObject character) =>
+        public static ActionRunner RunnerOnOrNull(GameObject character) =>
             character.TryGetComponent(out CombatActions combatActions) ? combatActions.Runner : null;
 
         [Inject]
@@ -62,7 +61,6 @@ namespace ArkhamCombat.Characters
 
         public Vector3 TakePendingWarpMovement() => pendingWarpMovement.TakeMovement();
 
-        /// <summary>The frame's warp or dash movement as the velocity that covers it this frame.</summary>
         public Vector3 TakeWarpVelocity(float deltaTime)
         {
             Vector3 warpMovement = TakePendingWarpMovement();

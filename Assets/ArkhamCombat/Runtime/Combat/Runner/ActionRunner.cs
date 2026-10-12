@@ -88,7 +88,6 @@ namespace ArkhamCombat.Combat
         /// <summary>Null while idle or while a plain action plays.</summary>
         public AttackDefinition CurrentAttack { get; private set; }
 
-        /// <summary>Null unless the action that plays is a dash.</summary>
         public DashDefinition CurrentDash { get; private set; }
 
         /// <summary>
@@ -159,7 +158,6 @@ namespace ArkhamCombat.Combat
         public void PlayAction(ActionDefinition action, Vector3 position) =>
             StartAction(null, action, position, isInterrupt: isPlaying, StraightAhead);
 
-        /// <summary>For whoever knows better than the character's own picker which way a dash should go.</summary>
         public void PlayAction(ActionDefinition action, Vector3 position, Vector3 travelDirection)
         {
             PlayAction(action, position);

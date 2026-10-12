@@ -10,8 +10,6 @@ using static ArkhamCombat.Tests.TreeAssets;
 
 namespace ArkhamCombat.Tests
 {
-    // Every enemy is a root that lists the shared sub-trees. What must hold on each root, and what
-    // sets one enemy apart from another, is drawn on canvases, so these read the authored assets.
     public class EnemyRootContractTests
     {
         private const string RootsFolder = TreesFolder + "/Roots";

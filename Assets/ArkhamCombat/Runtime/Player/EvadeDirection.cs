@@ -6,10 +6,6 @@ using Zenject;
 
 namespace ArkhamCombat.Player
 {
-    /// <summary>
-    /// Along the stick when it is pushed. With the stick at rest, away from whoever is winding up
-    /// an attack, and straight back when nobody is.
-    /// </summary>
     public sealed class EvadeDirection : MonoBehaviour, ITravelDirectionPicker
     {
         private const float NegligibleSqrDistance = 1e-4f;
