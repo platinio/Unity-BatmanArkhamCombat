@@ -30,6 +30,7 @@ namespace ArkhamCombat.Combat
         private bool isWarpWindowOpen;
         private bool isTelegraphWindowOpen;
         private bool isWarping;
+        private bool isTheTargetExpectingAStrike;
         private float idleSeconds;
         private Vector3 travelDirection;
 
@@ -334,8 +335,27 @@ namespace ArkhamCombat.Combat
 
             if (CurrentAttack != null)
             {
+                TellTheTargetAStrikeIsComing();
                 StartThePairedReactionOfTheTarget(CurrentAttack);
                 HandleWindowsStartingAtZero(CurrentAttack, position);
+            }
+        }
+
+        private void TellTheTargetAStrikeIsComing()
+        {
+            if (HasValidTarget)
+            {
+                CurrentActionTarget.StrikeIsComing();
+                isTheTargetExpectingAStrike = true;
+            }
+        }
+
+        private void TellTheTargetTheStrikeIsOver()
+        {
+            if (isTheTargetExpectingAStrike)
+            {
+                CurrentActionTarget.StrikeIsOver();
+                isTheTargetExpectingAStrike = false;
             }
         }
 
@@ -377,6 +397,8 @@ namespace ArkhamCombat.Combat
             {
                 hitWindowListener.HitWindowClosed();
             }
+
+            TellTheTargetTheStrikeIsOver();
 
             ActionDefinition endedAction = CurrentAction;
             float endedAtTime = driver.NormalizedTime;
@@ -451,6 +473,7 @@ namespace ArkhamCombat.Combat
             {
                 isHitWindowOpen = true;
                 hitWindowListener.HitWindowOpened(attack, CurrentActionTarget);
+                TellTheTargetTheStrikeIsOver();
             }
 
             if (attack.HitWindow.IsClosed(previousTime, currentTime))

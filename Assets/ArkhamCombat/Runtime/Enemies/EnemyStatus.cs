@@ -18,6 +18,8 @@ namespace ArkhamCombat.Enemies
         private const string NoReaction = nameof(AppliedReaction.None);
         private const string Stunned = nameof(AppliedReaction.Stun);
         private const ActionDefinition NoOverride = null;
+        private const float RollNoChanceIsAbove = 1f;
+        private const float HighestRoll = 0.999999f;
 
         private HitReceiverProfile profile;
         private HitReceiver receiver;
@@ -63,6 +65,25 @@ namespace ArkhamCombat.Enemies
             Write(EnemyVariableNames.Reaction, NoReaction);
             Write(EnemyVariableNames.ReactionOverride, NoOverride);
             Write(EnemyVariableNames.Health01, ShareOfHealthLeft);
+            Write(EnemyVariableNames.PlayerStrikeIncoming, false);
+            Write(EnemyVariableNames.IncomingStrikeRoll, RollNoChanceIsAbove);
+        }
+
+        // The roll is made here, once per strike, so a guard that weighs a chance against it stays
+        // pure: asked again a frame later it gets the same answer.
+        public void StrikeIsComing()
+        {
+            Write(EnemyVariableNames.IncomingStrikeRoll, Mathf.Min(Random.value, HighestRoll));
+            Write(EnemyVariableNames.PlayerStrikeIncoming, true);
+        }
+
+        public void StrikeIsOver()
+        {
+            bool isStillInTheScene = this != null;
+            if (isStillInTheScene)
+            {
+                Write(EnemyVariableNames.PlayerStrikeIncoming, false);
+            }
         }
 
         /// <summary>

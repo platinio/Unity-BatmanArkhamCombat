@@ -1,0 +1,27 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: a0e48880e2ff4a747a37a932bb4aa5e5, type: 3}
+  m_Name: CanDodge
+  m_EditorClassIdentifier: ArcaneOnyx.VisualScriptingExtension.Runtime::ArcaneOnyx.VisualScriptingExtension.FunctionGraphAsset
+  _data:
+    _json: '{"pure":true,"watchedKeys":["playerStrikeIncoming","incomingStrikeRoll"],"description":"Whether
+      a strike is coming at this agent and the roll made for that strike is under
+      ''chance''. The roll is a fact written once per strike, so asking again gives
+      the same answer and a guard on this never rolls for itself.","graph":{"variables":{"Kind":"Flow","collection":{"$content":[],"$version":"A"},"$version":"A"},"controlInputDefinitions":[{"key":"Enter","label":"Enter","summary":null,"hideLabel":false}],"controlOutputDefinitions":[{"key":"Exit","label":"Exit","summary":null,"hideLabel":false}],"valueInputDefinitions":[{"hasDefaultValue":false,"defaultValue":{"$content":0.0,"$type":"System.Single"},"_type":"System.Single","key":"chance","label":"chance","summary":null,"hideLabel":false}],"valueOutputDefinitions":[{"_type":"System.Boolean","key":"Result","label":"Result","summary":null,"hideLabel":false}],"title":null,"summary":null,"pan":{"x":0.0,"y":0.0},"zoom":1.0,"elements":[{"defaultValues":{},"position":{"x":-700.0,"y":0.0},"guid":"e4f9c396-e4f9-40a9-b25f-ec91135f9772","$version":"A","$type":"ArcaneOnyx.VisualScriptingExtension.ScriptGraphInput","$id":"14"},{"defaultValues":{},"position":{"x":700.0,"y":0.0},"guid":"00f2fce2-2548-462b-9b07-4566da301f69","$version":"A","$type":"ArcaneOnyx.VisualScriptingExtension.ScriptGraphOutput","$id":"16"},{"specifyFallback":true,"kind":"Object","defaultValues":{"name":{"$content":"playerStrikeIncoming","$type":"System.String"},"object":null},"position":{"x":-440.0,"y":180.0},"guid":"82a32d3e-b5ed-42f4-b775-eee7ae5533b1","$version":"A","$type":"Unity.VisualScripting.GetVariable","$id":"18"},{"type":"System.Boolean","value":{"$content":false,"$type":"System.Boolean"},"defaultValues":{},"position":{"x":-700.0,"y":240.0},"guid":"ca2cc413-4df0-4112-a41a-3a784e7bcee7","$version":"A","$type":"Unity.VisualScripting.Literal","$id":"20"},{"specifyFallback":true,"kind":"Object","defaultValues":{"name":{"$content":"incomingStrikeRoll","$type":"System.String"},"object":null},"position":{"x":-440.0,"y":400.0},"guid":"545079ee-294b-43ac-9878-991ab1510bcc","$version":"A","$type":"Unity.VisualScripting.GetVariable","$id":"22"},{"type":"System.Single","value":{"$content":1.0,"$type":"System.Single"},"defaultValues":{},"position":{"x":-700.0,"y":460.0},"guid":"fe608008-6868-4f0a-96b0-1cabf0cbd1bd","$version":"A","$type":"Unity.VisualScripting.Literal","$id":"24"},{"numeric":true,"defaultValues":{"b":{"$content":0.0,"$type":"System.Single"}},"position":{"x":-100.0,"y":380.0},"guid":"d14ffb02-d483-4418-9e38-581c72835856","$version":"A","$type":"Unity.VisualScripting.Less","$id":"26"},{"defaultValues":{},"position":{"x":260.0,"y":200.0},"guid":"81e072ec-d48f-4ebb-9419-83c2e56b0af4","$version":"A","$type":"Unity.VisualScripting.And","$id":"28"},{"sourceUnit":{"$ref":"14"},"sourceKey":"Enter","destinationUnit":{"$ref":"16"},"destinationKey":"Exit","guid":"5ca0d8a6-30fc-4d4d-aea1-0b8e875251d9","$type":"Unity.VisualScripting.ControlConnection"},{"sourceUnit":{"$ref":"20"},"sourceKey":"output","destinationUnit":{"$ref":"18"},"destinationKey":"fallback","guid":"dea27153-b280-472e-82b3-02f3cbf1eac2","$type":"Unity.VisualScripting.ValueConnection"},{"sourceUnit":{"$ref":"24"},"sourceKey":"output","destinationUnit":{"$ref":"22"},"destinationKey":"fallback","guid":"8be913e7-e43a-4267-905f-ee1f1c17549c","$type":"Unity.VisualScripting.ValueConnection"},{"sourceUnit":{"$ref":"22"},"sourceKey":"value","destinationUnit":{"$ref":"26"},"destinationKey":"a","guid":"a6d9912d-353d-45b1-be99-35411b2cc5cc","$type":"Unity.VisualScripting.ValueConnection"},{"sourceUnit":{"$ref":"14"},"sourceKey":"chance","destinationUnit":{"$ref":"26"},"destinationKey":"b","guid":"1204b261-e040-4652-a585-3ef7b9864d6b","$type":"Unity.VisualScripting.ValueConnection"},{"sourceUnit":{"$ref":"18"},"sourceKey":"value","destinationUnit":{"$ref":"28"},"destinationKey":"a","guid":"9ec722a3-1d5d-413b-8713-7e641c75a308","$type":"Unity.VisualScripting.ValueConnection"},{"sourceUnit":{"$ref":"26"},"sourceKey":"comparison","destinationUnit":{"$ref":"28"},"destinationKey":"b","guid":"5752e0d8-a4b2-440b-9c67-302d96fa10b0","$type":"Unity.VisualScripting.ValueConnection"},{"sourceUnit":{"$ref":"28"},"sourceKey":"result","destinationUnit":{"$ref":"16"},"destinationKey":"Result","guid":"bc096270-8082-4e2a-af1c-9890dd1420bb","$type":"Unity.VisualScripting.ValueConnection"}],"$version":"A"}}'
+    _objectReferences: []
+  pure: 1
+  watchedKeys:
+  - playerStrikeIncoming
+  - incomingStrikeRoll
+  description: Whether a strike is coming at this agent and the roll made for that
+    strike is under 'chance'. The roll is a fact written once per strike, so asking
+    again gives the same answer and a guard on this never rolls for itself.

@@ -23,6 +23,7 @@ MonoBehaviour:
   tokenType: 0
   attack: {fileID: 11400000, guid: 6809121d96415a64588ed6467bfcc033, type: 2}
   tauntChance: 0
+  dodgeChance: 0
 --- !u!114 &-4506345148178389099
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -46,6 +47,7 @@ MonoBehaviour:
   tokenType: 0
   attack: {fileID: 11400000, guid: 6a4778f432f6b5a4880d064477e30186, type: 2}
   tauntChance: 0.25
+  dodgeChance: 0
 --- !u!114 &11400000
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -61,4 +63,29 @@ MonoBehaviour:
   items:
   - {fileID: -4506345148178389099}
   - {fileID: -5390072830440781213}
-  id: 2
+  - {fileID: 8589400000854732524}
+  id: 3
+--- !u!114 &8589400000854732524
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 0543b86f072271443adb3c8a0d70c9b5, type: 3}
+  m_Name: Knife
+  m_EditorClassIdentifier: ArkhamCombat.Enemies::ArkhamCombat.Enemies.EnemyArchetype
+  Name: Knife
+  icon: {fileID: 0}
+  id: e6bad4264868d24438e21f8006a89738_2
+  hitReceiverProfile: {fileID: -6411615913016946419, guid: e1d889d01db7699409079ff9f9515ac3, type: 2}
+  idleMin: 0.2
+  idleMax: 0.5
+  combatRange: 5
+  moveSpeed: 4.2
+  tokenType: 0
+  attack: {fileID: 11400000, guid: b95270b9e1459ea48b0040fbd5686647, type: 2}
+  tauntChance: 0
+  dodgeChance: 0.5

@@ -12,6 +12,9 @@ namespace ArkhamCombat.Enemies
         public const string MoveSpeed = "moveSpeed";
         public const string Attack = "attack";
         public const string TauntChance = "tauntChance";
+        public const string DodgeChance = "dodgeChance";
+        public const string PlayerStrikeIncoming = "playerStrikeIncoming";
+        public const string IncomingStrikeRoll = "incomingStrikeRoll";
         public const string HasTarget = "hasTarget";
         public const string TargetDistance = "targetDistance";
         public const string InCombatRange = "inCombatRange";
