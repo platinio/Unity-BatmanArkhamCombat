@@ -22,6 +22,7 @@ namespace ArkhamCombat.Tests
         private const string SwitchedOnOrOff = "enabled";
         private const string AttackSubTree = "Attack";
         private const string ProwlSubTree = "Prowl";
+        private const string TauntSubTree = "Taunt";
 
         private static List<string> KindsTheRootAsksAbout()
         {
@@ -89,7 +90,8 @@ namespace ArkhamCombat.Tests
         {
             string[] subTreesInPriorityOrder = BranchesOfTheRootInPriorityOrder().Select(SubTreeRunBy).ToArray();
 
-            CollectionAssert.AreEqual(new[] { "Death", "KnockedDown", "Stagger", "Flinch", "Attack", ProwlSubTree, "Approach", "Idle" }, subTreesInPriorityOrder);
+            CollectionAssert.AreEqual(
+                new[] { "Death", "KnockedDown", "Stagger", "Flinch", "Attack", TauntSubTree, ProwlSubTree, "Approach", "Idle" }, subTreesInPriorityOrder);
         }
 
         [Test]
@@ -102,6 +104,7 @@ namespace ArkhamCombat.Tests
 
         [Test]
         [TestCase(AttackSubTree)]
+        [TestCase(TauntSubTree)]
         [TestCase(ProwlSubTree)]
         public void TheAttackAndTheRing_AskTheSameFunctionWhetherTheTargetIsInCombatRange(string subTree)
         {
@@ -325,7 +328,8 @@ namespace ArkhamCombat.Tests
         {
             string[] guardedSubTrees = Tree(RootPath).graph.Nodes.OfType<ConditionalExecution>().Select(guard => SubTreeRunBy(guard.Owner)).ToArray();
 
-            CollectionAssert.AreEquivalent(new[] { "Death", "KnockedDown", "Stagger", "Flinch", AttackSubTree, ProwlSubTree, "Approach" }, guardedSubTrees);
+            CollectionAssert.AreEquivalent(
+                new[] { "Death", "KnockedDown", "Stagger", "Flinch", AttackSubTree, TauntSubTree, ProwlSubTree, "Approach" }, guardedSubTrees);
         }
 
         [Test]
