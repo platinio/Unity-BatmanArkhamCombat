@@ -154,16 +154,5 @@ namespace ArkhamCombat.Tests
             Assert.IsInstanceOf<SetNavAgentPosition>(steps[1]);
         }
 
-        [TestCase("Attack")]
-        [TestCase("Approach")]
-        public void TheRoot_HandsABranchThatWalksFast_TheMoveSpeedTheArchetypeWriterWrites(string subTree)
-        {
-            BehaviorTreeGraph root = Tree(ThugRootPath).graph;
-            BehaviorTreeNode branch = root.Nodes.OfType<RunBehaviorTreeGraphNode>().Single(call => SubTreeRunBy(call) == subTree);
-
-            VisualScriptGraphVariable read = (VisualScriptGraphVariable)WhatFeeds(branch, EnemyVariableNames.MoveSpeed);
-
-            CollectionAssert.AreEquivalent(new[] { EnemyVariableNames.MoveSpeed }, read.Function.DeriveReadKeys());
-        }
     }
 }

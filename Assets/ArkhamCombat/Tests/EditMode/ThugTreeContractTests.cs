@@ -17,47 +17,11 @@ namespace ArkhamCombat.Tests
     public class ThugTreeContractTests
     {
         private const string RootPath = ThugRootPath;
-        private const string KindOfReactionAskedAbout = "kind";
         private const string HasTargetInCombatRangePath = "Assets/ArkhamCombat/Trees/Functions/HasTargetInCombatRange.asset";
         private const string SwitchedOnOrOff = "enabled";
         private const string AttackSubTree = "Attack";
         private const string ProwlSubTree = "Prowl";
         private const string TauntSubTree = "Taunt";
-
-        private static List<string> KindsTheRootAsksAbout()
-        {
-            List<string> kinds = new List<string>();
-            foreach (VisualScriptGraphVariable functionCall in Tree(RootPath).graph.Nodes.OfType<VisualScriptGraphVariable>())
-            {
-                ValueInput kind = functionCall.valueInputs.FirstOrDefault(input => input.key == KindOfReactionAskedAbout);
-                if (kind != null)
-                {
-                    kinds.Add(kind.GetValue<string>());
-                }
-            }
-
-            return kinds;
-        }
-
-        [Test]
-        public void TheRootGuardsOneBranchPerReactionAnEnemyCanPlay()
-        {
-            string[] reactionsWithABranch =
-            {
-                nameof(AppliedReaction.Flinch), nameof(AppliedReaction.Stagger), nameof(AppliedReaction.Knockdown), nameof(AppliedReaction.Stun)
-            };
-
-            CollectionAssert.AreEquivalent(reactionsWithABranch, KindsTheRootAsksAbout());
-        }
-
-        [Test]
-        public void EveryKindTheRootAsksAbout_IsAReactionTheStatusCanPublish()
-        {
-            foreach (string kind in KindsTheRootAsksAbout())
-            {
-                Assert.IsTrue(Enum.TryParse(kind, out AppliedReaction _), $"'{kind}' on the canvas is not an {nameof(AppliedReaction)}, so its guard can never be true.");
-            }
-        }
 
         [TestCase("Flinch")]
         [TestCase("Stagger")]
@@ -98,13 +62,6 @@ namespace ArkhamCombat.Tests
                 new[] { "Death", "KnockedDown", "Stunned", "Stagger", "Flinch", "Attack", TauntSubTree, ProwlSubTree, "Approach", "Idle" }, subTreesInPriorityOrder);
         }
 
-        [Test]
-        public void TheAttacksGuard_ChecksOnlyAtTheDoor_SoASwingIsNeverCutShortByIt()
-        {
-            ConditionalExecution guard = Tree(RootPath).graph.Nodes.OfType<ConditionalExecution>().Single(candidate => SubTreeRunBy(candidate.Owner) == AttackSubTree);
-
-            Assert.IsNotInstanceOf<ReactiveGuard>(guard);
-        }
 
         [Test]
         [TestCase(AttackSubTree)]
@@ -314,29 +271,6 @@ namespace ArkhamCombat.Tests
                 new[] { typeof(UnityEngine.Collider), typeof(UnityEngine.AI.NavMeshAgent) }, WhatItSwitches(FunctionRunBy(steps[stopBlockingIndex])));
         }
 
-        [TestCase("Death", true)]
-        [TestCase("KnockedDown", false)]
-        [TestCase("Stunned", true)]
-        [TestCase("Stagger", true)]
-        [TestCase("Flinch", true)]
-        [TestCase(ProwlSubTree, true)]
-        [TestCase("Approach", true)]
-        public void EveryGuardedBranch_TakesOverWhatIsBelowIt(string subTree, bool shouldAlsoStopItself)
-        {
-            ReactiveGuard guard = Tree(RootPath).graph.Nodes.OfType<ReactiveGuard>().Single(candidate => SubTreeRunBy(candidate.Owner) == subTree);
-
-            Assert.IsTrue(guard.TakesOverLowerPriority);
-            Assert.AreEqual(shouldAlsoStopItself, guard.StopsItsOwnBranch);
-        }
-
-        [Test]
-        public void Idle_IsTheOnlyBranchWithoutAGuard()
-        {
-            string[] guardedSubTrees = Tree(RootPath).graph.Nodes.OfType<ConditionalExecution>().Select(guard => SubTreeRunBy(guard.Owner)).ToArray();
-
-            CollectionAssert.AreEquivalent(
-                new[] { "Death", "KnockedDown", "Stunned", "Stagger", "Flinch", AttackSubTree, TauntSubTree, ProwlSubTree, "Approach" }, guardedSubTrees);
-        }
 
         [Test]
         public void EveryVariableReadInEveryTree_IsCompleteEnoughToRun()

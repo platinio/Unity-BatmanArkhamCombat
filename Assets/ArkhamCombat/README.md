@@ -412,8 +412,10 @@ both generated assemblies reference it.
 - **Another kind of enemy**: a root, an archetype and a prefab variant. `Roots/ArmoredRoot`, the
   `Armored` items in the archetype and profile databases and `Prefabs/Armored.prefab` are the model.
   The root is a Repeater over a Selector that calls the shared sub-trees in priority order: pick the
-  branches this enemy has, guard each as `ThugRoot` does, and feed a port only where this enemy
-  differs from the sub-tree's default. Every root needs a branch for each reaction `EnemyStatus` can
+  branches this enemy has, guard each as `ThugRoot` does, feed from the agent's variables every
+  port the archetype has a value for (`attack` on Attack, `moveSpeed` on Attack and Approach, as
+  `ThugRoot` does), and pass a literal only where this enemy differs from a sub-tree's default.
+  Every root needs a branch for each reaction `EnemyStatus` can
   publish (Flinch, Stagger, Knockdown, Stun), or the enemy stays in a reaction nothing plays; a test
   reads every root for it. The prefab is a variant of `Prefabs/Thug.prefab` that overrides three
   things: the root on its `BehaviorTreeMachine`, the archetype on its `EnemyInstaller`, and the body's
