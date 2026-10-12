@@ -71,10 +71,9 @@ namespace ArkhamCombat.Enemies
             Container.Bind<IPresentationDriver>().FromInstance(hasBody ? driverOnTheBody : new NullPresentationDriver());
         }
 
-        // CombatActions asks for the warp mover by its own type, so an enemy has one though nothing takes its movement yet.
         private void BindWarpAndHits()
         {
-            Container.Bind(typeof(MotorWarpMover), typeof(IWarpMover)).To<MotorWarpMover>().AsSingle();
+            Container.Bind(typeof(PendingWarpMovement), typeof(IWarpMover)).To<PendingWarpMovement>().AsSingle();
             Container.Bind<IHitWindowListener>().To<NullHitWindowListener>().AsSingle();
         }
 

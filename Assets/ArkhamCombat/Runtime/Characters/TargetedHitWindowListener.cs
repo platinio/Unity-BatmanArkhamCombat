@@ -1,28 +1,26 @@
 using ArcaneOnyx.GameEventGenerator;
-using ArcaneOnyx.TPCharacterController.Motor;
-using ArkhamCombat.Characters;
 using ArkhamCombat.Combat;
 using UnityEngine;
 
-namespace ArkhamCombat.Player
+namespace ArkhamCombat.Characters
 {
     public sealed class TargetedHitWindowListener : IHitWindowListener
     {
         private readonly HitResolver hitResolver;
         private readonly Transform character;
-        private readonly MotorWarpMover warpMover;
+        private readonly PendingWarpMovement pendingWarpMovement;
         private readonly ISceneGameEvents sceneGameEvents;
 
         public TargetedHitWindowListener(
             IHitCheckSettings settings,
-            CharacterMotor motor,
-            MotorWarpMover warpMover,
+            Transform character,
+            PendingWarpMovement pendingWarpMovement,
             ISceneGameEvents sceneGameEvents)
         {
             hitResolver = new HitResolver(settings);
-            this.warpMover = warpMover;
+            this.character = character;
+            this.pendingWarpMovement = pendingWarpMovement;
             this.sceneGameEvents = sceneGameEvents;
-            character = motor.transform;
         }
 
         public void HitWindowOpened(AttackDefinition attack, IActionTarget target)
@@ -57,19 +55,19 @@ namespace ArkhamCombat.Player
         // The hit window opens on the tick the warp closes, and that tick's warp share has not
         // reached the transform yet, so the strike is measured from where the character lands.
         private StrikeOrigin WhereTheStrikeComesFrom() =>
-            new StrikeOrigin(character.position + warpMover.PendingMovement, character.forward);
+            new StrikeOrigin(character.position + pendingWarpMovement.Movement, character.forward);
 
         private void AnnounceStrikeLanded(AttackDefinition attack, ICombatTarget victim)
         {
 #if HERMES_EVENTS_GENERATED
-            sceneGameEvents?.GameEventDispatcher.StrikeLandedGameEvent.Raise(character.gameObject, attack, GameObjectOf(victim));
+            sceneGameEvents?.GameEventDispatcher?.StrikeLandedGameEvent.Raise(character.gameObject, attack, GameObjectOf(victim));
 #endif
         }
 
         private void AnnounceStrikeWhiffed(AttackDefinition attack)
         {
 #if HERMES_EVENTS_GENERATED
-            sceneGameEvents?.GameEventDispatcher.StrikeWhiffedGameEvent.Raise(character.gameObject, attack);
+            sceneGameEvents?.GameEventDispatcher?.StrikeWhiffedGameEvent.Raise(character.gameObject, attack);
 #endif
         }
 

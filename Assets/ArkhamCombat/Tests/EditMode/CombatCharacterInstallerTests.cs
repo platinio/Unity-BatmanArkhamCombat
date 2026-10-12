@@ -27,6 +27,8 @@ namespace ArkhamCombat.Tests
         private const float TickSeconds = 0.1f;
         private const float PressLifetimeSeconds = 10f;
 
+        private static readonly Vector3 FarFromTheOtherCharacter = new Vector3(20f, 0f, 0f);
+
         private TestIntentKinds kinds;
         private AttackDefinition jab;
         private Stance stance;
@@ -75,6 +77,19 @@ namespace ArkhamCombat.Tests
             Object.DestroyImmediate(function);
             Object.DestroyImmediate(config);
             kinds.Destroy();
+        }
+
+        [Test]
+        public void TheCharactersStrike_IsMeasuredFromThatCharacter_NotFromAnotherOneInTheScene()
+        {
+            character.transform.position = FarFromTheOtherCharacter;
+            GiveTheCharacterAStanceWithoutConditions();
+            InstallTheCharacter();
+            PointCombatTarget targetInFrontOfTheCharacter = new PointCombatTarget(FarFromTheOtherCharacter + Vector3.forward);
+
+            characterContainer.Resolve<IHitWindowListener>().HitWindowOpened(jab, targetInFrontOfTheCharacter);
+
+            Assert.AreEqual(1, targetInFrontOfTheCharacter.HitsTaken);
         }
 
         private Edge StrikeEdgeWithACondition(string destinationId)

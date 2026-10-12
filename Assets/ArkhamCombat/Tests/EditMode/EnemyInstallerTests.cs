@@ -132,11 +132,11 @@ namespace ArkhamCombat.Tests
         }
 
         [Test]
-        public void TheWarpMoverIsOneObjectUnderBothNames()
+        public void ThePendingWarpMovementIsOneObjectUnderBothNames()
         {
             InstallTheEnemyWithItsArchetype();
 
-            Assert.AreSame(enemyContainer.Resolve<MotorWarpMover>(), enemyContainer.Resolve<IWarpMover>());
+            Assert.AreSame(enemyContainer.Resolve<PendingWarpMovement>(), enemyContainer.Resolve<IWarpMover>());
         }
 
         [Test]

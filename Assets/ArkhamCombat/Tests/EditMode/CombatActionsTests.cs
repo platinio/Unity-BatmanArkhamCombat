@@ -52,11 +52,11 @@ namespace ArkhamCombat.Tests
             intents = new IntentBuffer();
             targetPicker = new RecordingActionTargetPicker();
             startGate = new SettableActionStartGate();
-            MotorWarpMover warpMover = new MotorWarpMover();
+            PendingWarpMovement pendingWarpMovement = new PendingWarpMovement();
 
             ActionRunner runner = new ActionRunner(
                 stance, intents, new CombatFacts(), new AlwaysConditionEvaluator(), kinds.InterruptKinds,
-                new NullPresentationDriver(), warpMover, new NullHitWindowListener(), targetPicker);
+                new NullPresentationDriver(), pendingWarpMovement, new NullHitWindowListener(), targetPicker);
 
             hermesObject = HiddenObject("Hermes");
             dispatcher = hermesObject.AddComponent<GameEventDispatcher>();
@@ -66,7 +66,7 @@ namespace ArkhamCombat.Tests
             character = HiddenObject("Character");
             character.transform.position = CharacterPosition;
             combatActions = character.AddComponent<CombatActions>();
-            combatActions.Construct(runner, warpMover, startGate, new SceneGameEventsWith(dispatcher));
+            combatActions.Construct(runner, pendingWarpMovement, startGate, new SceneGameEventsWith(dispatcher));
             combatActions.StartListeningToTheRunner();
 
             startedActions = new List<ActionStartedEventArgs>();

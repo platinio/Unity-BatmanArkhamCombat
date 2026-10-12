@@ -44,12 +44,12 @@ namespace ArkhamCombat.Tests
         {
             GameObject agent = HiddenObject(name);
             agent.AddComponent<BehaviorTreeMachine>();
-            MotorWarpMover warpMover = new MotorWarpMover();
+            PendingWarpMovement pendingWarpMovement = new PendingWarpMovement();
             ActionRunner runner = new ActionRunner(
                 stance: null, intents: null, new CombatFacts(), new AlwaysConditionEvaluator(), new InterruptKinds(null, null),
-                new NullPresentationDriver(), warpMover, new NullHitWindowListener());
+                new NullPresentationDriver(), pendingWarpMovement, new NullHitWindowListener());
             combatActions = agent.AddComponent<CombatActions>();
-            combatActions.Construct(runner, warpMover, new AlwaysOpenActionStartGate(), null);
+            combatActions.Construct(runner, pendingWarpMovement, new AlwaysOpenActionStartGate(), null);
             return agent;
         }
 
