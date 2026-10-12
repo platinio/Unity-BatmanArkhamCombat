@@ -86,6 +86,18 @@ namespace ArkhamCombat.Tests
         }
 
         [Test]
+        public void LosesTheComboWhenItsOwnCharacterIsStruck()
+        {
+            StrikeLandsFor(character);
+            StrikeLandsFor(character);
+
+            dispatcher.StrikeLandedGameEvent.Raise(anotherCharacter, attack, character);
+
+            Assert.AreEqual(0, tracker.Count);
+            Assert.AreEqual(ComboResetReason.PlayerHit, comboResets[0].Reason);
+        }
+
+        [Test]
         public void IgnoresAnotherCharactersStrikes()
         {
             StrikeLandsFor(character);

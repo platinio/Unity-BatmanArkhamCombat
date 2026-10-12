@@ -30,16 +30,18 @@ namespace ArkhamCombat.Player
             motor = GetComponent<CharacterMotor>();
         }
 
-        public override void Tick(float deltaTime) => EnterAttackingStateWhileAnActionPlays();
+        public override void Tick(float deltaTime) => EnterAttackingStateWhileAnAttackPlays();
 
         // Attacking counts too: an idle runner while still in Attacking is recovery, so a queued press
         // continues the combo without a one-frame trip through Locomotion.
         internal static bool CanStartFromIdleWhen(bool isGrounded, ICharacterState currentState) =>
             isGrounded && (currentState is LocomotionState || currentState is AttackingState);
 
-        private void EnterAttackingStateWhileAnActionPlays()
+        // Any other action on the runner is a reaction, and its own state holds the character.
+        private void EnterAttackingStateWhileAnAttackPlays()
         {
-            if (runner.IsPlaying && !IsInAttackingState())
+            bool isAnAttackPlaying = runner.CurrentAttack != null;
+            if (isAnAttackPlaying && !IsInAttackingState())
             {
                 characterBrain.StateMachine.Change<AttackingState>();
             }

@@ -17,6 +17,10 @@ MonoBehaviour:
   - rid: 1000
   - rid: 1001
   - rid: 3135146534942277833
+  - rid: 3135146639645999206
+  - rid: 3135146639645999207
+  - rid: 3135146639645999208
+  - rid: 3135146639645999209
   references:
     version: 2
     RefIds:
@@ -29,3 +33,20 @@ MonoBehaviour:
     - rid: 3135146534942277833
       type: {class: AttackingStateBinding, ns: ArkhamCombat.Player, asm: ArkhamCombat.Player}
       data: 
+    - rid: 3135146639645999206
+      type: {class: FlinchStateBinding, ns: ArkhamCombat.Player, asm: ArkhamCombat.Player}
+      data:
+        flinchAction: {fileID: 11400000, guid: b2c60ed6e3697d24aa5bbd628d498b75, type: 2}
+    - rid: 3135146639645999207
+      type: {class: StaggerStateBinding, ns: ArkhamCombat.Player, asm: ArkhamCombat.Player}
+      data:
+        staggerAction: {fileID: 11400000, guid: a9035956a4ea1614b9a94368bbec1bae, type: 2}
+    - rid: 3135146639645999208
+      type: {class: KnockedDownStateBinding, ns: ArkhamCombat.Player, asm: ArkhamCombat.Player}
+      data:
+        knockdownAction: {fileID: 11400000, guid: 9855ac607fae59b49af1ea8407b96f2c, type: 2}
+        getUpAction: {fileID: 11400000, guid: 53ab710b47b79b2448b826e034e5233a, type: 2}
+    - rid: 3135146639645999209
+      type: {class: DeadStateBinding, ns: ArkhamCombat.Player, asm: ArkhamCombat.Player}
+      data:
+        deathAction: {fileID: 11400000, guid: 7769e75d9697a44469d3a98b945a53b3, type: 2}
