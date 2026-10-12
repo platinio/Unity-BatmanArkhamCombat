@@ -29,9 +29,19 @@ namespace ArkhamCombat.Combat
 
             base.Validate(errors);
             ReportWhenWindowEndsBeforeItStarts(nameof(travelWindow), travelWindow, errors);
+            ReportWhenItHasNoTimeToTravelIn(errors);
 
             bool isWellFormed = errors.Count == errorCountBefore;
             return isWellFormed;
+        }
+
+        private void ReportWhenItHasNoTimeToTravelIn(List<string> errors)
+        {
+            bool hasNoTimeToTravelIn = travelDistance > 0f && Mathf.Approximately(travelWindow.Start, travelWindow.End);
+            if (hasNoTimeToTravelIn)
+            {
+                errors.Add($"'{name}': travelWindow has no length, so the dash would never cover its travelDistance.");
+            }
         }
     }
 }
