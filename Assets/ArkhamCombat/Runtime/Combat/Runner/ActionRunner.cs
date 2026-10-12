@@ -331,7 +331,7 @@ namespace ArkhamCombat.Combat
 
             if (CurrentAttack != null)
             {
-                TellTheTargetAStrikeIsComing();
+                TellTheTargetAStrikeIsComing(position);
                 StartThePairedReactionOfTheTarget(CurrentAttack);
                 HandleWindowsStartingAtZero(CurrentAttack, position);
             }
@@ -348,12 +348,13 @@ namespace ArkhamCombat.Combat
             return OnTheGroundAndOfLengthOne(direction);
         }
 
-        private void TellTheTargetAStrikeIsComing()
+        private void TellTheTargetAStrikeIsComing(Vector3 position)
         {
-            if (HasValidTarget)
+            bool canTheStrikeReachItsTarget = HasValidTarget && !CurrentAttack.IsBeyondLunge(position, CurrentActionTarget.Position);
+            if (canTheStrikeReachItsTarget)
             {
-                CurrentActionTarget.StrikeIsComing();
                 isTheTargetExpectingAStrike = true;
+                CurrentActionTarget.StrikeIsComing();
             }
         }
 
@@ -361,8 +362,8 @@ namespace ArkhamCombat.Combat
         {
             if (isTheTargetExpectingAStrike)
             {
-                CurrentActionTarget.StrikeIsOver();
                 isTheTargetExpectingAStrike = false;
+                CurrentActionTarget.StrikeIsOver();
             }
         }
 
