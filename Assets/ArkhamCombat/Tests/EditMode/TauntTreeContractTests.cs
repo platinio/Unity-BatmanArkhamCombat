@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using ArcaneOnyx.BehaviorTree;
@@ -10,7 +11,6 @@ namespace ArkhamCombat.Tests
 {
     public class TauntTreeContractTests
     {
-        private const string RootPath = "Assets/ArkhamCombat/Trees/Roots/ThugRoot.asset";
         private const string TauntSubTree = "Taunt";
         private const string ActionItPlays = "tauntAction";
 
@@ -19,23 +19,35 @@ namespace ArkhamCombat.Tests
         private static BehaviorTreeNode OnlyChildOf(BehaviorTreeNode parent) => Taunt.ChildrenInPriorityOrder(parent).Single();
 
         private static BehaviorTreeNode TheBranchOnTheRoot() =>
-            Tree(RootPath).graph.Nodes.OfType<RunBehaviorTreeGraphNode>().Single(call => SubTreeRunBy(call) == TauntSubTree);
+            Tree(ThugRootPath).graph.Nodes.OfType<RunBehaviorTreeGraphNode>().Single(call => SubTreeRunBy(call) == TauntSubTree);
+
+        private static BehaviorTreeNode TheWait() => OnlyChildOf(Taunt.EntryNode);
+
+        private static BehaviorTreeNode TheRoll() => OnlyChildOf(TheWait());
+
+        private static List<BehaviorTreeNode> StepsOfATaunt() => Taunt.ChildrenInPriorityOrder(OnlyChildOf(TheRoll()));
 
         [Test]
         public void ATaunt_IsRolledForOnlyOnceInAWhile_AndOnlySomeRollsPass()
         {
-            BehaviorTreeNode onceInAWhile = OnlyChildOf(Taunt.EntryNode);
-            BehaviorTreeNode sometimes = OnlyChildOf(onceInAWhile);
+            Assert.IsInstanceOf<Cooldown>(TheWait(), "a roll that fails must start the wait too, or the next loop rolls again");
+            Assert.IsInstanceOf<RandomChance>(TheRoll());
+        }
 
-            Assert.IsInstanceOf<Cooldown>(onceInAWhile, "a roll that fails must start the wait too, or the next loop rolls again");
-            Assert.IsInstanceOf<RandomChance>(sometimes);
+        [TestCase(typeof(Cooldown), nameof(Cooldown.Duration), "secondsBetweenTaunts")]
+        [TestCase(typeof(RandomChance), nameof(RandomChance.Chance), "tauntChance")]
+        [TestCase(typeof(PlayActionNode), nameof(PlayActionNode.Action), ActionItPlays)]
+        public void EachStepOfATaunt_ReadsItsOwnParameter(Type step, string port, string parameter)
+        {
+            BehaviorTreeNode stepOfTheTaunt = Taunt.Nodes.Single(node => node.GetType() == step);
+
+            Assert.AreEqual(parameter, ParameterThatFeeds(stepOfTheTaunt, port));
         }
 
         [Test]
         public void ATauntingEnemy_StopsWalking_FacesItsTarget_ThenPlaysItsTaunt()
         {
-            BehaviorTreeNode sometimes = OnlyChildOf(OnlyChildOf(Taunt.EntryNode));
-            List<BehaviorTreeNode> steps = Taunt.ChildrenInPriorityOrder(OnlyChildOf(sometimes));
+            List<BehaviorTreeNode> steps = StepsOfATaunt();
 
             Assert.AreEqual(3, steps.Count);
             Assert.IsInstanceOf<StopNavAgent>(steps[0]);
@@ -72,7 +84,7 @@ namespace ArkhamCombat.Tests
         [Test]
         public void TheTauntsGuard_ChecksOnlyAtTheDoor_SoATauntThatStartedIsNotCutShortByIt()
         {
-            ConditionalExecution guard = Tree(RootPath).graph.Nodes.OfType<ConditionalExecution>().Single(candidate => candidate.Owner == TheBranchOnTheRoot());
+            ConditionalExecution guard = Tree(ThugRootPath).graph.Nodes.OfType<ConditionalExecution>().Single(candidate => candidate.Owner == TheBranchOnTheRoot());
 
             Assert.IsNotInstanceOf<ReactiveGuard>(guard);
         }

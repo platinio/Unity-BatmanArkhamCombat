@@ -16,7 +16,7 @@ namespace ArkhamCombat.Tests
     // compiles the two together. So these read the authored assets.
     public class ThugTreeContractTests
     {
-        private const string RootPath = "Assets/ArkhamCombat/Trees/Roots/ThugRoot.asset";
+        private const string RootPath = ThugRootPath;
         private const string KindOfReactionAskedAbout = "kind";
         private const string HasTargetInCombatRangePath = "Assets/ArkhamCombat/Trees/Functions/HasTargetInCombatRange.asset";
         private const string SwitchedOnOrOff = "enabled";
@@ -110,7 +110,7 @@ namespace ArkhamCombat.Tests
         [TestCase(AttackSubTree)]
         [TestCase(TauntSubTree)]
         [TestCase(ProwlSubTree)]
-        public void TheAttackAndTheRing_AskTheSameFunctionWhetherTheTargetIsInCombatRange(string subTree)
+        public void EveryBranchThatNeedsTheTargetInRange_AsksTheSameFunction(string subTree)
         {
             FunctionGraphAsset hasTargetInCombatRange = AssetDatabase.LoadAssetAtPath<FunctionGraphAsset>(HasTargetInCombatRangePath);
             ConditionalExecution guard = Tree(RootPath).graph.Nodes.OfType<ConditionalExecution>().Single(candidate => SubTreeRunBy(candidate.Owner) == subTree);
