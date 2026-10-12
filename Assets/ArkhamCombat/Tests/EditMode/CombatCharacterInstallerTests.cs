@@ -92,6 +92,31 @@ namespace ArkhamCombat.Tests
             Assert.AreEqual(1, targetInFrontOfTheCharacter.HitsTaken);
         }
 
+        [Test]
+        public void TheHitReceiverProfile_IsBoundForTheCharacter_WhenOneIsAssigned()
+        {
+            HitReceiverProfile profile = ReceiverProfile();
+            SerializedObject serializedInstaller = new SerializedObject(installer);
+            serializedInstaller.FindProperty("hitReceiverProfile").objectReferenceValue = profile;
+            serializedInstaller.ApplyModifiedPropertiesWithoutUndo();
+            GiveTheCharacterAStanceWithoutConditions();
+
+            InstallTheCharacter();
+
+            Assert.AreSame(profile, characterContainer.Resolve<HitReceiverProfile>());
+            Object.DestroyImmediate(profile);
+        }
+
+        [Test]
+        public void ACharacterNothingCanHit_HasNoHitReceiverProfile()
+        {
+            GiveTheCharacterAStanceWithoutConditions();
+
+            InstallTheCharacter();
+
+            Assert.IsFalse(characterContainer.HasBinding<HitReceiverProfile>());
+        }
+
         private Edge StrikeEdgeWithACondition(string destinationId)
         {
             Edge edge = new Edge(kinds.Strike, destinationId);

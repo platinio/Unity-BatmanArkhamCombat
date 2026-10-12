@@ -1647,6 +1647,8 @@ GameObject:
   - component: {fileID: 1426181070}
   - component: {fileID: 1426181069}
   - component: {fileID: 1426181068}
+  - component: {fileID: 1426181073}
+  - component: {fileID: 1426181072}
   m_Layer: 0
   m_Name: Player
   m_TagString: Player
@@ -1671,6 +1673,7 @@ MonoBehaviour:
   - {fileID: 1426181067}
   - {fileID: 1426181069}
   - {fileID: 1426181068}
+  - {fileID: 1426181072}
 --- !u!114 &1426181060
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -1815,6 +1818,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: ArkhamCombat.Player::ArkhamCombat.Player.CombatCharacterInstaller
   stance: {fileID: 11400000, guid: 417965012c9051c4fa318b5cbb6e89c1, type: 2}
+  hitReceiverProfile: {fileID: 8819781258670630746, guid: e1d889d01db7699409079ff9f9515ac3, type: 2}
 --- !u!114 &1426181071
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -1833,6 +1837,30 @@ MonoBehaviour:
   _installerPrefabs: []
   _autoRun: 1
   _kernel: {fileID: 0}
+--- !u!114 &1426181072
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1426181058}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 181206a1ef8b34340aea5fda43cbf9cc, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: ArkhamCombat.Player::ArkhamCombat.Player.HitReactionSwitch
+--- !u!114 &1426181073
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1426181058}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 42b282bb7c4ec9d43a75f5697074c234, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: ArkhamCombat.Player::ArkhamCombat.Player.PlayerStatus
 --- !u!1 &1454199925
 GameObject:
   m_ObjectHideFlags: 0

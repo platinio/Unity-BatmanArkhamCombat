@@ -1,4 +1,5 @@
 using System.Collections.Generic;
+using ArcaneOnyx.ScriptableObjectDatabase;
 using ArcaneOnyx.TPCharacterController;
 using ArcaneOnyx.TPCharacterController.Inputs;
 using ArcaneOnyx.TPCharacterController.Motor;
@@ -21,12 +22,17 @@ namespace ArkhamCombat.Player
         [Tooltip("The chain this character fights with.")]
         [SerializeField] private Stance stance;
 
+        [Tooltip("How much health this character has and which hits it shrugs off. Leave it empty on a character nothing can hit.")]
+        [SerializeField, ScriptableItemDatabaseSelector(typeof(HitReceiverProfileDatabase))]
+        private HitReceiverProfile hitReceiverProfile;
+
         public override void InstallBindings()
         {
             ReportAuthoringErrors();
 
             BindMotor();
             BindStance();
+            BindHitReceiverProfile();
             BindPresses();
             BindFacts();
             BindConditions();
@@ -41,6 +47,15 @@ namespace ArkhamCombat.Player
         private void BindMotor() => Container.Bind<CharacterMotor>().FromInstance(GetComponent<CharacterMotor>());
 
         private void BindStance() => Container.Bind<Stance>().FromInstance(stance);
+
+        // Left unbound when missing: the character's status takes it as optional and reports that it cannot be hit.
+        private void BindHitReceiverProfile()
+        {
+            if (hitReceiverProfile != null)
+            {
+                Container.Bind<HitReceiverProfile>().FromInstance(hitReceiverProfile);
+            }
+        }
 
         private void BindPresses()
         {

@@ -7,8 +7,8 @@ using Zenject;
 namespace ArkhamCombat.Player
 {
     /// <summary>
-    /// It hears every strike in the scene and counts only its own character's. Without generated
-    /// Hermes events the combo stays at zero.
+    /// It hears every strike in the scene, counts only its own character's, and loses the combo
+    /// when its character is the one struck. Without generated Hermes events the combo stays at zero.
     /// </summary>
     public sealed class ComboTracker : CharacterComponent
     {
@@ -78,6 +78,10 @@ namespace ArkhamCombat.Player
             {
                 meter.Increment();
             }
+            else if (IsThisCharacter(strike.Target))
+            {
+                meter.Reset(ComboResetReason.PlayerHit);
+            }
         }
 
         private void OnStrikeWhiffed(StrikeWhiffedEventArgs strike)
@@ -88,7 +92,7 @@ namespace ArkhamCombat.Player
             }
         }
 
-        private bool IsThisCharacter(GameObject attacker) => attacker == gameObject;
+        private bool IsThisCharacter(GameObject character) => character == gameObject;
 
         // The meter only changes after a strike was heard, so the scene events are known to be there.
         private void AnnounceComboChanged(int count, int tier) => SceneEvents.ComboChangedGameEvent.Raise(gameObject, count, tier);
