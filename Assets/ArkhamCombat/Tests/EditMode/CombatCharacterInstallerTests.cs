@@ -35,6 +35,7 @@ namespace ArkhamCombat.Tests
         private Stance stance;
         private FunctionGraphAsset function;
         private CombatConfig config;
+        private HitReceiverProfile profile;
         private StillCharacterInput input;
         private GameObject character;
         private GameObject anotherCharacter;
@@ -77,6 +78,7 @@ namespace ArkhamCombat.Tests
             Object.DestroyImmediate(jab);
             Object.DestroyImmediate(function);
             Object.DestroyImmediate(config);
+            Object.DestroyImmediate(profile);
             kinds.Destroy();
         }
 
@@ -84,7 +86,7 @@ namespace ArkhamCombat.Tests
         [Test]
         public void TheHitReceiverProfile_IsBoundForTheCharacter_WhenOneIsAssigned()
         {
-            HitReceiverProfile profile = ReceiverProfile();
+            profile = ReceiverProfile();
             SerializedObject serializedInstaller = new SerializedObject(installer);
             serializedInstaller.FindProperty("hitReceiverProfile").objectReferenceValue = profile;
             serializedInstaller.ApplyModifiedPropertiesWithoutUndo();
@@ -93,7 +95,6 @@ namespace ArkhamCombat.Tests
             InstallTheCharacter();
 
             Assert.AreSame(profile, characterContainer.Resolve<HitReceiverProfile>());
-            Object.DestroyImmediate(profile);
         }
 
         [Test]

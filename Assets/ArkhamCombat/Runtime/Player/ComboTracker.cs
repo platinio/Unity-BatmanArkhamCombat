@@ -7,8 +7,8 @@ using Zenject;
 namespace ArkhamCombat.Player
 {
     /// <summary>
-    /// It hears every strike in the scene, counts only its own character's, and loses the combo
-    /// when its character is the one struck. Without generated Hermes events the combo stays at zero.
+    /// It hears every strike in the scene and keeps only the ones about its own character. Without
+    /// generated Hermes events the combo stays at zero.
     /// </summary>
     public sealed class ComboTracker : CharacterComponent
     {

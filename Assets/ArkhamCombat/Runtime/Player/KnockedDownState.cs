@@ -24,7 +24,12 @@ namespace ArkhamCombat.Player
         [Tooltip("What the character plays to stand up again.")]
         [SerializeField] private ActionDefinition getUpAction;
 
-        public void Install(DiContainer container) =>
+        public void Install(DiContainer container)
+        {
+            ReactionState.ReportWhenMissing(knockdownAction, nameof(KnockedDownStateBinding), nameof(knockdownAction));
+            ReactionState.ReportWhenMissing(getUpAction, nameof(KnockedDownStateBinding), nameof(getUpAction));
+
             container.Bind<ICharacterState>().To<KnockedDownState>().AsSingle().WithArguments(new[] { knockdownAction, getUpAction });
+        }
     }
 }

@@ -103,6 +103,16 @@ namespace ArkhamCombat.Tests
         }
 
         [Test]
+        public void AMissingAction_StillCutsShortWhatTheRunnerWasPlaying()
+        {
+            runner.PlayAction(knockdown, Vector3.zero);
+
+            StartedPlaybackOf(new ActionDefinition[] { null });
+
+            Assert.IsFalse(runner.IsPlaying, "the reaction must not sit on top of an action that goes on playing");
+        }
+
+        [Test]
         public void AReactionWithNoActions_EndsAsItStarts()
         {
             ReactionPlayback playback = StartedPlaybackOf();

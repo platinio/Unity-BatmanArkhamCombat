@@ -37,16 +37,18 @@ namespace ArkhamCombat.Player
         internal static bool CanStartFromIdleWhen(bool isGrounded, ICharacterState currentState) =>
             isGrounded && (currentState is LocomotionState || currentState is AttackingState);
 
-        // Any other action on the runner is a reaction, and its own state holds the character.
+        internal static bool ShouldEnterAttackingWhen(AttackDefinition currentAttack, ICharacterState currentState)
+        {
+            bool isAnAttackPlaying = currentAttack != null;
+            return isAnAttackPlaying && !(currentState is AttackingState);
+        }
+
         private void EnterAttackingStateWhileAnAttackPlays()
         {
-            bool isAnAttackPlaying = runner.CurrentAttack != null;
-            if (isAnAttackPlaying && !IsInAttackingState())
+            if (ShouldEnterAttackingWhen(runner.CurrentAttack, characterBrain.StateMachine.Current))
             {
                 characterBrain.StateMachine.Change<AttackingState>();
             }
         }
-
-        private bool IsInAttackingState() => characterBrain.StateMachine.Current is AttackingState;
     }
 }

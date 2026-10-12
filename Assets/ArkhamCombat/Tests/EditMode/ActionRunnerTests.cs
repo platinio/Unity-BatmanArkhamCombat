@@ -582,6 +582,44 @@ namespace ArkhamCombat.Tests
         }
 
         [Test]
+        public void APressDuringAPlainAction_Waits_EvenForAnInterruptThatIsAllowed()
+        {
+            stance = Stance("Neutral",
+                new[]
+                {
+                    NodeWithNothingToPlay("Neutral", new Edge(kinds.Strike, "S1")),
+                    new ChainNode("S1", jab),
+                    new ChainNode("CounterStrike", cross)
+                },
+                new[] { new Edge(kinds.Counter, "CounterStrike") },
+                ChainResetSeconds);
+            facts.IsIncomingAttackCounterable = true;
+            ActionDefinition flinch = Action("Flinch", 0.5f);
+            ActionRunner runner = CreateRunner();
+            runner.PlayAction(flinch, Vector3.zero);
+
+            Press(kinds.Counter);
+            Tick(runner);
+
+            Assert.AreSame(flinch, runner.CurrentAction, "a reaction is not cut short by a press");
+            Assert.AreEqual(1, intents.Queued.Count, "the press waits");
+        }
+
+        [Test]
+        public void IsStillPlaying_IsTrueOnlyForTheActionOnTheRunner()
+        {
+            ActionDefinition flinch = Action("Flinch", 0.5f);
+            ActionRunner runner = CreateRunner();
+            Assert.IsFalse(runner.IsStillPlaying(flinch), "before it starts");
+
+            runner.PlayAction(flinch, Vector3.zero);
+            Assert.IsTrue(runner.IsStillPlaying(flinch), "while it plays");
+
+            runner.PlayAction(jab, Vector3.zero);
+            Assert.IsFalse(runner.IsStillPlaying(flinch), "once another action replaced it");
+        }
+
+        [Test]
         public void TheTrace_KeepsTheLastEightRecords_WithThePressesMarkedOnThem()
         {
             ActionRunner runner = CreateRunner();

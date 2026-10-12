@@ -91,6 +91,8 @@ namespace ArkhamCombat.Combat
         public IActionTarget CurrentActionTarget { get; private set; }
 
         public bool IsPlaying => isPlaying;
+
+        public bool IsStillPlaying(ActionDefinition action) => isPlaying && CurrentAction == action;
         public float NormalizedTime => isPlaying ? driver.NormalizedTime : 0f;
         public bool IsHitWindowOpen => isHitWindowOpen;
         public bool IsComboWindowOpen => isComboWindowOpen;
@@ -199,6 +201,11 @@ namespace ArkhamCombat.Combat
                 return false;
             }
 
+            if (IsPlayingAnActionNoPressCanReplace)
+            {
+                return false;
+            }
+
             Resolution resolution = resolver.Resolve(stance, DescribeCurrentSituation(), intents, facts);
             if (!resolution.HasMatch)
             {
@@ -210,6 +217,9 @@ namespace ArkhamCombat.Combat
             StartAction(nextNode, PickAttack(nextNode), position, resolution.IsInterrupt, directionAtPress);
             return true;
         }
+
+        // An action that is not an attack, a reaction for one, has no window a press could be taken in.
+        private bool IsPlayingAnActionNoPressCanReplace => isPlaying && CurrentAttack == null;
 
         private ComboSituation DescribeCurrentSituation()
         {

@@ -5,8 +5,7 @@ using Zenject;
 namespace ArkhamCombat.Player
 {
     /// <summary>
-    /// It never plays anything: it keeps the reaction a hit caused until the
-    /// <see cref="HitReactionSwitch"/> takes it.
+    /// It never plays anything: the reaction states do.
     /// </summary>
     public sealed class PlayerStatus : MonoBehaviour, ICombatTarget
     {
@@ -63,8 +62,7 @@ namespace ArkhamCombat.Player
         // Two hits can land before the character next ticks, and it can only play one reaction.
         private void KeepTheHeavierReaction(AppliedReaction appliedReaction)
         {
-            bool isHeavierThanThePendingOne = appliedReaction > pendingReaction;
-            if (isHeavierThanThePendingOne)
+            if (appliedReaction.IsHeavierThan(pendingReaction))
             {
                 pendingReaction = appliedReaction;
             }

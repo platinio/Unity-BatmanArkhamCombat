@@ -1,4 +1,5 @@
 using ArcaneOnyx.TPCharacterController.States;
+using ArkhamCombat.Combat;
 using ArkhamCombat.Player;
 using NUnit.Framework;
 
@@ -14,6 +15,32 @@ namespace ArkhamCombat.Tests
         private static readonly ICharacterState Locomotion = new LocomotionState(null);
         private static readonly ICharacterState Airborne = new AirborneState(null);
         private static readonly ICharacterState Attacking = new AttackingState(null, null, null);
+
+        [Test]
+        public void TheCharacterEntersAttacking_WhenAnAttackPlays()
+        {
+            AttackDefinition jab = CombatTestDoubles.Attack("Jab");
+
+            Assert.IsTrue(AttackingStateSwitch.ShouldEnterAttackingWhen(jab, Locomotion));
+
+            UnityEngine.Object.DestroyImmediate(jab);
+        }
+
+        [Test]
+        public void TheCharacterIsLeftWhereItIs_WhenWhatPlaysIsNotAnAttack()
+        {
+            Assert.IsFalse(AttackingStateSwitch.ShouldEnterAttackingWhen(currentAttack: null, Locomotion));
+        }
+
+        [Test]
+        public void TheCharacterAlreadyAttacking_IsNotEnteredAgain()
+        {
+            AttackDefinition jab = CombatTestDoubles.Attack("Jab");
+
+            Assert.IsFalse(AttackingStateSwitch.ShouldEnterAttackingWhen(jab, Attacking));
+
+            UnityEngine.Object.DestroyImmediate(jab);
+        }
 
         [Test]
         public void AnActionCanStart_OnTheGroundInLocomotion()

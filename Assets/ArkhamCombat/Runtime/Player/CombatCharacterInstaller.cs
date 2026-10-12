@@ -32,7 +32,7 @@ namespace ArkhamCombat.Player
 
             BindMotor();
             BindStance();
-            BindHitReceiverProfile();
+            BindHitReceiverProfileWhenAssigned();
             BindPresses();
             BindFacts();
             BindConditions();
@@ -48,8 +48,7 @@ namespace ArkhamCombat.Player
 
         private void BindStance() => Container.Bind<Stance>().FromInstance(stance);
 
-        // Left unbound when missing: what depends on it takes it as optional and goes without.
-        private void BindHitReceiverProfile()
+        private void BindHitReceiverProfileWhenAssigned()
         {
             if (hitReceiverProfile != null)
             {
