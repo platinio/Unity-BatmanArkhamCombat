@@ -1,6 +1,7 @@
 using ArkhamCombat.Encounter;
 using NUnit.Framework;
 using UnityEngine;
+using static ArkhamCombat.Tests.CombatTestDoubles;
 
 namespace ArkhamCombat.Tests
 {
@@ -53,8 +54,8 @@ namespace ArkhamCombat.Tests
             director.Register(first, AttackTokenType.Melee);
             director.Register(second, AttackTokenType.Melee);
 
-            Assert.IsTrue(director.TryAcquireToken(first), "The first agent to ask should get the turn.");
-            Assert.IsFalse(director.TryAcquireToken(second), "A second agent must wait rather than attack alongside the first.");
+            Assert.IsTrue(TakeAToken(director, first), "The first agent to ask should get the turn.");
+            Assert.IsFalse(TakeAToken(director, second), "A second agent must wait rather than attack alongside the first.");
         }
 
         [Test]
@@ -64,7 +65,7 @@ namespace ArkhamCombat.Tests
             var agent = new FakeAgent(1.0f, 0.0f);
             director.Register(agent, AttackTokenType.Melee);
 
-            Assert.IsTrue(director.TryAcquireToken(agent));
+            Assert.IsTrue(TakeAToken(director, agent));
             Assert.IsTrue(director.TryAcquireToken(agent), "Re-asking while holding the token must not be treated as a new request.");
             Assert.AreEqual(1, director.HeldTokenCount(AttackTokenType.Melee), "Re-asking must not consume a second token.");
         }
@@ -79,8 +80,8 @@ namespace ArkhamCombat.Tests
             director.Register(brawler, AttackTokenType.Melee);
             director.Register(thrower, AttackTokenType.Ranged);
 
-            Assert.IsTrue(director.TryAcquireToken(brawler));
-            Assert.IsTrue(director.TryAcquireToken(thrower), "A thrown attack must not be blocked by the melee turn.");
+            Assert.IsTrue(TakeAToken(director, brawler));
+            Assert.IsTrue(TakeAToken(director, thrower), "A thrown attack must not be blocked by the melee turn.");
         }
 
         [Test]
@@ -89,7 +90,7 @@ namespace ArkhamCombat.Tests
             var director = Director(maxTokenHoldSeconds: 3.0f);
             var agent = new FakeAgent(1.0f, 0.0f);
             director.Register(agent, AttackTokenType.Melee);
-            director.TryAcquireToken(agent);
+            TakeAToken(director, agent);
 
             director.Tick(3.0f);
 
@@ -102,11 +103,11 @@ namespace ArkhamCombat.Tests
             var director = Director(reacquireCooldownSeconds: 1.5f);
             var agent = new FakeAgent(1.0f, 0.0f);
             director.Register(agent, AttackTokenType.Melee);
-            director.TryAcquireToken(agent);
+            TakeAToken(director, agent);
 
             director.ReleaseToken(agent);
 
-            Assert.IsFalse(director.TryAcquireToken(agent), "Without a cooldown the same agent would attack forever.");
+            Assert.IsFalse(TakeAToken(director, agent), "Without a cooldown the same agent would attack forever.");
         }
 
         [Test]
@@ -115,12 +116,12 @@ namespace ArkhamCombat.Tests
             var director = Director(reacquireCooldownSeconds: 1.5f);
             var agent = new FakeAgent(1.0f, 0.0f);
             director.Register(agent, AttackTokenType.Melee);
-            director.TryAcquireToken(agent);
+            TakeAToken(director, agent);
             director.ReleaseToken(agent);
 
             director.Tick(2.0f);
 
-            Assert.IsTrue(director.TryAcquireToken(agent));
+            Assert.IsTrue(TakeAToken(director, agent));
         }
 
         [Test]
@@ -131,12 +132,12 @@ namespace ArkhamCombat.Tests
             var second = new FakeAgent(-1.0f, 0.0f);
             director.Register(first, AttackTokenType.Melee);
             director.Register(second, AttackTokenType.Melee);
-            director.TryAcquireToken(first);
+            TakeAToken(director, first);
 
             director.Tick(3.0f);
 
-            Assert.IsTrue(director.TryAcquireToken(second), "The freed turn should go to someone who has been waiting.");
-            Assert.IsFalse(director.TryAcquireToken(first), "The agent that just had its turn must not take it straight back.");
+            Assert.IsTrue(TakeAToken(director, second), "The freed turn should go to someone who has been waiting.");
+            Assert.IsFalse(TakeAToken(director, first), "The agent that just had its turn must not take it straight back.");
         }
 
         [Test]
@@ -147,12 +148,12 @@ namespace ArkhamCombat.Tests
             var waiting = new FakeAgent(-1.0f, 0.0f);
             director.Register(dying, AttackTokenType.Melee);
             director.Register(waiting, AttackTokenType.Melee);
-            director.TryAcquireToken(dying);
+            TakeAToken(director, dying);
 
             director.Unregister(dying);
 
             Assert.AreEqual(0, director.HeldTokenCount(AttackTokenType.Melee), "An agent that leaves must not keep holding a turn.");
-            Assert.IsTrue(director.TryAcquireToken(waiting));
+            Assert.IsTrue(TakeAToken(director, waiting));
         }
 
         [Test]
@@ -161,7 +162,7 @@ namespace ArkhamCombat.Tests
             var director = Director();
             var stranger = new FakeAgent(1.0f, 0.0f);
 
-            Assert.IsFalse(director.TryAcquireToken(stranger), "Nodes fail closed when their agent never joined an encounter.");
+            Assert.IsFalse(TakeAToken(director, stranger), "Nodes fail closed when their agent never joined an encounter.");
             Assert.IsFalse(director.HasToken(stranger));
         }
 
@@ -182,7 +183,7 @@ namespace ArkhamCombat.Tests
             director.Register(south, AttackTokenType.Melee);
             director.Register(east, AttackTokenType.Melee);
             director.Register(west, AttackTokenType.Melee);
-            director.SetTargetPosition(Vector3.zero);
+            director.SetTarget(Vector3.zero, Vector3.forward);
 
             director.Tick(0.1f);
 
@@ -202,7 +203,7 @@ namespace ArkhamCombat.Tests
             var director = Director(slotCount: 4, slotRadius: 4.0f);
             var north = new FakeAgent(0.0f, 5.0f);
             director.Register(north, AttackTokenType.Melee);
-            director.SetTargetPosition(Vector3.zero);
+            director.SetTarget(Vector3.zero, Vector3.forward);
 
             director.Tick(0.1f);
 
@@ -218,7 +219,7 @@ namespace ArkhamCombat.Tests
             var director = Director(slotCount: 8, slotRadius: 4.0f);
             var agent = new FakeAgent(6.0f, 0.0f);
             director.Register(agent, AttackTokenType.Melee);
-            director.SetTargetPosition(Vector3.zero);
+            director.SetTarget(Vector3.zero, Vector3.forward);
 
             director.Tick(0.1f);
 
@@ -231,10 +232,10 @@ namespace ArkhamCombat.Tests
             var director = Director(slotCount: 4, slotRadius: 4.0f);
             var agent = new FakeAgent(0.0f, 5.0f);
             director.Register(agent, AttackTokenType.Melee);
-            director.SetTargetPosition(Vector3.zero);
+            director.SetTarget(Vector3.zero, Vector3.forward);
             director.Tick(0.1f);
 
-            director.SetTargetPosition(new Vector3(10.0f, 0.0f, 0.0f));
+            director.SetTarget(new Vector3(10.0f, 0.0f, 0.0f), Vector3.forward);
 
             Assert.AreEqual(4.0f, (director.GetSlotPosition(agent) - new Vector3(10.0f, 0.0f, 0.0f)).magnitude, 0.001f,
                 "Standing positions are relative to the target, so they must move when the player does.");
@@ -251,7 +252,7 @@ namespace ArkhamCombat.Tests
             director.Register(first, AttackTokenType.Melee);
             director.Register(second, AttackTokenType.Melee);
             director.Register(overflow, AttackTokenType.Melee);
-            director.SetTargetPosition(Vector3.zero);
+            director.SetTarget(Vector3.zero, Vector3.forward);
 
             director.Tick(0.1f);
 

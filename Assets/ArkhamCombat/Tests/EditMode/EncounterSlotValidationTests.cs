@@ -110,7 +110,7 @@ namespace ArkhamCombat.Tests
             director.Register(agent, AttackTokenType.Melee);
             director.Tick(0.1f);
 
-            director.SetTargetPosition(whereTheTargetWent);
+            director.SetTarget(whereTheTargetWent, Vector3.forward);
 
             Assert.Less((director.GetSlotPosition(agent) - (whereTheTargetWent + North + upOntoALedge)).magnitude, Tolerance);
         }

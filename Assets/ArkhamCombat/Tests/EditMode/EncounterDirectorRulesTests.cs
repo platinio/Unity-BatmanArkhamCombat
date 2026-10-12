@@ -130,7 +130,7 @@ namespace ArkhamCombat.Tests
             RecordingSlotValidator validator = new RecordingSlotValidator(upOntoALedge);
             EncounterDirector director = Director(slotValidator: validator);
             StandingAgent agent = Join(director, whereTheTargetStands + North * 1.5f);
-            director.SetTargetPosition(whereTheTargetStands);
+            director.SetTarget(whereTheTargetStands, Vector3.forward);
 
             director.Tick(FirstTick);
 
@@ -143,7 +143,7 @@ namespace ArkhamCombat.Tests
         {
             EncounterDirector director = Director();
             StandingAgent agent = Join(director, North);
-            director.TryAcquireToken(agent);
+            TakeAToken(director, agent);
 
             director.Tick(MaxTokenHoldSeconds - 0.1f);
 
@@ -155,7 +155,7 @@ namespace ArkhamCombat.Tests
         {
             EncounterDirector director = Director();
             StandingAgent agent = Join(director, North);
-            director.TryAcquireToken(agent);
+            TakeAToken(director, agent);
 
             director.Tick(MaxTokenHoldSeconds / 3f);
             director.Tick(MaxTokenHoldSeconds / 3f);
@@ -170,7 +170,7 @@ namespace ArkhamCombat.Tests
         {
             EncounterDirector director = Director(maxTokenHoldSeconds: 0f);
             StandingAgent agent = Join(director, North);
-            director.TryAcquireToken(agent);
+            TakeAToken(director, agent);
 
             director.Tick(MaxTokenHoldSeconds * 100f);
 
@@ -182,11 +182,11 @@ namespace ArkhamCombat.Tests
         {
             EncounterDirector director = Director();
             StandingAgent agent = Join(director, North);
-            director.TryAcquireToken(agent);
+            TakeAToken(director, agent);
             director.Tick(MaxTokenHoldSeconds);
             Assert.AreEqual(0, director.HeldTokenCount(AttackTokenType.Melee), "sanity: the pool is free again");
 
-            Assert.IsFalse(director.TryAcquireToken(agent), "only its cooldown can be refusing it");
+            Assert.IsFalse(TakeAToken(director, agent), "only its cooldown can be refusing it");
         }
 
         [Test]
@@ -194,14 +194,14 @@ namespace ArkhamCombat.Tests
         {
             EncounterDirector director = Director();
             StandingAgent agent = Join(director, North);
-            director.TryAcquireToken(agent);
+            TakeAToken(director, agent);
             director.ReleaseToken(agent);
 
             director.Tick(ReacquireCooldownSeconds / 2f);
-            Assert.IsFalse(director.TryAcquireToken(agent), "halfway through");
+            Assert.IsFalse(TakeAToken(director, agent), "halfway through");
 
             director.Tick(ReacquireCooldownSeconds / 2f + Tolerance);
-            Assert.IsTrue(director.TryAcquireToken(agent), "once it has passed");
+            Assert.IsTrue(TakeAToken(director, agent), "once it has passed");
         }
 
         [Test]
@@ -213,10 +213,10 @@ namespace ArkhamCombat.Tests
             StandingAgent thirdBrawler = Join(director, South);
             StandingAgent thrower = Join(director, -East, AttackTokenType.Ranged);
 
-            Assert.IsTrue(director.TryAcquireToken(firstBrawler));
-            Assert.IsTrue(director.TryAcquireToken(secondBrawler));
-            Assert.IsFalse(director.TryAcquireToken(thirdBrawler), "the melee pool has two");
-            Assert.IsFalse(director.TryAcquireToken(thrower), "the ranged pool has none");
+            Assert.IsTrue(TakeAToken(director, firstBrawler));
+            Assert.IsTrue(TakeAToken(director, secondBrawler));
+            Assert.IsFalse(TakeAToken(director, thirdBrawler), "the melee pool has two");
+            Assert.IsFalse(TakeAToken(director, thrower), "the ranged pool has none");
         }
 
         [Test]
@@ -224,7 +224,7 @@ namespace ArkhamCombat.Tests
         {
             EncounterDirector director = Director();
             StandingAgent agent = Join(director, North);
-            director.TryAcquireToken(agent);
+            TakeAToken(director, agent);
             int timesItLeft = 0;
             director.AgentUnregistered += _ => timesItLeft++;
             director.TokenReleased += director.Unregister;

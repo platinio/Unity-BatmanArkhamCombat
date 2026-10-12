@@ -36,6 +36,21 @@ namespace ArkhamCombat.Encounter
         [Tooltip("NavMeshAgent avoidance priority of an agent without a token.")]
         [SerializeField, Range(0, 99)] private int defaultAvoidancePriority = 50;
 
+        [Tooltip("How much standing in front of the target counts when several agents ask for the same token.")]
+        [SerializeField, Min(0f)] private float frontWeight = 1.0f;
+
+        [Tooltip("How much a long wait since its last token counts when several agents ask for the same token.")]
+        [SerializeField, Min(0f)] private float fairnessWeight = 0.6f;
+
+        [Tooltip("Seconds without a token after which waiting longer no longer counts for more.")]
+        [SerializeField, Min(0f)] private float fairnessHorizonSeconds = 6.0f;
+
+        [Tooltip("How much being far from the target counts against an agent asking for a token. A full ring radius away costs all of it.")]
+        [SerializeField, Min(0f)] private float distancePenalty = 0.3f;
+
+        [Tooltip("Seconds an agent has to come back for a token it was granted before the token is taken back. 0 disables this.")]
+        [SerializeField, Min(0f)] private float grantGraceSeconds = 0.5f;
+
         public int MaxMeleeTokens => Mathf.Max(0, maxMeleeTokens);
         public int MaxRangedTokens => Mathf.Max(0, maxRangedTokens);
         public float MaxTokenHoldSeconds => Mathf.Max(0.0f, maxTokenHoldSeconds);
@@ -46,6 +61,11 @@ namespace ArkhamCombat.Encounter
         public float SlotSampleRadius => Mathf.Max(0.0f, slotSampleRadius);
         public int AttackerAvoidancePriority => attackerAvoidancePriority;
         public int DefaultAvoidancePriority => defaultAvoidancePriority;
+        public float FrontWeight => Mathf.Max(0.0f, frontWeight);
+        public float FairnessWeight => Mathf.Max(0.0f, fairnessWeight);
+        public float FairnessHorizonSeconds => Mathf.Max(0.0f, fairnessHorizonSeconds);
+        public float DistancePenalty => Mathf.Max(0.0f, distancePenalty);
+        public float GrantGraceSeconds => Mathf.Max(0.0f, grantGraceSeconds);
 
         public EncounterDirectorSettings()
         {
@@ -61,7 +81,12 @@ namespace ArkhamCombat.Encounter
             float slotReassignIntervalSeconds = 1.0f,
             float slotSampleRadius = 1.0f,
             int attackerAvoidancePriority = 20,
-            int defaultAvoidancePriority = 50)
+            int defaultAvoidancePriority = 50,
+            float frontWeight = 1.0f,
+            float fairnessWeight = 0.6f,
+            float fairnessHorizonSeconds = 6.0f,
+            float distancePenalty = 0.3f,
+            float grantGraceSeconds = 0.5f)
         {
             this.maxMeleeTokens = maxMeleeTokens;
             this.maxRangedTokens = maxRangedTokens;
@@ -73,6 +98,11 @@ namespace ArkhamCombat.Encounter
             this.slotSampleRadius = slotSampleRadius;
             this.attackerAvoidancePriority = attackerAvoidancePriority;
             this.defaultAvoidancePriority = defaultAvoidancePriority;
+            this.frontWeight = frontWeight;
+            this.fairnessWeight = fairnessWeight;
+            this.fairnessHorizonSeconds = fairnessHorizonSeconds;
+            this.distancePenalty = distancePenalty;
+            this.grantGraceSeconds = grantGraceSeconds;
         }
     }
 }

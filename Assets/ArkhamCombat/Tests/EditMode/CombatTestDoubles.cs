@@ -51,6 +51,15 @@ namespace ArkhamCombat.Tests
             public StandingAgent(Vector3 position) => Position = position;
         }
 
+        // The whole exchange a tree has with the director: it asks, the ask is answered when the
+        // director's tick ends, and it comes back for the token. No time passes in that tick.
+        public static bool TakeAToken(EncounterDirector director, IEncounterAgent agent)
+        {
+            director.TryAcquireToken(agent);
+            director.Tick(0f);
+            return director.HasToken(agent) && director.TryAcquireToken(agent);
+        }
+
         public static AttackDefinition Attack(
             string name,
             float duration = 1f,
