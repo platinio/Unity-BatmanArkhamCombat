@@ -198,12 +198,15 @@ namespace ArkhamCombat.Tests
             public AttackDefinition LastOpenedFor;
             public IActionTarget LastOpenedAgainst;
 
+            public event Action Opened;
+
             public void HitWindowOpened(AttackDefinition attack, IActionTarget target)
             {
                 OpenedCount++;
                 IsOpen = true;
                 LastOpenedFor = attack;
                 LastOpenedAgainst = target;
+                Opened?.Invoke();
             }
 
             public void HitWindowClosed()

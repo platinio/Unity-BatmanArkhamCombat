@@ -32,7 +32,7 @@ namespace ArkhamCombat.Combat
         [Tooltip("The character is moved toward the target over this span.")]
         [SerializeField] private Window warpWindow = new Window(0f, 0.3f);
 
-        [Tooltip("While open, the attack is announced before it can hit, so its target can answer it. Leave it empty for an attack that gives no warning.")]
+        [Tooltip("While open, the attack is announced before it can hit, so its target can answer it. Leave start and end equal for an attack that gives no warning.")]
         [SerializeField] private Window telegraphWindow = new Window(0f, 0f);
 
         [Header("Travel")]
@@ -88,7 +88,7 @@ namespace ArkhamCombat.Combat
             this.isUnblockable = isUnblockable;
         }
 
-        public void ConfigureTelegraph(Window telegraphWindow) => this.telegraphWindow = telegraphWindow;
+        public void ConfigureTelegraphWindow(Window telegraphWindow) => this.telegraphWindow = telegraphWindow;
 
         /// <summary>
         /// A character standing on the target backs off along -Z so the result is still defined.

@@ -42,7 +42,7 @@ namespace ArkhamCombat.Tests
         public void AReversedTelegraphWindow_IsReportedByName()
         {
             AttackDefinition attack = Attack("Bad");
-            attack.ConfigureTelegraph(new Window(0.6f, 0.4f));
+            attack.ConfigureTelegraphWindow(new Window(0.6f, 0.4f));
             List<string> errors = new List<string>();
 
             Assert.IsFalse(attack.Validate(errors));

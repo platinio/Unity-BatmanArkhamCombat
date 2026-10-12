@@ -320,9 +320,9 @@ namespace ArkhamCombat.Combat
         private void HandleAttackWindows(AttackDefinition attack, float previousTime, float currentTime, Vector3 position)
         {
             HandleWarp(attack, previousTime, currentTime, position);
+            HandleTelegraphWindow(attack, previousTime, currentTime);
             HandleHitWindow(attack, previousTime, currentTime);
             HandleComboWindow(attack, previousTime, currentTime);
-            HandleTelegraphWindow(attack, previousTime, currentTime);
         }
 
         private void HandleWarp(AttackDefinition attack, float previousTime, float currentTime, Vector3 position)
@@ -374,6 +374,12 @@ namespace ArkhamCombat.Combat
 
         private void HandleTelegraphWindow(AttackDefinition attack, float previousTime, float currentTime)
         {
+            bool givesNoWarning = attack.TelegraphWindow.IsZeroLength;
+            if (givesNoWarning)
+            {
+                return;
+            }
+
             if (attack.TelegraphWindow.IsOpen(previousTime, currentTime))
             {
                 isTelegraphWindowOpen = true;

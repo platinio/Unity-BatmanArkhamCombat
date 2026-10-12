@@ -21,6 +21,9 @@ namespace ArkhamCombat.Tests
         private static readonly Window WarpWindow = new Window(0f, 0.3f);
         private static readonly Window JabEvadeWindow = new Window(0f, 0.6f);
         private static readonly Window CrossEvadeWindow = new Window(0f, 0.3f);
+        private static readonly Window TelegraphFromTheStart = new Window(0f, 0.5f);
+        private static readonly Window TelegraphUntilTheHit = new Window(0.1f, 0.3f);
+        private static readonly Window TelegraphUntilTheEnd = new Window(0.5f, 1f);
 
         private TestIntentKinds kinds;
         private AttackDefinition jab;
@@ -441,7 +444,7 @@ namespace ArkhamCombat.Tests
         [Test]
         public void TheTelegraphWindow_IsOpenFromItsStartToItsEnd()
         {
-            jab.ConfigureTelegraph(new Window(0.1f, 0.3f));
+            jab.ConfigureTelegraphWindow(TelegraphUntilTheHit);
             ActionRunner runner = CreateRunner();
             StartJab(runner);
             Assert.IsFalse(runner.IsTelegraphWindowOpen, "at 0 the telegraph has not started");
@@ -459,12 +462,54 @@ namespace ArkhamCombat.Tests
         [Test]
         public void ATelegraphWindowStartingAtZero_IsOpenAsTheAttackStarts()
         {
-            jab.ConfigureTelegraph(new Window(0f, 0.3f));
+            jab.ConfigureTelegraphWindow(TelegraphFromTheStart);
             ActionRunner runner = CreateRunner();
 
             StartJab(runner);
 
             Assert.IsTrue(runner.IsTelegraphWindowOpen);
+        }
+
+        [Test]
+        public void ATelegraphWindowRunningToTheEnd_IsClosedOnceTheAttackHasEnded()
+        {
+            jab.ConfigureTelegraphWindow(TelegraphUntilTheEnd);
+            ActionRunner runner = CreateRunner();
+            StartJab(runner);
+            TickFor(runner, TelegraphUntilTheEnd.Start + TickSeconds);
+            Assert.IsTrue(runner.IsTelegraphWindowOpen, "sanity: it telegraphs before the end");
+
+            TickFor(runner, AttackSeconds);
+
+            Assert.IsFalse(runner.IsPlaying);
+            Assert.IsFalse(runner.IsTelegraphWindowOpen);
+        }
+
+        [Test]
+        public void ATickThatStepsOverTheWholeTelegraphWindow_LeavesItClosed()
+        {
+            jab.ConfigureTelegraphWindow(TelegraphUntilTheHit);
+            ActionRunner runner = CreateRunner();
+            StartJab(runner);
+
+            runner.Tick(TelegraphUntilTheHit.End + TickSeconds, Vector3.zero, canStartFromIdle: true);
+
+            Assert.IsFalse(runner.IsTelegraphWindowOpen);
+        }
+
+        [Test]
+        public void TheTelegraph_IsOverByTheTimeTheHitWindowOpens()
+        {
+            jab.ConfigureTelegraphWindow(TelegraphUntilTheHit);
+            bool wasTelegraphingAsTheHitWindowOpened = true;
+            ActionRunner runner = CreateRunner();
+            hitWindowListener.Opened += () => wasTelegraphingAsTheHitWindowOpened = runner.IsTelegraphWindowOpen;
+            StartJab(runner);
+
+            TickFor(runner, HitWindow.Start);
+
+            Assert.AreEqual(1, hitWindowListener.OpenedCount, "sanity: the hit window opened");
+            Assert.IsFalse(wasTelegraphingAsTheHitWindowOpened);
         }
 
         [Test]
@@ -483,7 +528,7 @@ namespace ArkhamCombat.Tests
         [Test]
         public void Cancel_ClosesTheTelegraphWindow()
         {
-            jab.ConfigureTelegraph(new Window(0f, 0.5f));
+            jab.ConfigureTelegraphWindow(TelegraphFromTheStart);
             ActionRunner runner = CreateRunner();
             StartJab(runner);
             Assert.IsTrue(runner.IsTelegraphWindowOpen);
@@ -496,13 +541,29 @@ namespace ArkhamCombat.Tests
         [Test]
         public void AnActionThatReplacesATelegraphingAttack_ClosesItsTelegraphWindow()
         {
-            jab.ConfigureTelegraph(new Window(0f, 0.5f));
+            jab.ConfigureTelegraphWindow(TelegraphFromTheStart);
             ActionRunner runner = CreateRunner();
             StartJab(runner);
+            Assert.IsTrue(runner.IsTelegraphWindowOpen, "sanity: it telegraphs before it is replaced");
 
             runner.PlayAction(Action("Flinch", 0.5f), Vector3.zero);
 
             Assert.IsFalse(runner.IsTelegraphWindowOpen);
+        }
+
+        [Test]
+        public void AnAttackThatReplacesATelegraphingOne_TelegraphsByItsOwnWindow()
+        {
+            jab.ConfigureTelegraphWindow(TelegraphFromTheStart);
+            cross.ConfigureTelegraphWindow(TelegraphUntilTheHit);
+            ActionRunner runner = CreateRunner();
+            StartJab(runner);
+
+            runner.PlayAction(cross, Vector3.zero);
+            Assert.IsFalse(runner.IsTelegraphWindowOpen, "the cross has not started telegraphing, whatever the jab was doing");
+
+            TickFor(runner, TelegraphUntilTheHit.Start);
+            Assert.IsTrue(runner.IsTelegraphWindowOpen);
         }
 
         [Test]

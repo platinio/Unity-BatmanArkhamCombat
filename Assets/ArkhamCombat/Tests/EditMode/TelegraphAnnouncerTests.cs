@@ -38,7 +38,7 @@ namespace ArkhamCombat.Tests
             encounter.Construct(director);
 
             haymaker = Attack("Haymaker", AttackSeconds);
-            haymaker.ConfigureTelegraph(TelegraphWindow);
+            haymaker.ConfigureTelegraphWindow(TelegraphWindow);
 
             thug = HiddenObject("Thug");
             PendingWarpMovement pendingWarpMovement = new PendingWarpMovement();

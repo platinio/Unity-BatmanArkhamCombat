@@ -150,7 +150,7 @@ namespace ArkhamCombat.Tests
         [Test]
         public void AnArchetypeWhoseAttackIsBroken_IsReported()
         {
-            haymaker.ConfigureTelegraph(new Window(0.6f, 0.4f));
+            haymaker.ConfigureTelegraphWindow(new Window(0.6f, 0.4f));
             LogAssert.Expect(LogType.Error, new Regex("telegraphWindow"));
 
             InstallTheEnemyWithItsArchetype();
