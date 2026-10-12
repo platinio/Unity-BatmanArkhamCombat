@@ -90,6 +90,8 @@ namespace ArkhamCombat.Combat
 
         public void ConfigureTelegraphWindow(Window telegraphWindow) => this.telegraphWindow = telegraphWindow;
 
+        internal override void GiveItsWindowsTo(ActionRunner runner) => runner.TakeTheWindowsOf(this);
+
         /// <summary>
         /// A character standing on the target backs off along -Z so the result is still defined.
         /// </summary>

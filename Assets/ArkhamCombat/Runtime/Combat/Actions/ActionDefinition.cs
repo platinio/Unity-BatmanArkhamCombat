@@ -31,6 +31,10 @@ namespace ArkhamCombat.Combat
             this.tags = tags != null ? new List<string>(tags) : new List<string>();
         }
 
+        // A plain action has no windows to give. An attack gives its own, which is how the runner
+        // knows an attack is playing without testing the action's type.
+        internal virtual void GiveItsWindowsTo(ActionRunner runner) { }
+
         /// <summary>
         /// Adds one line to <paramref name="errors"/> for each authoring mistake in this asset, and
         /// answers whether it added none.

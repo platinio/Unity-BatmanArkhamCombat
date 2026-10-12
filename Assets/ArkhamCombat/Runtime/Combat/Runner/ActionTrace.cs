@@ -33,7 +33,7 @@ namespace ArkhamCombat.Combat
 
             public ActionDefinition Action;
 
-            public AttackDefinition Attack => Action as AttackDefinition;
+            public AttackDefinition Attack;
             public bool IsIdle => Action == null;
 
             /// <summary>How far the action got before it ended, 1 when it ran out, or seconds idled.</summary>
@@ -90,9 +90,9 @@ namespace ArkhamCombat.Combat
             intents.Expired -= OnIntentExpired;
         }
 
-        public void BeginAction(ChainNode node, ActionDefinition action)
+        public void BeginAction(ChainNode node, ActionDefinition action, AttackDefinition attack)
         {
-            StartRecord(new Record { NodeId = node?.Id, Action = action });
+            StartRecord(new Record { NodeId = node?.Id, Action = action, Attack = attack });
         }
 
         public void EndAction(float normalizedTime, bool wasInterrupted)

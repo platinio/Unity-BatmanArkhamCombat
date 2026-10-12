@@ -81,7 +81,7 @@ namespace ArkhamCombat.Combat
         public ActionDefinition CurrentAction { get; private set; }
 
         /// <summary>Null while idle or while a plain action plays.</summary>
-        public AttackDefinition CurrentAttack => CurrentAction as AttackDefinition;
+        public AttackDefinition CurrentAttack { get; private set; }
 
         /// <summary>
         /// Who the current action is aimed at, picked when it started and kept until it ends, so the
@@ -267,18 +267,28 @@ namespace ArkhamCombat.Combat
             }
 
             CurrentAction = action;
+            action.GiveItsWindowsTo(this);
             CurrentActionTarget = targetPicker.PickTarget(targetDirection);
             isPlaying = true;
             idleSeconds = 0f;
             WasWarpRefused = false;
 
             driver.Play(action);
-            Trace.BeginAction(node, action);
+            Trace.BeginAction(node, action, CurrentAttack);
             ActionStarted?.Invoke(action, isInterrupt);
 
-            if (action is AttackDefinition attack)
+            if (CurrentAttack != null)
             {
-                HandleWindowsStartingAtZero(attack, position);
+                HandleWindowsStartingAtZero(CurrentAttack, position);
+            }
+        }
+
+        internal void TakeTheWindowsOf(AttackDefinition attack)
+        {
+            bool isTheActionThatIsStarting = ReferenceEquals(attack, CurrentAction);
+            if (isTheActionThatIsStarting)
+            {
+                CurrentAttack = attack;
             }
         }
 
@@ -295,6 +305,7 @@ namespace ArkhamCombat.Combat
             CloseAllWindows();
             isPlaying = false;
             CurrentAction = null;
+            CurrentAttack = null;
             CurrentActionTarget = null;
             idleSeconds = 0f;
 

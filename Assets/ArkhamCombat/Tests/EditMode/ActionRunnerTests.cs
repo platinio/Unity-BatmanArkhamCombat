@@ -582,6 +582,52 @@ namespace ArkhamCombat.Tests
         }
 
         [Test]
+        public void AnAttackPlayedAsAPlainAction_IsStillTheCurrentAttack()
+        {
+            ActionDefinition attackSeenAsAnAction = cross;
+            ActionRunner runner = CreateRunner();
+
+            runner.PlayAction(attackSeenAsAnAction, Vector3.zero);
+
+            Assert.AreSame(cross, runner.CurrentAttack);
+        }
+
+        [Test]
+        public void TheCurrentAttack_IsForgotten_WhenAPlainActionReplacesIt()
+        {
+            ActionRunner runner = CreateRunner();
+            StartJab(runner);
+            Assert.AreSame(jab, runner.CurrentAttack, "sanity: the jab is the current attack");
+
+            runner.PlayAction(Action("Flinch", 0.5f), Vector3.zero);
+
+            Assert.IsNull(runner.CurrentAttack);
+        }
+
+        [Test]
+        public void TheCurrentAttack_IsForgotten_WhenTheAttackIsCancelled()
+        {
+            ActionRunner runner = CreateRunner();
+            StartJab(runner);
+
+            runner.Cancel();
+
+            Assert.IsNull(runner.CurrentAttack);
+        }
+
+        [Test]
+        public void TheTrace_RecordsTheAttack_OnlyForAnActionThatIsOne()
+        {
+            ActionRunner runner = CreateRunner();
+
+            runner.PlayAction(cross, Vector3.zero);
+            Assert.AreSame(cross, LatestRecord(runner).Attack);
+
+            runner.PlayAction(Action("Flinch", 0.5f), Vector3.zero);
+            Assert.IsNull(LatestRecord(runner).Attack);
+        }
+
+        [Test]
         public void APressDuringAPlainAction_Waits_EvenForAnInterruptThatIsAllowed()
         {
             stance = Stance("Neutral",
