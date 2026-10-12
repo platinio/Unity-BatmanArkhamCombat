@@ -25,7 +25,8 @@ namespace ArkhamCombat.Tests
         private static EncounterDirector Director(
             int maxMeleeTokens = 1,
             float fairnessWeight = 0.6f,
-            float grantGraceSeconds = GrantGraceSeconds)
+            float grantGraceSeconds = GrantGraceSeconds,
+            float secondsBetweenTurns = 0f)
         {
             EncounterDirector director = new EncounterDirector(new EncounterDirectorSettings(
                 maxMeleeTokens: maxMeleeTokens,
@@ -34,7 +35,8 @@ namespace ArkhamCombat.Tests
                 slotRadius: SlotRadius,
                 fairnessWeight: fairnessWeight,
                 fairnessHorizonSeconds: FairnessHorizonSeconds,
-                grantGraceSeconds: grantGraceSeconds));
+                grantGraceSeconds: grantGraceSeconds,
+                secondsBetweenTurns: secondsBetweenTurns));
             director.SetTarget(Vector3.zero, WhereTheTargetLooks);
             return director;
         }
@@ -149,6 +151,74 @@ namespace ArkhamCombat.Tests
             director.Tick(NoTime);
 
             Assert.IsTrue(director.HasToken(behind));
+        }
+
+        private const float BreathSeconds = 1f;
+        private const float HalfTheBreath = BreathSeconds / 2f;
+
+        [Test]
+        public void AfterATurnEnds_TheNextOneWaits_UntilTheBreathBetweenTurnsIsOver()
+        {
+            EncounterDirector director = Director(secondsBetweenTurns: BreathSeconds);
+            StandingAgent first = Join(director, North);
+            StandingAgent next = Join(director, East);
+            TakeAToken(director, first);
+            director.ReleaseToken(first);
+
+            director.TryAcquireToken(next);
+            director.Tick(HalfTheBreath);
+            Assert.IsFalse(director.HasToken(next), "half way through the breath");
+
+            director.TryAcquireToken(next);
+            director.Tick(BreathSeconds);
+            Assert.IsTrue(director.HasToken(next), "once the breath is over");
+        }
+
+        [Test]
+        public void WithNoBreathBetweenTurns_TheNextTurnStartsAsTheTickEnds()
+        {
+            EncounterDirector director = Director(secondsBetweenTurns: 0f);
+            StandingAgent first = Join(director, North);
+            StandingAgent next = Join(director, East);
+            TakeAToken(director, first);
+            director.ReleaseToken(first);
+
+            director.TryAcquireToken(next);
+            director.Tick(NoTime);
+
+            Assert.IsTrue(director.HasToken(next));
+        }
+
+        [Test]
+        public void ATurnThatEndsWithItsLastAttack_IsFollowedByTheBreathToo()
+        {
+            EncounterDirector director = Director(secondsBetweenTurns: BreathSeconds);
+            StandingAgent first = Join(director, North);
+            StandingAgent next = Join(director, East);
+            TakeAToken(director, first);
+            director.SpendAnAttackOfTheTurn(first);
+            Assert.IsFalse(director.HasToken(first), "sanity: a turn is worth one attack here, so it is over");
+
+            director.TryAcquireToken(next);
+            director.Tick(HalfTheBreath);
+
+            Assert.IsFalse(director.HasToken(next));
+        }
+
+        [Test]
+        public void TheBreathAfterAMeleeTurn_DoesNotHoldBackARangedOne()
+        {
+            EncounterDirector director = Director(secondsBetweenTurns: BreathSeconds);
+            StandingAgent brawler = Join(director, North);
+            StandingAgent shooter = new StandingAgent(East);
+            director.Register(shooter, AttackTokenType.Ranged);
+            TakeAToken(director, brawler);
+            director.ReleaseToken(brawler);
+
+            director.TryAcquireToken(shooter);
+            director.Tick(NoTime);
+
+            Assert.IsTrue(director.HasToken(shooter));
         }
 
         private const string CombatConfigPath = "Assets/ArkhamCombat/Settings/CombatConfig.asset";

@@ -23,6 +23,7 @@ namespace ArkhamCombat.Encounter
         public Transform Target => hasJoined ? encounter.Target : null;
         public bool HasToken => hasJoined && Director.HasToken(this);
         public Vector3 SlotPosition => hasJoined ? Director.GetSlotPosition(this) : transform.position;
+        public Vector3 StandingPosition => hasJoined ? Director.GetStandingPosition(this) : transform.position;
 
         private EncounterDirector Director => encounter.Director;
 

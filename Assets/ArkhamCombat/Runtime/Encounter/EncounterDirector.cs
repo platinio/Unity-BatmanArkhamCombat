@@ -39,6 +39,8 @@ namespace ArkhamCombat.Encounter
         private readonly bool[] isSlotUsable;
         private readonly Vector3[] slotOffsetFromTarget;
 
+        private readonly Dictionary<AttackTokenType, float> secondsUntilTheNextTurnByTokenType = new Dictionary<AttackTokenType, float>();
+
         private Vector3 targetPosition;
         private Vector3 targetForward;
         private float secondsUntilSlotsAreReassigned;
@@ -261,6 +263,7 @@ namespace ArkhamCombat.Encounter
             state.TokenHeldFor = 0.0f;
             state.SecondsWithoutAToken = 0.0f;
             state.ReacquireCooldown = settings.ReacquireCooldownSeconds;
+            secondsUntilTheNextTurnByTokenType[state.TokenType] = settings.SecondsBetweenTurns;
 
             TokenReleased?.Invoke(state.Agent);
         }
@@ -273,6 +276,24 @@ namespace ArkhamCombat.Encounter
             }
 
             return state.Slot == UnassignedSlot ? BearingPosition(agent) : SlotWorldPosition(state.Slot);
+        }
+
+        /// <summary>
+        /// An agent nearer the target than the ring holds its ground: one that has walked in to
+        /// attack does not walk back out to wait for its next turn.
+        /// </summary>
+        public Vector3 GetStandingPosition(IEncounterAgent agent)
+        {
+            bool isInTheEncounter = agent != null && stateByAgent.ContainsKey(agent);
+            return isInTheEncounter && IsInsideTheRing(agent) ? agent.Position : GetSlotPosition(agent);
+        }
+
+        private bool IsInsideTheRing(IEncounterAgent agent)
+        {
+            Vector3 fromTarget = agent.Position - targetPosition;
+            fromTarget.y = 0.0f;
+
+            return fromTarget.magnitude < settings.SlotRadius;
         }
 
         public int GetSlot(IEncounterAgent agent)
@@ -308,6 +329,7 @@ namespace ArkhamCombat.Encounter
 
         public void Tick(float deltaTime)
         {
+            AgeTheBreathBetweenTurns(deltaTime);
             AgeReacquireCooldowns(deltaTime);
             AgeHeldTokens(deltaTime);
             AgeTheWaitsForAToken(deltaTime);
@@ -317,6 +339,23 @@ namespace ArkhamCombat.Encounter
             ForgetEveryRequest();
             AssignSlotsWhenDue(deltaTime);
         }
+
+        private void AgeTheBreathBetweenTurns(float deltaTime)
+        {
+            AgeTheBreathBefore(AttackTokenType.Melee, deltaTime);
+            AgeTheBreathBefore(AttackTokenType.Ranged, deltaTime);
+        }
+
+        private void AgeTheBreathBefore(AttackTokenType tokenType, float deltaTime)
+        {
+            if (IsTakingABreathBefore(tokenType))
+            {
+                secondsUntilTheNextTurnByTokenType[tokenType] -= deltaTime;
+            }
+        }
+
+        private bool IsTakingABreathBefore(AttackTokenType tokenType) =>
+            secondsUntilTheNextTurnByTokenType.TryGetValue(tokenType, out float secondsLeft) && secondsLeft > 0.0f;
 
         private void AgeReacquireCooldowns(float deltaTime)
         {
@@ -401,6 +440,11 @@ namespace ArkhamCombat.Encounter
 
         private void GrantFreeTokensOf(AttackTokenType tokenType)
         {
+            if (IsTakingABreathBefore(tokenType))
+            {
+                return;
+            }
+
             int freeTokens = MaxTokens(tokenType) - HeldTokenCount(tokenType);
 
             for (int i = 0; i < freeTokens; i++)

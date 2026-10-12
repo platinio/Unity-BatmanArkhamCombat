@@ -43,3 +43,4 @@ MonoBehaviour:
     grantGraceSeconds: 0.5
     minAttacksPerTurn: 1
     maxAttacksPerTurn: 2
+    secondsBetweenTurns: 0.7

@@ -161,23 +161,34 @@ namespace ArkhamCombat.Tests
         }
 
         [Test]
-        public void GetSlotPosition_OutputsTheSlotTheDirectorAssigned()
+        public void GetStandingPosition_OutputsTheSlotTheDirectorAssigned_ToAnAgentOutsideTheRing()
         {
             thug.transform.position = new Vector3(0f, 0f, 9f);
             director.SetTarget(Vector3.zero, Vector3.forward);
             director.Tick(AnyTick);
-            TreeOfOne(thug, out GetSlotPosition getSlotPosition);
+            TreeOfOne(thug, out GetStandingPosition getStandingPosition);
 
-            Assert.AreEqual(director.GetSlotPosition(agent), ValueOf<Vector3>(getSlotPosition.Output));
+            Assert.AreEqual(director.GetSlotPosition(agent), ValueOf<Vector3>(getStandingPosition.Output));
         }
 
         [Test]
-        public void GetSlotPosition_OutputsWhereTheAgentStands_OnAnObjectWithoutAnEncounterAgent()
+        public void GetStandingPosition_OutputsWhereTheAgentStands_WhenItIsNearerTheTargetThanTheRing()
+        {
+            thug.transform.position = new Vector3(0f, 0f, 1f);
+            director.SetTarget(Vector3.zero, Vector3.forward);
+            director.Tick(AnyTick);
+            TreeOfOne(thug, out GetStandingPosition getStandingPosition);
+
+            Assert.AreEqual(thug.transform.position, ValueOf<Vector3>(getStandingPosition.Output));
+        }
+
+        [Test]
+        public void GetStandingPosition_OutputsWhereTheAgentStands_OnAnObjectWithoutAnEncounterAgent()
         {
             loner.transform.position = new Vector3(3f, 0f, -2f);
-            TreeOfOne(loner, out GetSlotPosition getSlotPosition);
+            TreeOfOne(loner, out GetStandingPosition getStandingPosition);
 
-            Assert.AreEqual(loner.transform.position, ValueOf<Vector3>(getSlotPosition.Output));
+            Assert.AreEqual(loner.transform.position, ValueOf<Vector3>(getStandingPosition.Output));
         }
 
         [Test]

@@ -296,6 +296,28 @@ namespace ArkhamCombat.Tests
         }
 
         [Test]
+        public void InASceneWithNoEncounter_ItStandsWhereItIs()
+        {
+            thug.transform.position = new Vector3(3f, 0f, -2f);
+
+            WakeInASceneWithNoEncounter();
+
+            Assert.AreEqual(thug.transform.position, agent.StandingPosition);
+        }
+
+        [Test]
+        public void WhereItStands_IsWhatTheDirectorAnswersForIt()
+        {
+            thug.transform.position = new Vector3(0f, 0f, 9f);
+            JoinTheEncounter();
+            director.SetTarget(Vector3.zero, Vector3.forward);
+            director.Tick(0.1f);
+
+            Assert.AreEqual(director.GetStandingPosition(agent), agent.StandingPosition);
+            Assert.AreNotEqual(thug.transform.position, agent.StandingPosition, "sanity: outside the ring it is sent to its slot");
+        }
+
+        [Test]
         public void InASceneWithNoEncounter_LeavingAndReleasingDoNothing()
         {
             WakeInASceneWithNoEncounter();
