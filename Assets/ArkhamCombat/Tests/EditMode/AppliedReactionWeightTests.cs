@@ -6,6 +6,8 @@ namespace ArkhamCombat.Tests
     public class AppliedReactionWeightTests
     {
         [TestCase(AppliedReaction.Flinch, AppliedReaction.None)]
+        [TestCase(AppliedReaction.Stun, AppliedReaction.Flinch)]
+        [TestCase(AppliedReaction.Stagger, AppliedReaction.Stun)]
         [TestCase(AppliedReaction.Stagger, AppliedReaction.Flinch)]
         [TestCase(AppliedReaction.Knockdown, AppliedReaction.Stagger)]
         [TestCase(AppliedReaction.Death, AppliedReaction.Knockdown)]

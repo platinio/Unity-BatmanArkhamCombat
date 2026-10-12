@@ -42,7 +42,10 @@ namespace ArkhamCombat.Tests
         [Test]
         public void TheRootGuardsOneBranchPerReactionAnEnemyCanPlay()
         {
-            string[] reactionsWithABranch = { nameof(AppliedReaction.Flinch), nameof(AppliedReaction.Stagger), nameof(AppliedReaction.Knockdown) };
+            string[] reactionsWithABranch =
+            {
+                nameof(AppliedReaction.Flinch), nameof(AppliedReaction.Stagger), nameof(AppliedReaction.Knockdown), nameof(AppliedReaction.Stun)
+            };
 
             CollectionAssert.AreEquivalent(reactionsWithABranch, KindsTheRootAsksAbout());
         }
@@ -59,6 +62,7 @@ namespace ArkhamCombat.Tests
         [TestCase("Flinch")]
         [TestCase("Stagger")]
         [TestCase("KnockedDown")]
+        [TestCase("Stunned")]
         public void AReactionBranch_ClearsTheReactionToWhatTheStatusCallsNone(string subTree)
         {
             SetVariable clear = Tree(SubTreesFolder + subTree + ".asset").graph.Nodes.OfType<SetVariable>().Single();
@@ -91,7 +95,7 @@ namespace ArkhamCombat.Tests
             string[] subTreesInPriorityOrder = BranchesOfTheRootInPriorityOrder().Select(SubTreeRunBy).ToArray();
 
             CollectionAssert.AreEqual(
-                new[] { "Death", "KnockedDown", "Stagger", "Flinch", "Attack", TauntSubTree, ProwlSubTree, "Approach", "Idle" }, subTreesInPriorityOrder);
+                new[] { "Death", "KnockedDown", "Stunned", "Stagger", "Flinch", "Attack", TauntSubTree, ProwlSubTree, "Approach", "Idle" }, subTreesInPriorityOrder);
         }
 
         [Test]
@@ -252,6 +256,7 @@ namespace ArkhamCombat.Tests
         [TestCase("Death")]
         [TestCase("KnockedDown")]
         [TestCase("Stagger")]
+        [TestCase("Stunned")]
         public void AReactionThatCanInterruptAnAttack_GivesTheTokenBack_ThenStopsTheWalk_BeforeItPlays(string subTree)
         {
             List<BehaviorTreeNode> steps = StepsOf(subTree);
@@ -311,6 +316,7 @@ namespace ArkhamCombat.Tests
 
         [TestCase("Death", true)]
         [TestCase("KnockedDown", false)]
+        [TestCase("Stunned", true)]
         [TestCase("Stagger", true)]
         [TestCase("Flinch", true)]
         [TestCase(ProwlSubTree, true)]
@@ -329,7 +335,7 @@ namespace ArkhamCombat.Tests
             string[] guardedSubTrees = Tree(RootPath).graph.Nodes.OfType<ConditionalExecution>().Select(guard => SubTreeRunBy(guard.Owner)).ToArray();
 
             CollectionAssert.AreEquivalent(
-                new[] { "Death", "KnockedDown", "Stagger", "Flinch", AttackSubTree, TauntSubTree, ProwlSubTree, "Approach" }, guardedSubTrees);
+                new[] { "Death", "KnockedDown", "Stunned", "Stagger", "Flinch", AttackSubTree, TauntSubTree, ProwlSubTree, "Approach" }, guardedSubTrees);
         }
 
         [Test]

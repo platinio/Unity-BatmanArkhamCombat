@@ -5,6 +5,8 @@ namespace ArkhamCombat.Combat
 {
     public sealed class HitReceiver
     {
+        private delegate AppliedReaction ReactionRule(HitReaction requestedReaction, HitReceiverProfile profile, float healthAfterDamage);
+
         private readonly HitReceiverProfile profile;
         private readonly ActionRunner runnerOfWhoeverIsHit;
 
@@ -20,7 +22,16 @@ namespace ArkhamCombat.Combat
 
         public bool IsAlive => Health > 0f;
 
-        public HitResult Receive(HitInfo hit)
+        public HitResult Receive(HitInfo hit) => TakeTheHit(hit, ReactionRules.Resolve);
+
+        /// <summary>For a receiver whose owner knows it is stunned: the hit lands heavier.</summary>
+        public HitResult ReceiveWhileStunned(HitInfo hit) => TakeTheHit(hit, ReactionRules.ResolveForAStunnedReceiver);
+
+        /// <summary>What a paired attack asks its target to play the moment it starts, before any hit of it lands.</summary>
+        public AppliedReaction ReactionToAPairedAttack(AttackDefinition attack) =>
+            ReactionRules.ResolveForAPairedAttack(attack.Reaction, Health);
+
+        private HitResult TakeTheHit(HitInfo hit, ReactionRule ruleForAnOrdinaryHit)
         {
             if (!IsAlive)
             {
@@ -33,17 +44,12 @@ namespace ArkhamCombat.Combat
             }
 
             TakeDamage(hit.Damage);
-            return HitResult.Landed(ReactionTo(hit));
-        }
 
-        /// <summary>What a paired attack asks its target to play the moment it starts, before any hit of it lands.</summary>
-        public AppliedReaction ReactionToAPairedAttack(AttackDefinition attack) =>
-            ReactionRules.ResolveForAPairedAttack(attack.Reaction, Health);
-
-        private AppliedReaction ReactionTo(HitInfo hit) =>
-            hit.IsPaired
+            AppliedReaction appliedReaction = hit.IsPaired
                 ? ReactionRules.ResolveForAPairedAttack(hit.RequestedReaction, Health)
-                : ReactionRules.Resolve(hit.RequestedReaction, profile, Health);
+                : ruleForAnOrdinaryHit(hit.RequestedReaction, profile, Health);
+            return HitResult.Landed(appliedReaction);
+        }
 
         private bool IsInvulnerable => runnerOfWhoeverIsHit != null && runnerOfWhoeverIsHit.IsInvulnerable;
 

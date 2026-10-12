@@ -22,6 +22,36 @@ namespace ArkhamCombat.Combat
                 case HitReaction.Knockdown:
                     return profile.CanBeKnockedDown ? AppliedReaction.Knockdown : AppliedReaction.Stagger;
 
+                case HitReaction.Stun:
+                    return AppliedReaction.Stun;
+
+                default:
+                    throw new ArgumentOutOfRangeException(nameof(requestedReaction), requestedReaction, "No rule for this reaction.");
+            }
+        }
+
+        /// <summary>
+        /// A stunned receiver cannot brace: armor lightens nothing, and even a light hit staggers.
+        /// </summary>
+        public static AppliedReaction ResolveForAStunnedReceiver(HitReaction requestedReaction, HitReceiverProfile profile, float healthAfterDamage)
+        {
+            if (healthAfterDamage <= 0f)
+            {
+                return AppliedReaction.Death;
+            }
+
+            switch (requestedReaction)
+            {
+                case HitReaction.Flinch:
+                case HitReaction.Stagger:
+                    return AppliedReaction.Stagger;
+
+                case HitReaction.Knockdown:
+                    return profile.CanBeKnockedDown ? AppliedReaction.Knockdown : AppliedReaction.Stagger;
+
+                case HitReaction.Stun:
+                    return AppliedReaction.Stun;
+
                 default:
                     throw new ArgumentOutOfRangeException(nameof(requestedReaction), requestedReaction, "No rule for this reaction.");
             }
@@ -48,6 +78,9 @@ namespace ArkhamCombat.Combat
 
                 case HitReaction.Knockdown:
                     return AppliedReaction.Knockdown;
+
+                case HitReaction.Stun:
+                    return AppliedReaction.Stun;
 
                 default:
                     throw new ArgumentOutOfRangeException(nameof(requestedReaction), requestedReaction, "No rule for this reaction.");

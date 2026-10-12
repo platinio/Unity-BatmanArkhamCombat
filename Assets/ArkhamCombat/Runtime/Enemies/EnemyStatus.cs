@@ -16,6 +16,7 @@ namespace ArkhamCombat.Enemies
         private const string Source = nameof(EnemyStatus);
         private const string Dead = "Dead";
         private const string NoReaction = nameof(AppliedReaction.None);
+        private const string Stunned = nameof(AppliedReaction.Stun);
         private const ActionDefinition NoOverride = null;
 
         private HitReceiverProfile profile;
@@ -87,7 +88,7 @@ namespace ArkhamCombat.Enemies
                 return HitResult.Ignored;
             }
 
-            HitResult result = receiver.Receive(hit);
+            HitResult result = IsStunned ? receiver.ReceiveWhileStunned(hit) : receiver.Receive(hit);
             if (result.HasLanded)
             {
                 PublishHit(result.AppliedReaction);
@@ -95,6 +96,9 @@ namespace ArkhamCombat.Enemies
 
             return result;
         }
+
+        // The tree clears the reaction when the stun has played out, which is what ends it.
+        private bool IsStunned => ReactionAsTheTreeLeftIt == Stunned;
 
         private void PublishHit(AppliedReaction appliedReaction)
         {
