@@ -8,7 +8,6 @@ using UnityEngine;
 
 namespace ArkhamCombat.Tests
 {
-    // The fight is played once, and each test asks one thing of what was seen in it.
     public class EncounterDirectorSoakTests
     {
         private const string CombatConfigPath = "Assets/ArkhamCombat/Settings/CombatConfig.asset";
@@ -22,47 +21,54 @@ namespace ArkhamCombat.Tests
         private const float SecondsBetweenTurnsOfTheTarget = 3f;
         private const float ChanceAnAttackerIsHitEachTick = 0.01f;
         private const float WalkingSpeed = 3.5f;
-        private const float LongEnoughToExpectATurn = 25f;
-        private const int FewestTurnsOfALivelyFight = 15;
+        private const float RingRadiiAwayAFighterJoins = 2f;
+        private const float RoundsAfterWhichEveryoneHasHadATurn = 1.35f;
+        private const int TicksAGrantMayTake = 3;
 
         private sealed class Fighter : IEncounterAgent
         {
             public Vector3 Position { get; set; }
             public float JoinedAt;
-            public float LeftAt = float.NaN;
+            public float? LeftAt;
             public int Turns;
             public float SecondsLeftInItsAttack;
             public float SecondsLeftTelegraphing;
-            public bool IsTelegraphingACounterableAttack;
+            public bool IsItsAttackCounterable;
 
             public bool IsAttacking => SecondsLeftInItsAttack > 0f;
             public bool IsTelegraphing => SecondsLeftTelegraphing > 0f;
-            public bool HasLeft => !float.IsNaN(LeftAt);
+            public bool HasLeft => LeftAt.HasValue;
 
-            public float SecondsInTheFight(float fightEndedAt) => (HasLeft ? LeftAt : fightEndedAt) - JoinedAt;
+            public float SecondsInTheFight(float fightEndedAt) => (LeftAt ?? fightEndedAt) - JoinedAt;
         }
 
         private EncounterDirectorSettings settings;
+        private EncounterDirector director;
+        private System.Random random;
+        private readonly List<Fighter> fighters = new List<Fighter>();
         private readonly List<Fighter> everyoneWhoFought = new List<Fighter>();
         private readonly List<string> timesAPoolWasOverdrawn = new List<string>();
-        private readonly List<string> telegraphsThatOutlivedTheirAgent = new List<string>();
+        private readonly List<string> telegraphsThatOutlivedTheirAgentOrTheirAttack = new List<string>();
         private readonly List<string> timesTheCounterPromptWasWrong = new List<string>();
-        private readonly List<string> placesNobodyCouldStand = new List<string>();
-        private int turnsGranted;
+        private readonly List<string> timesAnAgentHadNoPlaceOfItsOwn = new List<string>();
+        private float secondsSinceAnyoneHadTheTurn;
+        private float longestTimeNobodyHadTheTurn;
+        private int attacksCutShortByAHit;
+        private int deathsOfWhoeverHadTheTurn;
+
+        private float SecondsAFullRoundOfTurnsTakes =>
+            AgentsInTheFight * (settings.MaxAttacksPerTurn * AttackSeconds + settings.SecondsBetweenTurns);
 
         [OneTimeSetUp]
         public void PlayTheFightOnce()
         {
-            settings = CombatStaticInstaller.EncounterSettingsOf(AssetDatabase.LoadAssetAtPath<CombatConfig>(CombatConfigPath));
-            System.Random random = new System.Random(Seed);
-            EncounterDirector director = new EncounterDirector(settings, slotValidator: null, random);
-            director.TokenGranted += agent =>
-            {
-                ((Fighter)agent).Turns++;
-                turnsGranted++;
-            };
+            CombatConfig config = AssetDatabase.LoadAssetAtPath<CombatConfig>(CombatConfigPath);
+            Assert.IsNotNull(config, $"no combat config at {CombatConfigPath}");
+            settings = config.Encounter;
+            random = new System.Random(Seed);
+            director = new EncounterDirector(settings, slotValidator: null, random);
+            director.TokenGranted += agent => ((Fighter)agent).Turns++;
 
-            List<Fighter> fighters = new List<Fighter>();
             Vector3 targetPosition = Vector3.zero;
             Vector3 targetForward = Vector3.forward;
             float nextDeathAt = SecondsBetweenDeaths;
@@ -70,54 +76,65 @@ namespace ArkhamCombat.Tests
 
             for (float now = 0f; now < FightSeconds; now += TickSeconds)
             {
-                while (fighters.Count < AgentsInTheFight)
-                {
-                    fighters.Add(Join(director, random, targetPosition, now));
-                }
+                ReplaceWhoeverDied(targetPosition, now);
 
                 if (now >= nextTurnOfTheTargetAt)
                 {
                     nextTurnOfTheTargetAt = now + SecondsBetweenTurnsOfTheTarget;
-                    targetForward = SomeDirection(random);
-                    targetPosition += SomeDirection(random);
+                    targetForward = SomeDirection();
+                    targetPosition += SomeDirection();
                 }
 
                 if (now >= nextDeathAt)
                 {
                     nextDeathAt = now + SecondsBetweenDeaths;
-                    Fighter whoDies = fighters[random.Next(fighters.Count)];
-                    director.Unregister(whoDies);
-                    whoDies.LeftAt = now;
-                    fighters.Remove(whoDies);
+                    KillSomeone(now);
                 }
 
                 director.SetTarget(targetPosition, targetForward);
                 foreach (Fighter fighter in fighters)
                 {
-                    WalkTowardWhereItStands(director, fighter);
-                    AskForTheTurnAndAttackWhileItLasts(director, fighter, random);
+                    WalkTowardWhereItStands(fighter);
+                    TakeItsTurnWhileItHasOne(fighter);
                 }
 
                 director.Tick(TickSeconds);
-                RecordWhatIsWrong(director, fighters, targetPosition, now);
+                RecordWhatIsWrong(now);
             }
         }
 
-        private Fighter Join(EncounterDirector director, System.Random random, Vector3 targetPosition, float now)
+        private void ReplaceWhoeverDied(Vector3 targetPosition, float now)
         {
-            Fighter fighter = new Fighter { Position = targetPosition + SomeDirection(random) * (settings.SlotRadius * 2f), JoinedAt = now };
-            director.Register(fighter, AttackTokenType.Melee);
-            everyoneWhoFought.Add(fighter);
-            return fighter;
+            while (fighters.Count < AgentsInTheFight)
+            {
+                Vector3 whereItJoins = targetPosition + SomeDirection() * (settings.SlotRadius * RingRadiiAwayAFighterJoins);
+                Fighter fighter = new Fighter { Position = whereItJoins, JoinedAt = now };
+                director.Register(fighter, AttackTokenType.Melee);
+                fighters.Add(fighter);
+                everyoneWhoFought.Add(fighter);
+            }
         }
 
-        private static Vector3 SomeDirection(System.Random random)
+        private void KillSomeone(float now)
+        {
+            Fighter whoDies = fighters[random.Next(fighters.Count)];
+            if (director.HasToken(whoDies))
+            {
+                deathsOfWhoeverHadTheTurn++;
+            }
+
+            director.Unregister(whoDies);
+            whoDies.LeftAt = now;
+            fighters.Remove(whoDies);
+        }
+
+        private Vector3 SomeDirection()
         {
             float radians = (float)(random.NextDouble() * Mathf.PI * 2f);
             return new Vector3(Mathf.Sin(radians), 0f, Mathf.Cos(radians));
         }
 
-        private static void WalkTowardWhereItStands(EncounterDirector director, Fighter fighter)
+        private void WalkTowardWhereItStands(Fighter fighter)
         {
             if (!fighter.IsAttacking)
             {
@@ -125,85 +142,140 @@ namespace ArkhamCombat.Tests
             }
         }
 
-        private static void AskForTheTurnAndAttackWhileItLasts(EncounterDirector director, Fighter fighter, System.Random random)
+        private void TakeItsTurnWhileItHasOne(Fighter fighter)
         {
             bool isItsTurn = director.TryAcquireToken(fighter);
-            bool wasHitOutOfItsAttack = fighter.IsAttacking && random.NextDouble() < ChanceAnAttackerIsHitEachTick;
-
-            if (!isItsTurn || wasHitOutOfItsAttack)
+            if (!isItsTurn)
             {
-                StopAttacking(director, fighter);
-                if (wasHitOutOfItsAttack)
-                {
-                    director.ReleaseToken(fighter);
-                }
+                StopAttacking(fighter);
+                return;
+            }
 
+            if (fighter.IsAttacking && IsHitThisTick())
+            {
+                BeHitOutOfItsAttack(fighter);
                 return;
             }
 
             if (!fighter.IsAttacking)
             {
-                fighter.SecondsLeftInItsAttack = AttackSeconds;
-                fighter.SecondsLeftTelegraphing = TelegraphSeconds;
-                fighter.IsTelegraphingACounterableAttack = random.Next(2) == 0;
+                StartAnAttack(fighter);
             }
 
-            fighter.SecondsLeftInItsAttack -= TickSeconds;
-            fighter.SecondsLeftTelegraphing -= TickSeconds;
+            AdvanceItsAttack(fighter);
+            ReportWhetherItIsWindingUp(fighter);
 
-            if (fighter.IsTelegraphing)
-            {
-                director.TelegraphAnAttack(fighter, fighter.IsTelegraphingACounterableAttack);
-            }
-            else
-            {
-                director.StopTelegraphing(fighter);
-            }
-
-            if (!fighter.IsAttacking)
+            bool hasTheAttackEnded = !fighter.IsAttacking;
+            if (hasTheAttackEnded)
             {
                 director.SpendAnAttackOfTheTurn(fighter);
             }
         }
 
-        private static void StopAttacking(EncounterDirector director, Fighter fighter)
+        private bool IsHitThisTick() => random.NextDouble() < ChanceAnAttackerIsHitEachTick;
+
+        private void BeHitOutOfItsAttack(Fighter fighter)
+        {
+            attacksCutShortByAHit++;
+            StopAttacking(fighter);
+            director.ReleaseToken(fighter);
+        }
+
+        private void StopAttacking(Fighter fighter)
         {
             fighter.SecondsLeftInItsAttack = 0f;
             fighter.SecondsLeftTelegraphing = 0f;
             director.StopTelegraphing(fighter);
         }
 
-        private void RecordWhatIsWrong(EncounterDirector director, List<Fighter> fighters, Vector3 targetPosition, float now)
+        private void StartAnAttack(Fighter fighter)
+        {
+            fighter.SecondsLeftInItsAttack = AttackSeconds;
+            fighter.SecondsLeftTelegraphing = TelegraphSeconds;
+            fighter.IsItsAttackCounterable = random.Next(2) == 0;
+        }
+
+        private static void AdvanceItsAttack(Fighter fighter)
+        {
+            fighter.SecondsLeftInItsAttack -= TickSeconds;
+            fighter.SecondsLeftTelegraphing -= TickSeconds;
+        }
+
+        private void ReportWhetherItIsWindingUp(Fighter fighter)
+        {
+            if (fighter.IsTelegraphing)
+            {
+                director.TelegraphAnAttack(fighter, fighter.IsItsAttackCounterable);
+            }
+            else
+            {
+                director.StopTelegraphing(fighter);
+            }
+        }
+
+        private void RecordWhatIsWrong(float now)
+        {
+            RecordAnOverdrawnPool(now);
+            RecordTelegraphsThatOutlivedTheirAgentOrTheirAttack(now);
+            RecordAWrongCounterPrompt(now);
+            RecordAgentsWithNoPlaceOfTheirOwn(now);
+            RecordHowLongNobodyHasHadTheTurn();
+        }
+
+        private void RecordAnOverdrawnPool(float now)
         {
             int tokensOut = director.HeldTokenCount(AttackTokenType.Melee);
             if (tokensOut > settings.MaxMeleeTokens)
             {
                 timesAPoolWasOverdrawn.Add($"{now:0.00}s: {tokensOut} melee tokens out of {settings.MaxMeleeTokens}");
             }
+        }
 
-            if (director.TryGetNearestTelegraphingAgent(targetPosition, out IEncounterAgent whoTelegraphs))
+        private void RecordTelegraphsThatOutlivedTheirAgentOrTheirAttack(float now)
+        {
+            foreach (Fighter fighter in everyoneWhoFought)
             {
-                Fighter fighter = (Fighter)whoTelegraphs;
-                if (fighter.HasLeft || !fighter.IsTelegraphing)
+                bool shouldBeNamed = !fighter.HasLeft && fighter.IsTelegraphing;
+                if (director.IsTelegraphing(fighter) && !shouldBeNamed)
                 {
-                    telegraphsThatOutlivedTheirAgent.Add($"{now:0.00}s: an agent that {(fighter.HasLeft ? "left" : "stopped winding up")} is still named");
+                    string whatItDid = fighter.HasLeft ? "left" : "stopped winding up";
+                    telegraphsThatOutlivedTheirAgentOrTheirAttack.Add($"{now:0.00}s: an agent that {whatItDid} is still telegraphing");
                 }
             }
+        }
 
-            bool isACounterableAttackComing = fighters.Any(fighter => fighter.IsTelegraphing && fighter.IsTelegraphingACounterableAttack);
+        private void RecordAWrongCounterPrompt(float now)
+        {
+            bool isACounterableAttackComing = fighters.Any(fighter => fighter.IsTelegraphing && fighter.IsItsAttackCounterable);
             if (director.IsACounterableAttackIncoming != isACounterableAttackComing)
             {
-                timesTheCounterPromptWasWrong.Add($"{now:0.00}s: the director says {director.IsACounterableAttackIncoming}, the fight says {isACounterableAttackComing}");
+                timesTheCounterPromptWasWrong.Add(
+                    $"{now:0.00}s: the director says {director.IsACounterableAttackIncoming}, the fight says {isACounterableAttackComing}");
             }
+        }
 
+        private void RecordAgentsWithNoPlaceOfTheirOwn(float now)
+        {
+            HashSet<int> slotsTaken = new HashSet<int>();
             foreach (Fighter fighter in fighters)
             {
-                Vector3 whereItStands = director.GetStandingPosition(fighter);
-                if (float.IsNaN(whereItStands.x) || float.IsNaN(whereItStands.z))
+                int slot = director.GetSlot(fighter);
+                if (slot == EncounterDirector.UnassignedSlot)
                 {
-                    placesNobodyCouldStand.Add($"{now:0.00}s: {whereItStands}");
+                    timesAnAgentHadNoPlaceOfItsOwn.Add($"{now:0.00}s: an agent has no slot on the ring");
+                }
+                else if (!slotsTaken.Add(slot))
+                {
+                    timesAnAgentHadNoPlaceOfItsOwn.Add($"{now:0.00}s: two agents share slot {slot}");
                 }
             }
+        }
+
+        private void RecordHowLongNobodyHasHadTheTurn()
+        {
+            bool hasSomeoneTheTurn = director.HeldTokenCount(AttackTokenType.Melee) > 0;
+            secondsSinceAnyoneHadTheTurn = hasSomeoneTheTurn ? 0f : secondsSinceAnyoneHadTheTurn + TickSeconds;
+            longestTimeNobodyHadTheTurn = Mathf.Max(longestTimeNobodyHadTheTurn, secondsSinceAnyoneHadTheTurn);
         }
 
         [Test]
@@ -215,7 +287,7 @@ namespace ArkhamCombat.Tests
         [Test]
         public void NoTelegraphOutlivesTheAgentOrTheAttackThatMadeIt()
         {
-            Assert.IsEmpty(telegraphsThatOutlivedTheirAgent);
+            Assert.IsEmpty(telegraphsThatOutlivedTheirAgentOrTheirAttack);
         }
 
         [Test]
@@ -225,33 +297,39 @@ namespace ArkhamCombat.Tests
         }
 
         [Test]
-        public void EveryAgentAlwaysHasSomewhereToStand()
+        public void EveryAgentAlwaysHasASlotOnTheRing_ThatNobodyElseHas()
         {
-            Assert.IsEmpty(placesNobodyCouldStand);
+            Assert.IsEmpty(timesAnAgentHadNoPlaceOfItsOwn);
         }
 
         [Test]
-        public void NobodyWhoFoughtLongEnough_WasLeftWithoutATurn()
+        public void NobodyWhoFoughtThroughAFullRoundOfTurns_WasLeftWithoutOne()
         {
+            float longEnoughToExpectATurn = SecondsAFullRoundOfTurnsTakes * RoundsAfterWhichEveryoneHasHadATurn;
             string[] leftOut = everyoneWhoFought
-                .Where(fighter => fighter.SecondsInTheFight(FightSeconds) >= LongEnoughToExpectATurn && fighter.Turns == 0)
+                .Where(fighter => fighter.SecondsInTheFight(FightSeconds) >= longEnoughToExpectATurn && fighter.Turns == 0)
                 .Select(fighter => $"joined at {fighter.JoinedAt:0.0}s, fought {fighter.SecondsInTheFight(FightSeconds):0.0}s")
                 .ToArray();
 
+            Assert.Less(longEnoughToExpectATurn, FightSeconds, "the fight is too short for the shipped tuning to say anything about turns");
             Assert.IsEmpty(leftOut);
         }
 
         [Test]
-        public void TheFightNeverStalls()
+        public void TheFightNeverStalls_TheTurnIsNeverFreeForLongerThanTheBreathBetweenTurns()
         {
-            Assert.GreaterOrEqual(turnsGranted, FewestTurnsOfALivelyFight);
+            float longestABreathMayLast = settings.SecondsBetweenTurns + TicksAGrantMayTake * TickSeconds;
+
+            Assert.LessOrEqual(longestTimeNobodyHadTheTurn, longestABreathMayLast);
         }
 
         [Test]
         public void TheFight_WasAMessyOne()
         {
-            Assert.Greater(everyoneWhoFought.Count, AgentsInTheFight, "sanity: agents died and were replaced");
-            Assert.IsTrue(everyoneWhoFought.Any(fighter => fighter.Turns > 1), "sanity: somebody had more than one turn");
+            Assert.Greater(everyoneWhoFought.Count, AgentsInTheFight, "agents died and were replaced");
+            Assert.IsTrue(everyoneWhoFought.Any(fighter => fighter.Turns > 1), "somebody had more than one turn");
+            Assert.Greater(attacksCutShortByAHit, 0, "somebody was hit out of an attack");
+            Assert.Greater(deathsOfWhoeverHadTheTurn, 0, "somebody died on its turn");
         }
     }
 }

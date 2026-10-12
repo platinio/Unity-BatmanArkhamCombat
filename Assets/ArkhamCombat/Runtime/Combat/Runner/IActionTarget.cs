@@ -23,14 +23,11 @@ namespace ArkhamCombat.Combat
 
         /// <summary>
         /// Told as a paired attack aimed at it starts, so it can react from that moment rather than
-        /// when the hit lands. A target that plays no reactions lets the attack start without it.
+        /// when the hit lands.
         /// </summary>
         void BeginPairedReaction(AttackDefinition attack) { }
 
-        /// <summary>
-        /// Told as an attack aimed at it starts. A target that does nothing about a strike on its
-        /// way ignores it.
-        /// </summary>
+        /// <summary>Told as an attack aimed at it starts, when that attack can reach it.</summary>
         void StrikeIsComing() { }
 
         /// <summary>Told once that attack has struck, hit or miss, or was cut short before it could.</summary>

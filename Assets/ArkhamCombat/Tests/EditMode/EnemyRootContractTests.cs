@@ -260,34 +260,66 @@ namespace ArkhamCombat.Tests
             Assert.IsTrue(archetype.Validate(errors), string.Join("\n", errors));
         }
 
-        [Test]
-        public void EveryArchetypeInTheDatabase_IsWellFormed()
-        {
-            foreach (EnemyArchetype archetype in EveryArchetype())
-            {
-                List<string> errors = new List<string>();
+        private static string[] EveryArchetypeName() => EveryArchetype().Select(archetype => archetype.Name).ToArray();
 
-                Assert.IsTrue(archetype.Validate(errors), string.Join("\n", errors));
-            }
+        private static bool IsAnEnemyPrefabOfTheArchetype(string prefabPath, EnemyArchetype archetype)
+        {
+            GameObject prefab = AssetDatabase.LoadAssetAtPath<GameObject>(prefabPath);
+            return prefab.GetComponent<EnemyInstaller>() != null && ArchetypeOf(prefab) == archetype;
         }
 
         [Test]
-        public void TheEliteThug_IsOnlyAnotherArchetype_WithNoPrefabAndNoRootOfItsOwn()
+        public void TheArchetypeDatabase_HoldsEveryKindOfEnemyInTheArena()
         {
-            Assert.IsNotNull(ArchetypeNamed("EliteThug"));
-            Assert.IsNull(AssetDatabase.LoadAssetAtPath<GameObject>(PrefabsFolder + "EliteThug.prefab"));
-            CollectionAssert.DoesNotContain(EveryRoot(), "EliteThugRoot");
+            CollectionAssert.IsSupersetOf(EveryArchetypeName(), new[] { "Thug", "EliteThug", "Knife", "Armored" });
+        }
+
+        [TestCaseSource(nameof(EveryArchetypeName))]
+        public void EveryArchetypeInTheDatabase_IsWellFormed(string archetypeName)
+        {
+            List<string> errors = new List<string>();
+
+            Assert.IsTrue(ArchetypeNamed(archetypeName).Validate(errors), string.Join("\n", errors));
         }
 
         [Test]
-        public void TheEliteThug_HasMoreHealthThanAThug_HitsHarder_AndTauntsLess()
+        public void TheEliteThug_IsOnlyAnotherArchetype_ThatNoPrefabNames()
         {
             EnemyArchetype elite = ArchetypeNamed("EliteThug");
-            EnemyArchetype thug = ArchetypeNamed("Thug");
 
-            Assert.Greater(elite.HitReceiverProfile.MaxHealth, thug.HitReceiverProfile.MaxHealth);
-            Assert.Greater(elite.Attack.Damage, thug.Attack.Damage);
-            Assert.Less(elite.TauntChance, thug.TauntChance);
+            string[] prefabsOfTheElite = AssetDatabase.FindAssets("t:Prefab", new[] { PrefabsFolder.TrimEnd('/') })
+                .Select(AssetDatabase.GUIDToAssetPath)
+                .Where(prefabPath => IsAnEnemyPrefabOfTheArchetype(prefabPath, elite))
+                .ToArray();
+
+            Assert.IsEmpty(prefabsOfTheElite);
+        }
+
+        [Test]
+        public void TheEliteThug_HasMoreHealthThanAThug()
+        {
+            Assert.Greater(ArchetypeNamed("EliteThug").HitReceiverProfile.MaxHealth, ArchetypeNamed("Thug").HitReceiverProfile.MaxHealth);
+        }
+
+        [Test]
+        public void TheEliteThug_TauntsLessThanAThug()
+        {
+            Assert.Less(ArchetypeNamed("EliteThug").TauntChance, ArchetypeNamed("Thug").TauntChance);
+        }
+
+        [Test]
+        public void TheEliteThugsAttack_HitsHarderThanAThugs_AndKnocksDown()
+        {
+            AttackDefinition uppercut = ArchetypeNamed("EliteThug").Attack;
+
+            Assert.Greater(uppercut.Damage, ArchetypeNamed("Thug").Attack.Damage);
+            Assert.AreEqual(HitReaction.Knockdown, uppercut.Reaction);
+        }
+
+        [Test]
+        public void TheEliteThugsAttack_CanBeCountered()
+        {
+            Assert.IsTrue(ArchetypeNamed("EliteThug").Attack.IsCounterable);
         }
 
         [Test]
