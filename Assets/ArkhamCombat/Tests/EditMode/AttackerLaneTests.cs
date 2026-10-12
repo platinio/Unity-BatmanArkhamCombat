@@ -106,6 +106,27 @@ namespace ArkhamCombat.Tests
         }
 
         [Test]
+        public void EnabledWhileItsAgentAlreadyHoldsAToken_ItTakesTheLane()
+        {
+            lane.OnDisable();
+            agent.TryAcquireToken();
+
+            lane.OnEnable();
+
+            Assert.AreEqual(AttackerPriority, navMeshAgent.avoidancePriority);
+        }
+
+        [Test]
+        public void DisabledWhileItsAgentHoldsAToken_ItGivesTheLaneBack()
+        {
+            agent.TryAcquireToken();
+
+            lane.OnDisable();
+
+            Assert.AreEqual(DefaultPriority, navMeshAgent.avoidancePriority);
+        }
+
+        [Test]
         public void OnceDisabled_ItNoLongerFollowsTheToken()
         {
             lane.OnDisable();

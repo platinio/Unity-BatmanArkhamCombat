@@ -36,13 +36,22 @@ namespace ArkhamCombat.Encounter
             encounterAgent.TokenGranted += TakeTheLane;
             encounterAgent.TokenReleased += GiveTheLaneBack;
 
-            GiveTheLaneBack();
+            if (encounterAgent.HasToken)
+            {
+                TakeTheLane();
+            }
+            else
+            {
+                GiveTheLaneBack();
+            }
         }
 
         internal void OnDisable()
         {
             encounterAgent.TokenGranted -= TakeTheLane;
             encounterAgent.TokenReleased -= GiveTheLaneBack;
+
+            GiveTheLaneBack();
         }
 
         private void TakeTheLane() => navMeshAgent.avoidancePriority = settings.AttackerAvoidancePriority;

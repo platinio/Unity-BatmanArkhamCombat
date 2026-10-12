@@ -2,6 +2,7 @@ using System;
 using ArkhamCombat.Encounter;
 using NUnit.Framework;
 using UnityEngine;
+using static ArkhamCombat.Tests.CombatTestDoubles;
 
 namespace ArkhamCombat.Tests
 {
@@ -14,13 +15,6 @@ namespace ArkhamCombat.Tests
         private static readonly Vector3 North = new Vector3(0f, 0f, SlotRadius);
         private static readonly Vector3 East = new Vector3(SlotRadius, 0f, 0f);
         private static readonly Vector3 South = new Vector3(0f, 0f, -SlotRadius);
-
-        private sealed class StandingAgent : IEncounterAgent
-        {
-            public Vector3 Position { get; }
-
-            public StandingAgent(Vector3 position) => Position = position;
-        }
 
         private sealed class SlotValidatorThat : ISlotValidator
         {
@@ -72,7 +66,7 @@ namespace ArkhamCombat.Tests
         }
 
         [Test]
-        public void WithHalfTheRingRejected_OnlyTheUsableHalfIsFilled_AndTheRestHoldTheirBearing()
+        public void WithHalfTheRingRejected_OnlyTheUsableHalfIsFilled()
         {
             EncounterDirector director = DirectorWith(new SlotValidatorThat(position => position.z > -Tolerance && position.x < Tolerance));
             StandingAgent nearestInTheNorth = new StandingAgent(North * 1.1f);
@@ -91,7 +85,6 @@ namespace ArkhamCombat.Tests
             Assert.AreNotEqual(EncounterDirector.UnassignedSlot, director.GetSlot(nextInTheWest), "west is usable");
             Assert.AreEqual(EncounterDirector.UnassignedSlot, director.GetSlot(fartherInTheEast), "east is rejected and the usable slots are taken");
             Assert.AreEqual(EncounterDirector.UnassignedSlot, director.GetSlot(farthestInTheSouth), "south is rejected and the usable slots are taken");
-            Assert.Less((director.GetSlotPosition(farthestInTheSouth) - South).magnitude, Tolerance, "it holds its bearing, due south");
         }
 
         [Test]

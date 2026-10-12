@@ -3,6 +3,7 @@ using ArcaneOnyx.ScriptableObjectDatabase;
 using ArcaneOnyx.TPCharacterController.Inputs;
 using ArkhamCombat.Characters;
 using ArkhamCombat.Combat;
+using ArkhamCombat.Encounter;
 using UnityEngine;
 using Zenject;
 
@@ -17,6 +18,15 @@ namespace ArkhamCombat.Enemies
         [Tooltip("Which kind of enemy this is: its health, what it shrugs off, how long it idles.")]
         [SerializeField, ScriptableItemDatabaseSelector(typeof(EnemyArchetypeDatabase))]
         private EnemyArchetype archetype;
+
+        private EncounterDirectorSettings encounterSettings;
+
+        // Handed over before the bindings are made: asking the container for it during the install is what Zenject warns about.
+        [Inject]
+        internal void Construct([InjectOptional] EncounterDirectorSettings encounterSettings)
+        {
+            this.encounterSettings = encounterSettings;
+        }
 
         public override void InstallBindings()
         {
@@ -39,6 +49,7 @@ namespace ArkhamCombat.Enemies
             if (hasArchetype)
             {
                 Container.Bind<EnemyArchetype>().FromInstance(archetype);
+                Container.Bind<IEncounterAgentSettings>().FromInstance(archetype);
             }
 
             bool hasProfile = hasArchetype && archetype.HitReceiverProfile != null;
@@ -101,6 +112,27 @@ namespace ArkhamCombat.Enemies
             foreach (string error in errors)
             {
                 Debug.LogError($"[{nameof(EnemyInstaller)}] {error}", archetype);
+            }
+
+            ReportACombatRangeInsideTheRing();
+        }
+
+        // Inside the ring's reach the two would undo each other: holding its slot walks the enemy out of combat range, and closing in walks it back.
+        private void ReportACombatRangeInsideTheRing()
+        {
+            bool isInAnEncounter = encounterSettings != null;
+            if (!isInAnEncounter)
+            {
+                return;
+            }
+
+            float farthestASlotCanBe = encounterSettings.SlotRadius + encounterSettings.SlotSampleRadius;
+            if (archetype.CombatRange <= farthestASlotCanBe)
+            {
+                Debug.LogError(
+                    $"[{nameof(EnemyInstaller)}] Archetype '{archetype.name}': combatRange ({archetype.CombatRange:0.00}) does not reach past the ring " +
+                    $"(slot radius plus sample radius, {farthestASlotCanBe:0.00}), so its enemies would walk in and out of range instead of holding a slot.",
+                    archetype);
             }
         }
     }

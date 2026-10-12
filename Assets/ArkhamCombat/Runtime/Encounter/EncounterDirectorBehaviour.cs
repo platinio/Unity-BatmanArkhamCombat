@@ -1,3 +1,4 @@
+using ArcaneOnyx.MeshGizmos;
 using UnityEngine;
 using Zenject;
 
@@ -8,12 +9,15 @@ namespace ArkhamCombat.Encounter
     public sealed class EncounterDirectorBehaviour : MonoBehaviour
     {
         private const float SlotGizmoRadius = 0.25f;
+        private static readonly Color SlotGizmoColor = Color.yellow;
 
         [Tooltip("What the encounter revolves around. Normally the player.")]
         [SerializeField] private Transform target;
 
-        [Tooltip("Draws the ring of standing positions while this object is selected in play mode.")]
+        [Tooltip("Draws the ring of standing positions in play mode.")]
         [SerializeField] private bool drawGizmos = true;
+
+        private MGizmoGroup ringOfSlots;
 
         public EncounterDirector Director { get; private set; }
         public Transform Target => target;
@@ -23,7 +27,15 @@ namespace ArkhamCombat.Encounter
 
         public void SetTarget(Transform target) => this.target = target;
 
-        private void Update() => Tick(Time.deltaTime);
+        private void OnEnable() => ringOfSlots = new MGizmoGroup();
+
+        private void OnDisable() => ringOfSlots.Dispose();
+
+        private void Update()
+        {
+            Tick(Time.deltaTime);
+            DrawTheRingOfSlots();
+        }
 
         internal void Tick(float deltaTime)
         {
@@ -40,18 +52,18 @@ namespace ArkhamCombat.Encounter
             Director.Tick(deltaTime);
         }
 
-        private void OnDrawGizmosSelected()
+        private void DrawTheRingOfSlots()
         {
+            ringOfSlots.Clear();
+
             if (!drawGizmos || Director == null)
             {
                 return;
             }
 
-            Gizmos.color = Color.yellow;
-
             for (int slot = 0; slot < Director.Settings.SlotCount; slot++)
             {
-                Gizmos.DrawWireSphere(Director.SlotWorldPosition(slot), SlotGizmoRadius);
+                ringOfSlots.Add(MGizmos.RenderSphere(Director.SlotWorldPosition(slot), SlotGizmoRadius).SetColor(SlotGizmoColor));
             }
         }
     }

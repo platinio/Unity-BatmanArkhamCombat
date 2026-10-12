@@ -8,10 +8,11 @@ namespace ArkhamCombat.Encounter
     [AddComponentMenu("ArkhamCombat/Encounter Agent")]
     public sealed class EncounterAgent : MonoBehaviour, IEncounterAgent
     {
-        [Tooltip("Which token pool this agent competes in.")]
-        [SerializeField] private AttackTokenType tokenType = AttackTokenType.Melee;
+        private const AttackTokenType TokenTypeWithoutSettings = AttackTokenType.Melee;
 
         private EncounterDirectorBehaviour encounter;
+        private IEncounterAgentSettings settings;
+        private bool wasInjected;
         private bool hasJoined;
 
         public event Action TokenGranted;
@@ -25,7 +26,14 @@ namespace ArkhamCombat.Encounter
         private EncounterDirector Director => encounter.Director;
 
         [Inject]
-        internal void Construct([InjectOptional] EncounterDirectorBehaviour encounter) => this.encounter = encounter;
+        internal void Construct(
+            [InjectOptional] EncounterDirectorBehaviour encounter,
+            [InjectOptional] IEncounterAgentSettings settings = null)
+        {
+            this.encounter = encounter;
+            this.settings = settings;
+            wasInjected = true;
+        }
 
         public bool TryAcquireToken() => hasJoined && Director.TryAcquireToken(this);
 
@@ -42,15 +50,23 @@ namespace ArkhamCombat.Encounter
             bool isThereAnEncounter = encounter != null && encounter.Director != null;
             if (!isThereAnEncounter)
             {
-                Debug.LogWarning($"[{nameof(EncounterAgent)}] '{name}' found no encounter director in the scene, so it will never be granted an attack token.", this);
+                Debug.LogWarning($"[{nameof(EncounterAgent)}] '{name}' {WhyItJoinsNoEncounter()}, so it will never be granted an attack token.", this);
                 return;
             }
 
+            // Joined before it registers: whoever hears the director announce it can already ask it for its target.
+            hasJoined = true;
             Director.TokenGranted += RaiseTokenGrantedWhenItIsMine;
             Director.TokenReleased += RaiseTokenReleasedWhenItIsMine;
-            Director.Register(this, tokenType);
-            hasJoined = true;
+            Director.Register(this, TokenType);
         }
+
+        private AttackTokenType TokenType => settings != null ? settings.TokenType : TokenTypeWithoutSettings;
+
+        private string WhyItJoinsNoEncounter() =>
+            wasInjected
+                ? "found no encounter director in the scene"
+                : "was never injected, so it could not look for an encounter director (was it instantiated without the container?)";
 
         internal void OnDisable()
         {

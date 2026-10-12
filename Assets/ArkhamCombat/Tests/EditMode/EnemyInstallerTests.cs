@@ -2,6 +2,7 @@ using System.Text.RegularExpressions;
 using ArcaneOnyx.GameEventGenerator;
 using ArkhamCombat.Characters;
 using ArkhamCombat.Combat;
+using ArkhamCombat.Encounter;
 using ArkhamCombat.Enemies;
 using NUnit.Framework;
 using Unity.VisualScripting;
@@ -63,11 +64,14 @@ namespace ArkhamCombat.Tests
             serializedInstaller.ApplyModifiedPropertiesWithoutUndo();
         }
 
+        // The way a context does it, so anything Zenject warns about during an install is warned about here too.
         private void InstallTheEnemy()
         {
             enemyContainer = sceneContainer.CreateSubContainer();
+            enemyContainer.IsInstalling = true;
             enemyContainer.Inject(installer);
             installer.InstallBindings();
+            enemyContainer.IsInstalling = false;
         }
 
         private void InstallTheEnemyWithItsArchetype()
@@ -113,6 +117,18 @@ namespace ArkhamCombat.Tests
 
             Assert.AreSame(archetype, enemyContainer.Resolve<EnemyArchetype>());
             Assert.AreSame(profile, enemyContainer.Resolve<HitReceiverProfile>());
+        }
+
+        [Test]
+        public void TheEnemysEncounterAgent_WaitsForTheKindOfTokenItsArchetypeNames()
+        {
+            archetype.ConfigureTokenType(AttackTokenType.Ranged);
+            InstallTheEnemyWithItsArchetype();
+
+            IEncounterAgentSettings agentSettings = enemyContainer.Resolve<IEncounterAgentSettings>();
+
+            Assert.AreSame(archetype, agentSettings);
+            Assert.AreEqual(AttackTokenType.Ranged, agentSettings.TokenType);
         }
 
         [Test]
@@ -164,6 +180,7 @@ namespace ArkhamCombat.Tests
 
             Assert.IsNotNull(enemyContainer.Resolve<ActionRunner>());
             Assert.DoesNotThrow(() => AddToTheEnemyAndInject<EnemyArchetypeWriter>(), "what needs the archetype goes without it");
+            Assert.DoesNotThrow(() => AddToTheEnemyAndInject<EncounterAgent>(), "and so does its encounter agent");
         }
 
         [Test]
@@ -184,6 +201,57 @@ namespace ArkhamCombat.Tests
             LogAssert.Expect(LogType.Error, new Regex("idleMax .* is below idleMin"));
 
             InstallTheEnemyWithItsArchetype();
+        }
+
+        [Test]
+        public void ACombatRangeThatDoesNotReachPastTheRing_IsReported()
+        {
+            EncounterDirectorSettings ringOutToFive = new EncounterDirectorSettings(slotRadius: 4f, slotSampleRadius: 1f);
+            sceneContainer.Bind<EncounterDirectorSettings>().FromInstance(ringOutToFive);
+            archetype.ConfigureMovement(combatRange: 5f, moveSpeed: 3f);
+            LogAssert.Expect(LogType.Error, new Regex("does not reach past the ring"));
+
+            InstallTheEnemyWithItsArchetype();
+        }
+
+        [Test]
+        public void InstallingAnEnemyInAnEncounter_AsksTheContainerForNothing()
+        {
+            EncounterDirectorSettings ringOutToFour = new EncounterDirectorSettings(slotRadius: 3f, slotSampleRadius: 1f);
+            sceneContainer.Bind<EncounterDirectorSettings>().FromInstance(ringOutToFour);
+            archetype.ConfigureMovement(combatRange: 5f, moveSpeed: 3f);
+            string zenjectWarning = null;
+            Application.LogCallback rememberAZenjectWarning = (message, stackTrace, type) =>
+            {
+                if (type == LogType.Warning && message.Contains("Zenject Warning"))
+                {
+                    zenjectWarning = message;
+                }
+            };
+
+            Application.logMessageReceived += rememberAZenjectWarning;
+            try
+            {
+                InstallTheEnemyWithItsArchetype();
+            }
+            finally
+            {
+                Application.logMessageReceived -= rememberAZenjectWarning;
+            }
+
+            Assert.IsNull(zenjectWarning, "resolving while the bindings are still being made is what Zenject warns about");
+        }
+
+        [Test]
+        public void ACombatRangeWiderThanTheRing_IsNotReported()
+        {
+            EncounterDirectorSettings ringOutToFour = new EncounterDirectorSettings(slotRadius: 3f, slotSampleRadius: 1f);
+            sceneContainer.Bind<EncounterDirectorSettings>().FromInstance(ringOutToFour);
+            archetype.ConfigureMovement(combatRange: 5f, moveSpeed: 3f);
+
+            InstallTheEnemyWithItsArchetype();
+
+            LogAssert.NoUnexpectedReceived();
         }
 
         [Test]

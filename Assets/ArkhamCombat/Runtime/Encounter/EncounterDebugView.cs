@@ -1,3 +1,4 @@
+using ArcaneOnyx.MeshGizmos;
 using UnityEngine;
 
 namespace ArkhamCombat.Encounter
@@ -6,6 +7,8 @@ namespace ArkhamCombat.Encounter
     [AddComponentMenu("ArkhamCombat/Encounter Debug View")]
     public sealed class EncounterDebugView : MonoBehaviour
     {
+        private const float SlotLineWidth = 0.03f;
+
         [Tooltip("Leave empty to use the first renderer found on this object or its children.")]
         [SerializeField] private Renderer tintedRenderer;
 
@@ -15,12 +18,15 @@ namespace ArkhamCombat.Encounter
         [Tooltip("Draws a line to the standing position the director assigned.")]
         [SerializeField] private bool drawSlotLine = true;
 
+        [SerializeField] private Color slotLineColor = Color.cyan;
+
         private static readonly int BaseColorId = Shader.PropertyToID("_BaseColor");
         private static readonly int ColorId = Shader.PropertyToID("_Color");
 
         private EncounterAgent encounterAgent;
         private MaterialPropertyBlock propertyBlock;
         private bool wasHoldingToken;
+        private MGizmoGroup slotLine;
 
         private void Awake()
         {
@@ -35,7 +41,17 @@ namespace ArkhamCombat.Encounter
             Tint(waitingColor);
         }
 
+        private void OnEnable() => slotLine = new MGizmoGroup();
+
+        private void OnDisable() => slotLine.Dispose();
+
         private void Update()
+        {
+            ShowWhetherItHoldsAToken();
+            ShowTheWayToItsSlot();
+        }
+
+        private void ShowWhetherItHoldsAToken()
         {
             bool isHoldingToken = encounterAgent.HasToken;
             if (isHoldingToken == wasHoldingToken)
@@ -47,7 +63,6 @@ namespace ArkhamCombat.Encounter
             wasHoldingToken = isHoldingToken;
         }
 
-        // A property block tints this one body without giving it a material of its own, which would break batching.
         private void Tint(Color color)
         {
             if (tintedRenderer == null)
@@ -61,15 +76,14 @@ namespace ArkhamCombat.Encounter
             tintedRenderer.SetPropertyBlock(propertyBlock);
         }
 
-        private void OnDrawGizmos()
+        private void ShowTheWayToItsSlot()
         {
-            if (!drawSlotLine || !Application.isPlaying || encounterAgent == null)
-            {
-                return;
-            }
+            slotLine.Clear();
 
-            Gizmos.color = Color.cyan;
-            Gizmos.DrawLine(transform.position, encounterAgent.SlotPosition);
+            if (drawSlotLine)
+            {
+                slotLine.Add(MGizmos.RenderLine(transform.position, encounterAgent.SlotPosition, SlotLineWidth).SetColor(slotLineColor));
+            }
         }
     }
 }

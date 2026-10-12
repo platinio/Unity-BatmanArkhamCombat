@@ -22,6 +22,7 @@ namespace ArkhamCombat.Encounter
 
         private readonly EncounterDirectorSettings settings;
         private readonly ISlotValidator slotValidator;
+        private readonly int slotCount;
         private readonly List<AgentState> agentStates = new List<AgentState>();
         private readonly List<IEncounterAgent> registeredAgents = new List<IEncounterAgent>();
         private readonly Dictionary<IEncounterAgent, AgentState> stateByAgent = new Dictionary<IEncounterAgent, AgentState>();
@@ -38,7 +39,7 @@ namespace ArkhamCombat.Encounter
             this.settings = settings ?? new EncounterDirectorSettings();
             this.slotValidator = slotValidator ?? new EverySlotIsValid();
 
-            int slotCount = this.settings.SlotCount;
+            slotCount = this.settings.SlotCount;
             isSlotTaken = new bool[slotCount];
             isSlotUsable = new bool[slotCount];
             slotOffsetFromTarget = new Vector3[slotCount];
@@ -89,6 +90,12 @@ namespace ArkhamCombat.Encounter
             }
 
             Release(state);
+
+            bool wasTakenOutByAListenerToTheRelease = !stateByAgent.ContainsKey(agent);
+            if (wasTakenOutByAListenerToTheRelease)
+            {
+                return;
+            }
 
             agentStates.Remove(state);
             registeredAgents.Remove(agent);
@@ -205,13 +212,12 @@ namespace ArkhamCombat.Encounter
 
         private Vector3 OffsetOnTheRing(int slot)
         {
-            float radians = slot * ((Mathf.PI * 2.0f) / settings.SlotCount);
+            float radians = slot * ((Mathf.PI * 2.0f) / slotCount);
             Vector3 directionFromTarget = new Vector3(Mathf.Sin(radians), 0.0f, Mathf.Cos(radians));
 
             return directionFromTarget * settings.SlotRadius;
         }
 
-        // An agent the ring has no room for holds the line here, instead of piling onto a slot someone else has.
         private Vector3 BearingPosition(IEncounterAgent agent)
         {
             Vector3 bearing = agent.Position - targetPosition;
@@ -228,7 +234,8 @@ namespace ArkhamCombat.Encounter
         public void Tick(float deltaTime)
         {
             AgeReacquireCooldowns(deltaTime);
-            TakeBackTokensHeldTooLong(deltaTime);
+            AgeHeldTokens(deltaTime);
+            TakeBackTokensHeldTooLong();
             AssignSlotsWhenDue(deltaTime);
         }
 
@@ -243,19 +250,26 @@ namespace ArkhamCombat.Encounter
             }
         }
 
-        private void TakeBackTokensHeldTooLong(float deltaTime)
+        private void AgeHeldTokens(float deltaTime)
         {
             for (int i = 0; i < agentStates.Count; i++)
             {
-                AgentState state = agentStates[i];
-                if (!state.HasToken)
+                if (agentStates[i].HasToken)
                 {
-                    continue;
+                    agentStates[i].TokenHeldFor += deltaTime;
                 }
+            }
+        }
 
-                state.TokenHeldFor += deltaTime;
+        private void TakeBackTokensHeldTooLong()
+        {
+            bool canATokenBeHeldTooLong = settings.MaxTokenHoldSeconds > 0.0f;
 
-                bool hasHeldItTooLong = settings.MaxTokenHoldSeconds > 0.0f && state.TokenHeldFor >= settings.MaxTokenHoldSeconds;
+            for (int i = 0; i < agentStates.Count; i++)
+            {
+                AgentState state = agentStates[i];
+
+                bool hasHeldItTooLong = canATokenBeHeldTooLong && state.HasToken && state.TokenHeldFor >= settings.MaxTokenHoldSeconds;
                 if (hasHeldItTooLong)
                 {
                     Release(state);
@@ -276,7 +290,6 @@ namespace ArkhamCombat.Encounter
             secondsUntilSlotsAreReassigned = settings.SlotReassignIntervalSeconds;
         }
 
-        // A slot keeps the place it was given here until the next assignment, carried along with the target.
         private void ValidateSlots()
         {
             for (int slot = 0; slot < isSlotUsable.Length; slot++)
@@ -287,10 +300,7 @@ namespace ArkhamCombat.Encounter
             }
         }
 
-        /// <summary>
-        /// The agents closest to the target choose first. That keeps the front rank still and pushes
-        /// the shuffling out to the back, instead of everyone finding a new path at once.
-        /// </summary>
+        // Closest first keeps the front rank still and pushes the shuffling out to the back, instead of everyone finding a new path at once.
         private void AssignSlots()
         {
             for (int i = 0; i < isSlotTaken.Length; i++)
@@ -316,10 +326,10 @@ namespace ArkhamCombat.Encounter
 
         private int CompareByDistanceToTarget(AgentState a, AgentState b)
         {
-            float distanceA = (a.Agent.Position - targetPosition).sqrMagnitude;
-            float distanceB = (b.Agent.Position - targetPosition).sqrMagnitude;
+            float sqrDistanceA = (a.Agent.Position - targetPosition).sqrMagnitude;
+            float sqrDistanceB = (b.Agent.Position - targetPosition).sqrMagnitude;
 
-            return distanceA.CompareTo(distanceB);
+            return sqrDistanceA.CompareTo(sqrDistanceB);
         }
 
         private int NearestFreeSlot(Vector3 position)

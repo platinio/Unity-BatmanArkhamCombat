@@ -19,7 +19,7 @@ namespace ArkhamCombat.Encounter
         {
             base.Definition();
 
-            Output = ValueOutput<bool>(nameof(Output), () => IsInAnEncounter && EncounterAgent.HasToken);
+            Output = ValueOutput<bool>(nameof(Output), () => HasEncounterAgent && EncounterAgent.HasToken);
         }
     }
 }

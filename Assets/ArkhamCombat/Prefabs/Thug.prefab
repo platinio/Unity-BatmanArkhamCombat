@@ -245,7 +245,6 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 87c6c2a8c71b1ba4ebf9ea9700aa7047, type: 3}
   m_Name: 
   m_EditorClassIdentifier: ArkhamCombat.Encounter::ArkhamCombat.Encounter.EncounterAgent
-  tokenType: 0
 --- !u!114 &1843358124852920154
 MonoBehaviour:
   m_ObjectHideFlags: 0

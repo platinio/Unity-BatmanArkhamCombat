@@ -17,7 +17,7 @@ namespace ArkhamCombat.Enemies
         [Inject]
         internal void Construct([InjectOptional] EnemyArchetype archetype) => this.archetype = archetype;
 
-        private void Awake()
+        internal void Awake()
         {
             WriteTunables();
             ApplyMoveSpeed();

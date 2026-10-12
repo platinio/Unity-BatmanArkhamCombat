@@ -84,7 +84,16 @@ namespace ArkhamCombat.Tests
         }
 
         [Test]
-        public void InASceneWithNoEncounter_ItHasNoTarget_AndIsNotInCombatRange()
+        public void TheFactsExist_BeforeTheFirstTick()
+        {
+            Assert.IsTrue(facts.IsDefined(EnemyVariableNames.HasTarget));
+            Assert.IsTrue(facts.IsDefined(EnemyVariableNames.TargetDistance));
+            Assert.IsTrue(facts.IsDefined(EnemyVariableNames.InCombatRange));
+            Assert.IsTrue(facts.IsDefined(EnemyVariableNames.HasToken));
+        }
+
+        [Test]
+        public void InASceneWithNoEncounter_EveryFactSaysThereIsNoFight()
         {
             LogAssert.Expect(LogType.Warning, new Regex("found no encounter director"));
             agent.Construct(null);
@@ -92,20 +101,30 @@ namespace ArkhamCombat.Tests
 
             Tick();
 
-            Assert.IsFalse(Fact(EnemyVariableNames.HasTarget));
-            Assert.IsFalse(Fact(EnemyVariableNames.InCombatRange));
+            AssertEveryFactSaysThereIsNoFight();
         }
 
         [Test]
-        public void OnceItHasLeftTheEncounter_ItHasNoTarget()
+        public void OnceItHasLeftTheEncounter_EveryFactSaysThereIsNoFight()
         {
             JoinTheEncounter();
+            StandThisFarFromTheTarget(CombatRange - 0.5f);
+            agent.TryAcquireToken();
             Tick();
+            Assert.IsTrue(Fact(EnemyVariableNames.InCombatRange) && Fact(EnemyVariableNames.HasToken), "sanity: in range and holding the token before it leaves");
 
             agent.OnDisable();
             Tick();
 
+            AssertEveryFactSaysThereIsNoFight();
+        }
+
+        private void AssertEveryFactSaysThereIsNoFight()
+        {
             Assert.IsFalse(Fact(EnemyVariableNames.HasTarget));
+            Assert.IsFalse(Fact(EnemyVariableNames.InCombatRange));
+            Assert.IsFalse(Fact(EnemyVariableNames.HasToken));
+            Assert.IsTrue(float.IsPositiveInfinity((float)facts.Get(EnemyVariableNames.TargetDistance)), "no target is infinitely far, never zero metres away");
         }
 
         [Test]
@@ -147,7 +166,7 @@ namespace ArkhamCombat.Tests
         {
             updater.Construct(null);
             JoinTheEncounter();
-            StandThisFarFromTheTarget(0.5f);
+            StandThisFarFromTheTarget(0f);
 
             Tick();
 

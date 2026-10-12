@@ -1,0 +1,36 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 6aefa9c7ad4a4d3a9fb7ae5666f9b0b2, type: 3}
+  m_Name: HoldSlot
+  m_EditorClassIdentifier: ArcaneOnyx.BehaviorTree::ArcaneOnyx.BehaviorTree.BehaviorTreeGraphAsset
+  _data:
+    _json: '{"declarations":{"Kind":"Graph","collection":{"$content":[],"$version":"A"},"$version":"A"},"requiredDeclarations":{"Kind":"Graph","collection":{"$content":[],"$version":"A"},"$version":"A"},"optionalDeclarations":{"Kind":"Graph","collection":{"$content":[],"$version":"A"},"$version":"A"},"graph":{"controlInputDefinitions":[],"controlOutputDefinitions":[],"valueInputDefinitions":[],"valueOutputDefinitions":[],"entryNode":{"relations":{"$content":[],"$type":"Unity.VisualScripting.ConnectionCollection`3[[ArcaneOnyx.BehaviorTree.IPortRelation,
+      ArcaneOnyx.BehaviorTree, Version=0.0.0.0, Culture=neutral, PublicKeyToken=null],[ArcaneOnyx.BehaviorTree.IPort,
+      ArcaneOnyx.BehaviorTree, Version=0.0.0.0, Culture=neutral, PublicKeyToken=null],[ArcaneOnyx.BehaviorTree.IPort,
+      ArcaneOnyx.BehaviorTree, Version=0.0.0.0, Culture=neutral, PublicKeyToken=null]]"},"position":{"x":0.0,"y":0.0},"defaultValues":{},"LastExecutionStatus":"None","runtimeException":null,"positionRect":{"xMin":-96.0,"yMin":-15.0,"xMax":54.0,"yMax":85.0},"guid":"355b953f-42cc-411e-a20d-1ec1f7b37be0","$id":"12"},"title":null,"summary":null,"pan":{"x":0.0,"y":0.0},"zoom":1.0,"elements":[{"PlaceHolderNodes":null,"source":{"$ref":"12"},"destination":{"relations":{"$content":[],"$type":"Unity.VisualScripting.ConnectionCollection`3[[ArcaneOnyx.BehaviorTree.IPortRelation,
+      ArcaneOnyx.BehaviorTree, Version=0.0.0.0, Culture=neutral, PublicKeyToken=null],[ArcaneOnyx.BehaviorTree.IPort,
+      ArcaneOnyx.BehaviorTree, Version=0.0.0.0, Culture=neutral, PublicKeyToken=null],[ArcaneOnyx.BehaviorTree.IPort,
+      ArcaneOnyx.BehaviorTree, Version=0.0.0.0, Culture=neutral, PublicKeyToken=null]]"},"position":{"x":0.0,"y":0.0},"defaultValues":{},"LastExecutionStatus":"None","runtimeException":null,"positionRect":{"xMin":0.0,"yMin":160.0,"xMax":150.0,"yMax":260.0},"guid":"b987f6f9-71b3-4c3c-bf36-e0d20e2dc435","$type":"ArcaneOnyx.BehaviorTree.Sequence","$id":"17"},"Position":{"xMin":0.0,"yMin":0.0,"xMax":0.0,"yMax":0.0},"transitionIndex":0,"guid":"e1bb007f-8caf-47b6-9dd0-ac25c5837929","$type":"ArcaneOnyx.BehaviorTree.BehaviorTreeTransition"},{"PlaceHolderNodes":null,"source":{"$ref":"17"},"destination":{"ClearCurrentPath":false,"WaitForPathComplete":false,"relations":{"$content":[],"$type":"Unity.VisualScripting.ConnectionCollection`3[[ArcaneOnyx.BehaviorTree.IPortRelation,
+      ArcaneOnyx.BehaviorTree, Version=0.0.0.0, Culture=neutral, PublicKeyToken=null],[ArcaneOnyx.BehaviorTree.IPort,
+      ArcaneOnyx.BehaviorTree, Version=0.0.0.0, Culture=neutral, PublicKeyToken=null],[ArcaneOnyx.BehaviorTree.IPort,
+      ArcaneOnyx.BehaviorTree, Version=0.0.0.0, Culture=neutral, PublicKeyToken=null]]"},"position":{"x":0.0,"y":0.0},"defaultValues":{"NavPosition":{"x":0.0,"y":0.0,"z":0.0,"$type":"UnityEngine.Vector3"}},"LastExecutionStatus":"None","runtimeException":null,"positionRect":{"xMin":-260.0,"yMin":340.0,"xMax":-110.0,"yMax":440.0},"guid":"c0c337d1-b714-4827-96c0-d48ca98ef910","$type":"ArcaneOnyx.BehaviorTree.SetNavAgentPosition","$id":"21"},"Position":{"xMin":0.0,"yMin":0.0,"xMax":0.0,"yMax":0.0},"transitionIndex":0,"guid":"1d89e82a-1d71-4b29-b489-48fdc5298a35","$type":"ArcaneOnyx.BehaviorTree.BehaviorTreeTransition"},{"PlaceHolderNodes":null,"source":{"$ref":"17"},"destination":{"behaviorTreeGraphAsset":0,"parameters":[{"Name":"turnSpeed","Type":"System.Single","Optional":true,"DefaultValue":{"$content":540.0,"$type":"System.Single"}}],"relations":{"$content":[],"$type":"Unity.VisualScripting.ConnectionCollection`3[[ArcaneOnyx.BehaviorTree.IPortRelation,
+      ArcaneOnyx.BehaviorTree, Version=0.0.0.0, Culture=neutral, PublicKeyToken=null],[ArcaneOnyx.BehaviorTree.IPort,
+      ArcaneOnyx.BehaviorTree, Version=0.0.0.0, Culture=neutral, PublicKeyToken=null],[ArcaneOnyx.BehaviorTree.IPort,
+      ArcaneOnyx.BehaviorTree, Version=0.0.0.0, Culture=neutral, PublicKeyToken=null]]"},"position":{"x":0.0,"y":0.0},"defaultValues":{"turnSpeed":{"$content":540.0,"$type":"System.Single"}},"LastExecutionStatus":"None","runtimeException":null,"positionRect":{"xMin":260.0,"yMin":340.0,"xMax":410.0,"yMax":440.0},"guid":"05a670ef-648b-43a1-bc5d-1bd71942c900","$type":"ArcaneOnyx.BehaviorTree.RunBehaviorTreeGraphNode","$id":"25"},"Position":{"xMin":0.0,"yMin":0.0,"xMax":0.0,"yMax":0.0},"transitionIndex":1,"guid":"8b930267-2ea7-44e6-a526-719e27a7a0fc","$type":"ArcaneOnyx.BehaviorTree.BehaviorTreeTransition"},{"position":{"xMin":-420.0,"yMin":-160.0,"xMax":0.0,"yMax":-30.0},"title":"Holding
+      the ring","body":"Sends the agent to the slot the encounter director gave it
+      and keeps it facing the target. It succeeds as soon as it faces, so the root
+      asks again every loop and the slot follows the target.","colorTheme":"Classic","guid":"bca7515e-918d-45ec-9399-e6c7f11ce468","$type":"ArcaneOnyx.GraphCore.StickyNote"},{"$ref":"12"},{"$ref":"17"},{"$ref":"21"},{"relations":{"$content":[],"$type":"Unity.VisualScripting.ConnectionCollection`3[[ArcaneOnyx.BehaviorTree.IPortRelation,
+      ArcaneOnyx.BehaviorTree, Version=0.0.0.0, Culture=neutral, PublicKeyToken=null],[ArcaneOnyx.BehaviorTree.IPort,
+      ArcaneOnyx.BehaviorTree, Version=0.0.0.0, Culture=neutral, PublicKeyToken=null],[ArcaneOnyx.BehaviorTree.IPort,
+      ArcaneOnyx.BehaviorTree, Version=0.0.0.0, Culture=neutral, PublicKeyToken=null]]"},"position":{"x":0.0,"y":0.0},"defaultValues":{},"LastExecutionStatus":"None","runtimeException":null,"positionRect":{"xMin":-260.0,"yMin":520.0,"xMax":-110.0,"yMax":620.0},"guid":"218190bb-fc29-4bf3-98cb-75a71efa6ee3","$type":"ArkhamCombat.Encounter.GetSlotPosition","$id":"31"},{"$ref":"25"},{"sourceUnit":{"$ref":"31"},"sourceKey":"Output","destinationUnit":{"$ref":"21"},"destinationKey":"NavPosition","guid":"809ddbb7-2f5f-437a-9525-418479140cd9","$type":"ArcaneOnyx.BehaviorTree.PortValueConnection"}],"$version":"A"}}'
+    _objectReferences:
+    - {fileID: 11400000, guid: 5c903a341d3365e4ca45c44c945caa2f, type: 2}

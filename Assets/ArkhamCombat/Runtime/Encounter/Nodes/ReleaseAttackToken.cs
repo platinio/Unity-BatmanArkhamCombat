@@ -11,7 +11,7 @@ namespace ArkhamCombat.Encounter
 
         public override void OnEnter()
         {
-            if (IsInAnEncounter)
+            if (HasEncounterAgent)
             {
                 EncounterAgent.ReleaseToken();
             }

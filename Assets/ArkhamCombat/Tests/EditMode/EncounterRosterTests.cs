@@ -1,18 +1,13 @@
 using System.Collections.Generic;
 using ArkhamCombat.Encounter;
 using NUnit.Framework;
-using UnityEngine;
+using static ArkhamCombat.Tests.CombatTestDoubles;
 
 namespace ArkhamCombat.Tests
 {
     public class EncounterRosterTests
     {
         private const float MaxTokenHoldSeconds = 3f;
-
-        private sealed class StandingAgent : IEncounterAgent
-        {
-            public Vector3 Position => Vector3.zero;
-        }
 
         private EncounterDirector director;
         private StandingAgent first;

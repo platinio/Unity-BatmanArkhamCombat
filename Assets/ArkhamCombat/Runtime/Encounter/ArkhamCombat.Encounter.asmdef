@@ -4,6 +4,7 @@
     "references": [
         "ArcaneOnyx.BehaviorTree",
         "ArcaneOnyx.GraphCore",
+        "ArcaneOnyx.MGizmos",
         "ArcaneOnyx.UnityExtensions.Runtime",
         "Unity.VisualScripting.Core",
         "Zenject"

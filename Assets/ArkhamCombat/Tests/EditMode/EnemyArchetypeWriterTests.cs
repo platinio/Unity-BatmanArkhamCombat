@@ -74,11 +74,25 @@ namespace ArkhamCombat.Tests
         }
 
         [Test]
-        public void AnEnemyThatDoesNotWalk_TakesItsArchetypeAllTheSame()
+        public void WakingUp_WritesTheTunables_AndSetsTheWalkingSpeed()
+        {
+            NavMeshAgent navMeshAgent = enemy.AddComponent<NavMeshAgent>();
+            writer.Construct(archetype);
+
+            writer.Awake();
+
+            Assert.AreEqual(CombatRange, (float)facts.Get(EnemyVariableNames.CombatRange), Tolerance);
+            Assert.AreEqual(MoveSpeed, navMeshAgent.speed, Tolerance);
+        }
+
+        [Test]
+        public void AnEnemyThatDoesNotWalk_StillGetsItsTunables()
         {
             writer.Construct(archetype);
 
-            Assert.DoesNotThrow(() => writer.ApplyMoveSpeed());
+            writer.Awake();
+
+            Assert.AreEqual(IdleMin, (float)facts.Get(EnemyVariableNames.IdleMin), Tolerance);
         }
 
         [Test]
