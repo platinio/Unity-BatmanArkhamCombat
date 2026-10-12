@@ -5,7 +5,6 @@ using static ArkhamCombat.Tests.CombatTestDoubles;
 
 namespace ArkhamCombat.Tests
 {
-    // The target stands at the origin and looks north, so north of it is in front.
     public class EncounterTokenGrantTests
     {
         private const float GrantGraceSeconds = 0.5f;
@@ -13,10 +12,12 @@ namespace ArkhamCombat.Tests
         private const float FairnessHorizonSeconds = 6f;
         private const float SlotRadius = 4f;
         private const float NoTime = 0f;
+        private const float ALongTime = 60f;
 
         private static readonly Vector3 North = Vector3.forward;
         private static readonly Vector3 East = Vector3.right;
         private static readonly Vector3 South = Vector3.back;
+        private static readonly Vector3 WhereTheTargetLooks = North;
 
         private static EncounterDirector Director(
             int maxMeleeTokens = 1,
@@ -31,7 +32,7 @@ namespace ArkhamCombat.Tests
                 fairnessWeight: fairnessWeight,
                 fairnessHorizonSeconds: FairnessHorizonSeconds,
                 grantGraceSeconds: grantGraceSeconds));
-            director.SetTarget(Vector3.zero, North);
+            director.SetTarget(Vector3.zero, WhereTheTargetLooks);
             return director;
         }
 
@@ -134,6 +135,7 @@ namespace ArkhamCombat.Tests
             EncounterDirector director = Director(fairnessWeight: 2f);
             StandingAgent inFront = Join(director, North);
             StandingAgent behind = Join(director, South);
+            director.Tick(FairnessHorizonSeconds);
             TakeAToken(director, inFront);
             director.Tick(FairnessHorizonSeconds);
             director.ReleaseToken(inFront);
@@ -196,6 +198,38 @@ namespace ArkhamCombat.Tests
         }
 
         [Test]
+        public void ALaterGrant_IsTakenBackToo_WhenTheAgentDoesNotComeBackForIt()
+        {
+            EncounterDirector director = Director();
+            StandingAgent agent = Join(director, North);
+            TakeAToken(director, agent);
+            director.ReleaseToken(agent);
+            director.Tick(ReacquireCooldownSeconds);
+            director.TryAcquireToken(agent);
+            director.Tick(NoTime);
+            Assert.IsTrue(director.HasToken(agent), "sanity: it was granted a second turn");
+
+            director.Tick(GrantGraceSeconds);
+
+            Assert.IsFalse(director.HasToken(agent));
+        }
+
+        [Test]
+        public void AGrantTakenBackForNotComingBack_CountsAsTheAgentsTurn()
+        {
+            EncounterDirector director = Director();
+            StandingAgent agent = Join(director, North);
+            director.TryAcquireToken(agent);
+            director.Tick(NoTime);
+            director.Tick(GrantGraceSeconds);
+
+            director.TryAcquireToken(agent);
+            director.Tick(NoTime);
+
+            Assert.IsFalse(director.HasToken(agent), "it cools down like any agent that gave its token back");
+        }
+
+        [Test]
         public void AGrantTheAgentCameBackFor_IsKeptPastTheGraceTime()
         {
             EncounterDirector director = Director();
@@ -215,7 +249,7 @@ namespace ArkhamCombat.Tests
             director.TryAcquireToken(agent);
             director.Tick(NoTime);
 
-            director.Tick(60f);
+            director.Tick(ALongTime);
 
             Assert.IsTrue(director.HasToken(agent));
         }

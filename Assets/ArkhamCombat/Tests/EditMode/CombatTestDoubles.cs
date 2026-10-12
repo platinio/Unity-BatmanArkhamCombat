@@ -51,13 +51,21 @@ namespace ArkhamCombat.Tests
             public StandingAgent(Vector3 position) => Position = position;
         }
 
-        // The whole exchange a tree has with the director: it asks, the ask is answered when the
-        // director's tick ends, and it comes back for the token. No time passes in that tick.
+        private const float NoTime = 0f;
+
         public static bool TakeAToken(EncounterDirector director, IEncounterAgent agent)
         {
             director.TryAcquireToken(agent);
-            director.Tick(0f);
+            director.Tick(NoTime);
             return director.HasToken(agent) && director.TryAcquireToken(agent);
+        }
+
+        // Through the component, the way a tree's node asks, so its forwarding is under test too.
+        public static bool TakeAToken(EncounterDirector director, EncounterAgent agent)
+        {
+            agent.TryAcquireToken();
+            director.Tick(NoTime);
+            return agent.HasToken && agent.TryAcquireToken();
         }
 
         public static AttackDefinition Attack(

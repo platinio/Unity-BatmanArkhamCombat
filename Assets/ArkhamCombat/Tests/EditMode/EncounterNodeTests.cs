@@ -9,6 +9,8 @@ namespace ArkhamCombat.Tests
 {
     public class EncounterNodeTests
     {
+        private const float NoTime = 0f;
+
         private const float AnyTick = 0.1f;
 
         private EncounterDirector director;
@@ -75,7 +77,7 @@ namespace ArkhamCombat.Tests
         public void TryAcquireAttackToken_Succeeds_OnceTheDirectorGrantedTheTurnItAskedFor()
         {
             TreeOfOne(thug, out TryAcquireAttackToken _).OnUpdate();
-            director.Tick(0f);
+            director.Tick(NoTime);
             BehaviorTreeGraph graphAskingAgain = TreeOfOne(thug, out TryAcquireAttackToken _);
 
             Assert.AreEqual(ExecutionStatus.Success, graphAskingAgain.OnUpdate());
@@ -86,10 +88,12 @@ namespace ArkhamCombat.Tests
         public void TryAcquireAttackToken_Fails_WhileAnotherAgentHasTheTurn()
         {
             EncounterAgent attacker = AgentInTheEncounter(otherThug);
-            TakeAToken(director, attacker);
-            BehaviorTreeGraph graph = TreeOfOne(thug, out TryAcquireAttackToken _);
+            Assert.IsTrue(TakeAToken(director, attacker), "sanity: the other agent has the turn");
+            TreeOfOne(thug, out TryAcquireAttackToken _).OnUpdate();
+            director.Tick(NoTime);
+            BehaviorTreeGraph graphAskingAgain = TreeOfOne(thug, out TryAcquireAttackToken _);
 
-            Assert.AreEqual(ExecutionStatus.Failure, graph.OnUpdate());
+            Assert.AreEqual(ExecutionStatus.Failure, graphAskingAgain.OnUpdate());
             Assert.IsFalse(agent.HasToken);
         }
 

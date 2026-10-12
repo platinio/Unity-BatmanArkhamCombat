@@ -60,7 +60,7 @@ namespace ArkhamCombat.Tests
         [Test]
         public void WhileItHoldsAToken_TheOthersSteerAroundIt()
         {
-            TakeAToken(director, agent);
+            Assert.IsTrue(TakeAToken(director, agent), "sanity: it was granted the token");
 
             Assert.AreEqual(AttackerPriority, navMeshAgent.avoidancePriority);
         }
@@ -68,7 +68,7 @@ namespace ArkhamCombat.Tests
         [Test]
         public void WhenItGivesTheTokenBack_ItsPriorityIsTheDefaultAgain()
         {
-            TakeAToken(director, agent);
+            Assert.IsTrue(TakeAToken(director, agent), "sanity: it was granted the token");
 
             agent.ReleaseToken();
 
@@ -78,7 +78,7 @@ namespace ArkhamCombat.Tests
         [Test]
         public void WhenTheDirectorTakesTheTokenBack_ItsPriorityIsTheDefaultAgain()
         {
-            TakeAToken(director, agent);
+            Assert.IsTrue(TakeAToken(director, agent), "sanity: it was granted the token");
 
             director.Tick(MaxTokenHoldSeconds);
 
@@ -95,7 +95,7 @@ namespace ArkhamCombat.Tests
 
             try
             {
-                TakeAToken(director, otherAgent);
+                Assert.IsTrue(TakeAToken(director, otherAgent), "sanity: it was granted the token");
 
                 Assert.AreEqual(DefaultPriority, navMeshAgent.avoidancePriority);
             }
@@ -109,7 +109,7 @@ namespace ArkhamCombat.Tests
         public void EnabledWhileItsAgentAlreadyHoldsAToken_ItTakesTheLane()
         {
             lane.OnDisable();
-            TakeAToken(director, agent);
+            Assert.IsTrue(TakeAToken(director, agent), "sanity: it was granted the token");
 
             lane.OnEnable();
 
@@ -119,7 +119,7 @@ namespace ArkhamCombat.Tests
         [Test]
         public void DisabledWhileItsAgentHoldsAToken_ItGivesTheLaneBack()
         {
-            TakeAToken(director, agent);
+            Assert.IsTrue(TakeAToken(director, agent), "sanity: it was granted the token");
 
             lane.OnDisable();
 
@@ -131,7 +131,7 @@ namespace ArkhamCombat.Tests
         {
             lane.OnDisable();
 
-            TakeAToken(director, agent);
+            Assert.IsTrue(TakeAToken(director, agent), "sanity: it was granted the token");
 
             Assert.AreEqual(DefaultPriority, navMeshAgent.avoidancePriority);
         }

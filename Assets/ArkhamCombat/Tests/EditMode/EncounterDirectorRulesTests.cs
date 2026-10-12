@@ -43,7 +43,13 @@ namespace ArkhamCombat.Tests
         private static EncounterDirector Director(int maxMeleeTokens = 1, int maxRangedTokens = 1, float maxTokenHoldSeconds = MaxTokenHoldSeconds, ISlotValidator slotValidator = null) =>
             new EncounterDirector(
                 new EncounterDirectorSettings(
-                    maxMeleeTokens, maxRangedTokens, maxTokenHoldSeconds, ReacquireCooldownSeconds, SlotCount, SlotRadius, ReassignIntervalSeconds),
+                    maxMeleeTokens: maxMeleeTokens,
+                    maxRangedTokens: maxRangedTokens,
+                    maxTokenHoldSeconds: maxTokenHoldSeconds,
+                    reacquireCooldownSeconds: ReacquireCooldownSeconds,
+                    slotCount: SlotCount,
+                    slotRadius: SlotRadius,
+                    slotReassignIntervalSeconds: ReassignIntervalSeconds),
                 slotValidator);
 
         private static StandingAgent Join(EncounterDirector director, Vector3 position, AttackTokenType tokenType = AttackTokenType.Melee)

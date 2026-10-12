@@ -61,6 +61,16 @@ namespace ArkhamCombat.Tests
         }
 
         [Test]
+        public void TheEncountersFront_IsWhereTheMovementFrameLooks()
+        {
+            container.Bind<ArcaneOnyx.TPCharacterController.Movement.IMovementFrame>()
+                .FromInstance(new ArcaneOnyx.TPCharacterController.Movement.WorldMovementFrame());
+            InstallBoth();
+
+            Assert.IsInstanceOf<MovementFrameTargetForward>(container.Resolve<ITargetForwardSource>());
+        }
+
+        [Test]
         public void ThePlayerStrikesWhoeverIsInTheEncounter()
         {
             InstallBoth();
