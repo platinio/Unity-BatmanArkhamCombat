@@ -15,30 +15,30 @@ MonoBehaviour:
   locomotion: {fileID: 9100000, guid: d4d69c4152b9ac3499b2d89ae5aec5ec, type: 2}
   entries:
   - action: {fileID: 11400000, guid: 57c02750bb6bdf74d8a2f615033df455, type: 2}
-    clip: {fileID: 7400000, guid: 3015bd3b186f70a4c96655894f6a7998, type: 3}
+    clip: {fileID: 7400000, guid: 5aac49f5a103c764fb1dbed526aa67bd, type: 3}
     start: 0
-    end: 1
+    end: 0.8
     blendInSeconds: 0.08
     blendOutSeconds: 0.12
     keepsItsLastPose: 0
   - action: {fileID: 11400000, guid: 86332dfe60f01de49865387f9779acd5, type: 2}
-    clip: {fileID: 7400000, guid: 1fd3e6e39ce32924da99676da94b97f4, type: 3}
+    clip: {fileID: 7400000, guid: 5aac49f5a103c764fb1dbed526aa67bd, type: 3}
     start: 0
-    end: 1
+    end: 0.8
     blendInSeconds: 0.08
     blendOutSeconds: 0.12
     keepsItsLastPose: 0
   - action: {fileID: 11400000, guid: 5913c62127663b34ab776301bee1c4c5, type: 2}
-    clip: {fileID: 7400000, guid: b82516cfc2b28cc4fb5d8a050d208124, type: 3}
+    clip: {fileID: 7400000, guid: ccf68dc8d24676143a374ac03a84e3e4, type: 3}
     start: 0
-    end: 1
+    end: 0.8
     blendInSeconds: 0.08
     blendOutSeconds: 0.12
     keepsItsLastPose: 0
   - action: {fileID: 11400000, guid: 7dacb37d8f457a14899983f70b227388, type: 2}
-    clip: {fileID: 7400000, guid: ae5da67e25cd89f469bcced4b939a95e, type: 3}
+    clip: {fileID: 7400000, guid: 2f2f6ff3739633e4f93a3dc5e001c0e7, type: 3}
     start: 0
-    end: 1
+    end: 0.6
     blendInSeconds: 0.08
     blendOutSeconds: 0.12
     keepsItsLastPose: 0

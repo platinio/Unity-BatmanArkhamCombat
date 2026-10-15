@@ -12,7 +12,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: e26aa5865e262ac43b6c78b7660354b3, type: 3}
   m_Name: RoundhouseKick
   m_EditorClassIdentifier: ArkhamCombat.Combat::ArkhamCombat.Combat.AttackDefinition
-  duration: 0.8
+  duration: 0.54
   cues:
   - firesAt: 0
     kind:
@@ -105,24 +105,32 @@ MonoBehaviour:
       m_RotationOrder: 4
     colour: {r: 1, g: 1, b: 1, a: 1}
   tags: []
+  invulnerableWindow:
+    start: 0
+    end: 0
   hitWindow:
     start: 0.4
-    end: 0.6
+    end: 0.55
   comboWindow:
-    start: 0.6
+    start: 0.55
     end: 0.95
   evadeWindow:
     start: 0
-    end: 0.35
+    end: 0.4
   warpWindow:
     start: 0
-    end: 0.35
+    end: 0.4
+  telegraphWindow:
+    start: 0
+    end: 0
   strikeDistance: 1.4
   maxLunge: 4.5
   damage: 10
   reaction: 2
   isCounterable: 1
   isUnblockable: 0
+  isAimedAtTheAttacker: 0
+  pairedReaction: {fileID: 0}
   references:
     version: 2
     RefIds:

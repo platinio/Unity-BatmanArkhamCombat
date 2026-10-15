@@ -542,8 +542,11 @@ models and clips until they are imported. To play it:
    nothing in it can loop a clip whose import does not.
 3. Open `Assets/CombatDemo.unity` and press Play. The presses are the arena's.
 
-Nothing about the fight changes: the runner's clock is still the one truth, and each clip is stretched to its
-action's duration, so hit windows, warps, counters and the trees run exactly as on the capsules. The thugs run
+The runner's clock is still the one truth, and each clip is stretched to its action's duration, so hit windows,
+warps, counters and the trees run the same on the capsules and on the characters. The player's three-step chain is
+the one place the fight was tuned to the art rather than the other way round: `Jab_L` and `Jab_R`, `Cross` and
+`RoundhouseKick` play the three parts of Frank's `Combo02` at the clips' own pace, with each hit window opening on
+the clip's contact frame, so the same timings hold on the capsules. The thugs run
 the same roots and sub-trees, through the same Play Action and Set Nav Agent Speed nodes; what the bodies add is
 that the trees become legible: a prowling Guard sidesteps on the sideways walk because the locomotion is
 two-dimensional (`MoveRight`, `MoveForward`, the velocity in the model's own frame), Set Nav Agent Speed reads
@@ -559,10 +562,17 @@ body materials under `Materials/Characters` (`Thug_Guard_Body_01` and so on); th
 brighter tint overridden on its instance, as in the arena), the two clips assets and `Characters/Frank.Locomotion.controller`,
 one freeform 2D blend tree over Frank's fighting idle and his eight-way walk and run that both characters share.
 The clips report no root speed, so the walk sits at 1.6 m/s and the run at 4 m/s by hand; tune them in the
-Animator window. The clips are whole for now: trim an entry's `start` and `end` on the clips asset until a clip's
-contact lines up with its action's hit window, with the overlay's clip line (action, seconds into the clip, weight)
-to read it by. Knockdown and Death hold their last frame, so a downed character stays down until the get-up or
-for good. Every Frank clip sub-asset is named `Take 001`, which is why the overlay names the action rather than the clip.
+Animator window. An entry's `start` and `end` on the clips asset trim the clip to the part the action plays, with the overlay's
+clip line (action, seconds into the clip, weight) to read it by; the chain's three clips are trimmed, every other
+clip is whole.
+
+| Step | Actions | Clip, part used | Duration | Hit window | What the clip does there |
+|---|---|---|---|---|---|
+| S1 | `Jab_L`, `Jab_R` | `Combo02_1_IP`, 0 to 0.8 | 0.70 s | 0.33 to 0.50 | the first of two slashes; the second lands in the combo window |
+| S2 | `Cross` | `Combo02_2_IP`, 0 to 0.8 | 0.80 s | 0.30 to 0.55 | the second and third swings of a crouching flurry |
+| S3 | `RoundhouseKick` | `Combo02_3_IP`, 0 to 0.6 | 0.54 s | 0.40 to 0.55 | one wide slash, cut before the body turns away |
+
+Knockdown and Death hold their last frame, so a downed character stays down until the get-up or for good. Every Frank clip sub-asset is named `Take 001`, which is why the overlay names the action rather than the clip.
 
 ## Tests
 
