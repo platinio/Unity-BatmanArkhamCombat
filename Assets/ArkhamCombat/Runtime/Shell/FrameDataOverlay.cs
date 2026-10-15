@@ -92,11 +92,10 @@ namespace ArkhamCombat.Shell
             DrawRecordsNewestFirst(origin.x, y);
         }
 
-        // Only a driver with something to say takes a line: the capsule's never does.
         private float DrawTheDriversLine(float y)
         {
-            string driversLine = runner.Driver.FrameDataLine;
-            if (driversLine.Length == 0)
+            string driversLine = runner.PresentationFrameDataLine;
+            if (string.IsNullOrEmpty(driversLine))
             {
                 return y;
             }

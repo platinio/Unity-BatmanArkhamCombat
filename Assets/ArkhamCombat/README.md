@@ -179,10 +179,10 @@ The ordered list of per-frame jobs is the controller's too: `CharacterComponent`
 
 | Type | Responsibility |
 |---|---|
-| `IPresentationDriver` | Where the runner reads time: `Play`, `Stop`, `IsPlaying`, `NormalizedTime`, `Speed`, `Tick`. A driver that shows nothing and one on DOTween exist; one on animation clips is designed in spec 10 |
+| `IPresentationDriver` | Where the runner reads time: `Play`, `Stop`, `IsPlaying`, `NormalizedTime`, `Speed`, `Tick` (every frame, playing or not), and `FrameDataLine`, one line for the overlay, empty by default. A driver that shows nothing, one on DOTween for the capsules and one on animation clips for the characters |
 | `ActionClock` | The duration clock with the cue schedule on it. Advances elapsed time by `deltaTime * Speed`, fires each cue once when its time is crossed, fires cues at zero on `Play` so a frozen clock fires nothing. Pure; drivers compose it |
 | `NullPresentationDriver` | The clock alone. Tests and bodies without a picture |
-| `ILocomotionSignal`, `StillLocomotionSignal` | `PlanarVelocity`: how fast and which way the character moves over the ground, from whatever moves it. The player's is its motor, an enemy's its NavMeshAgent, and the still one is bound for an enemy without an agent. A driver that shows locomotion reads it every frame; the capsule's ignores it |
+| `ILocomotionSignal`, `StillLocomotionSignal` | `PlanarVelocity`: how fast and which way the character moves over the ground, in metres per second and world space, from whatever moves it. The player's is its motor, an enemy's its NavMeshAgent, and the still one is bound for an enemy without an agent. A driver that shows locomotion reads it every frame; the capsule's ignores it |
 
 ### Runner (`Runtime/Combat/Runner`)
 

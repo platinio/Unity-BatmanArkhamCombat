@@ -1,9 +1,11 @@
+using System.Text.RegularExpressions;
 using ArkhamCombat.Combat;
 using ArkhamCombat.Presentation;
 using NUnit.Framework;
 using UnityEditor;
 using UnityEditor.Animations;
 using UnityEngine;
+using UnityEngine.TestTools;
 using static ArkhamCombat.Tests.CombatTestDoubles;
 
 namespace ArkhamCombat.Tests
@@ -226,7 +228,7 @@ namespace ArkhamCombat.Tests
         {
             PlaybackWith();
 
-            playback.MoveAt(Vector3.right * 2f);
+            playback.ShowLocomotionAt(Vector3.right * 2f);
 
             Assert.AreEqual(2f, playback.MoveRight, 1e-4f);
             Assert.AreEqual(0f, playback.MoveForward, 1e-4f);
@@ -238,7 +240,7 @@ namespace ArkhamCombat.Tests
             PlaybackWith();
             model.transform.rotation = Quaternion.Euler(0f, 90f, 0f);
 
-            playback.MoveAt(Vector3.right * 2f);
+            playback.ShowLocomotionAt(Vector3.right * 2f);
 
             Assert.AreEqual(0f, playback.MoveRight, 1e-4f, "facing +X, a velocity along +X is straight ahead");
             Assert.AreEqual(2f, playback.MoveForward, 1e-4f);
@@ -250,7 +252,7 @@ namespace ArkhamCombat.Tests
             clips.Configure(locomotion: null, new ClipEntry[0]);
             playback = new ActionClipPlayback(animator, clips);
 
-            Assert.DoesNotThrow(() => playback.MoveAt(Vector3.forward));
+            Assert.DoesNotThrow(() => playback.ShowLocomotionAt(Vector3.forward));
             Assert.AreEqual(0f, playback.MoveForward);
         }
 
@@ -264,17 +266,44 @@ namespace ArkhamCombat.Tests
         }
 
         [Test]
-        public void TheFrameDataLine_SaysWhenAClipIsFadingOut_AndNothingAtRest()
+        public void TheFrameDataLine_IsEmptyAtRest()
+        {
+            PlaybackWith();
+
+            Assert.AreEqual(string.Empty, playback.FrameDataLine);
+        }
+
+        [Test]
+        public void TheFrameDataLine_SaysWhenAClipIsFadingOut()
         {
             PlaybackWith(WholeClipFor(jab, blendOutSeconds: 0.1f)).Show(jab);
-            Assert.AreEqual(string.Empty, PlaybackWith().FrameDataLine, "nothing to say at rest");
 
-            playback = PlaybackWith(WholeClipFor(jab, blendOutSeconds: 0.1f));
-            playback.Show(jab);
             playback.FadeOut();
-            playback.Blend(0.05f);
+            playback.StepTheBlend(0.05f);
 
             Assert.AreEqual("clip fading out  weight 0.50", playback.FrameDataLine);
+        }
+
+        [Test]
+        public void TheFrameDataLine_SaysWhenAnActionIsAHold()
+        {
+            PlaybackWith().Show(jab);
+
+            Assert.AreEqual("hold  weight 0.00", playback.FrameDataLine);
+        }
+
+        [Test]
+        public void ALocomotionControllerWithoutTheTwoFloats_IsReported()
+        {
+            AnimatorController bareController = new AnimatorController { hideFlags = HideFlags.HideAndDontSave };
+            bareController.AddLayer("Locomotion");
+            clips.Configure(bareController, new ClipEntry[0]);
+            LogAssert.Expect(LogType.Error, new Regex("no float parameter 'MoveRight'"));
+            LogAssert.Expect(LogType.Error, new Regex("no float parameter 'MoveForward'"));
+
+            playback = new ActionClipPlayback(animator, clips);
+
+            Object.DestroyImmediate(bareController);
         }
 
         [Test]

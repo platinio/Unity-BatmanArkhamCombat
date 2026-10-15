@@ -23,7 +23,6 @@ namespace ArkhamCombat.Combat
         /// <summary>Every frame, playing or not: a picture that blends back to rest keeps moving between actions.</summary>
         void Tick(float deltaTime);
 
-        /// <summary>One line for the frame-data overlay, empty when the driver has nothing to say.</summary>
         string FrameDataLine => string.Empty;
     }
 }

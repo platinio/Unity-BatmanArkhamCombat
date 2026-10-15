@@ -97,7 +97,7 @@ namespace ArkhamCombat.Combat
         /// </summary>
         public IActionTarget CurrentActionTarget { get; private set; }
 
-        public IPresentationDriver Driver => driver;
+        public string PresentationFrameDataLine => driver.FrameDataLine;
         public bool IsPlaying => isPlaying;
 
         public bool IsStillPlaying(ActionDefinition action) => isPlaying && CurrentAction == action;

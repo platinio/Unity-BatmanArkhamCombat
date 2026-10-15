@@ -76,10 +76,10 @@ namespace ArkhamCombat.Enemies
 
         private void BindLocomotionSignal()
         {
-            bool walks = TryGetComponent(out NavMeshAgent agent);
+            bool hasAnAgent = TryGetComponent(out NavMeshAgent agent);
 
             Container.Bind<ILocomotionSignal>()
-                .FromInstance(walks ? new NavMeshAgentLocomotionSignal(agent) : new StillLocomotionSignal());
+                .FromInstance(hasAnAgent ? new NavMeshAgentLocomotionSignal(agent) : new StillLocomotionSignal());
         }
 
         private void BindWarpAndHits()

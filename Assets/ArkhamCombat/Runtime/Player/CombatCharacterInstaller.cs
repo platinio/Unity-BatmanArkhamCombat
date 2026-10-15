@@ -102,8 +102,7 @@ namespace ArkhamCombat.Player
             Container.Bind<IPresentationDriver>().FromInstance(hasBody ? driverOnTheBody : new NullPresentationDriver());
         }
 
-        private void BindLocomotionSignal() =>
-            Container.Bind<ILocomotionSignal>().FromInstance(new MotorLocomotionSignal(GetComponent<CharacterMotor>()));
+        private void BindLocomotionSignal() => Container.Bind<ILocomotionSignal>().To<MotorLocomotionSignal>().AsSingle();
 
         private void BindWarpAndHits()
         {

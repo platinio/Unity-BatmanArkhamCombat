@@ -121,15 +121,21 @@ namespace ArkhamCombat.Tests
         }
 
         [Test]
-        public void AnEnemyThatWalks_HasItsAgentAsLocomotionSignal_AndOneThatDoesNotStandsStill()
+        public void AnEnemyThatWalks_HasItsAgentAsLocomotionSignal()
         {
-            InstallTheEnemyWithItsArchetype();
-            Assert.IsInstanceOf<StillLocomotionSignal>(enemyContainer.Resolve<ILocomotionSignal>());
-
             enemy.AddComponent<UnityEngine.AI.NavMeshAgent>();
+
             InstallTheEnemyWithItsArchetype();
 
             Assert.IsInstanceOf<NavMeshAgentLocomotionSignal>(enemyContainer.Resolve<ILocomotionSignal>());
+        }
+
+        [Test]
+        public void AnEnemyWithoutAnAgent_StandsStill()
+        {
+            InstallTheEnemyWithItsArchetype();
+
+            Assert.IsInstanceOf<StillLocomotionSignal>(enemyContainer.Resolve<ILocomotionSignal>());
         }
 
         [Test]

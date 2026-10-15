@@ -44,6 +44,19 @@ namespace ArkhamCombat.Tests
         }
 
         [Test]
+        public void TickingAStoppedClock_LeavesItAtZeroAndFiresNothing()
+        {
+            clock.Play(Action("A", 1f, new PresentationCue(0.5f, cue)));
+            clock.Stop();
+
+            clock.Tick(0.6f);
+
+            Assert.IsFalse(clock.IsPlaying);
+            Assert.AreEqual(0f, clock.NormalizedTime);
+            Assert.IsEmpty(firedCueTimes);
+        }
+
+        [Test]
         public void ACueAtZero_FiresOnPlay()
         {
             clock.Play(Action("A", 1f, new PresentationCue(0f, cue)));
