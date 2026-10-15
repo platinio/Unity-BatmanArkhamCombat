@@ -560,10 +560,6 @@ PrefabInstance:
     serializedVersion: 3
     m_TransformParent: {fileID: 2010000001}
     m_Modifications:
-    - target: {fileID: 6419933357967608404, guid: 328218c4228d4984387c73fca4748911, type: 3}
-      propertyPath: m_Name
-      value: Enemy_Thug
-      objectReference: {fileID: 0}
     - target: {fileID: 405707838572916532, guid: 328218c4228d4984387c73fca4748911, type: 3}
       propertyPath: m_LocalPosition.x
       value: 3.5
@@ -603,6 +599,10 @@ PrefabInstance:
     - target: {fileID: 405707838572916532, guid: 328218c4228d4984387c73fca4748911, type: 3}
       propertyPath: m_LocalEulerAnglesHint.z
       value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 6419933357967608404, guid: 328218c4228d4984387c73fca4748911, type: 3}
+      propertyPath: m_Name
+      value: Enemy_Thug
       objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
@@ -1034,14 +1034,6 @@ PrefabInstance:
       propertyPath: 'm_Materials.Array.data[0]'
       value: 
       objectReference: {fileID: 2100000, guid: 9268862216b6986499eb287439586d83, type: 2}
-    - target: {fileID: 5195508866714789546, guid: 328218c4228d4984387c73fca4748911, type: 3}
-      propertyPath: archetype
-      value: 
-      objectReference: {fileID: 1421227786600201058, guid: e6bad4264868d24438e21f8006a89738, type: 2}
-    - target: {fileID: 6419933357967608404, guid: 328218c4228d4984387c73fca4748911, type: 3}
-      propertyPath: m_Name
-      value: Enemy_EliteThug
-      objectReference: {fileID: 0}
     - target: {fileID: 405707838572916532, guid: 328218c4228d4984387c73fca4748911, type: 3}
       propertyPath: m_LocalPosition.x
       value: -4
@@ -1082,10 +1074,14 @@ PrefabInstance:
       propertyPath: m_LocalEulerAnglesHint.z
       value: 0
       objectReference: {fileID: 0}
-    - target: {fileID: 2850416581749221565, guid: 328218c4228d4984387c73fca4748911, type: 3}
-      propertyPath: 'm_Materials.Array.data[0]'
+    - target: {fileID: 5195508866714789546, guid: 328218c4228d4984387c73fca4748911, type: 3}
+      propertyPath: archetype
       value: 
-      objectReference: {fileID: 2100000, guid: 24ee7f9e908a42341b78e56e7d08c53c, type: 2}
+      objectReference: {fileID: 1421227786600201058, guid: e6bad4264868d24438e21f8006a89738, type: 2}
+    - target: {fileID: 6419933357967608404, guid: 328218c4228d4984387c73fca4748911, type: 3}
+      propertyPath: m_Name
+      value: Enemy_EliteThug
+      objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
     m_AddedGameObjects: []
@@ -1328,6 +1324,10 @@ PrefabInstance:
     serializedVersion: 3
     m_TransformParent: {fileID: 2010000001}
     m_Modifications:
+    - target: {fileID: 4024069584258491591, guid: 290d4e4496f5b8e4c8f786abea7f4f19, type: 3}
+      propertyPath: m_Name
+      value: Enemy_Armored
+      objectReference: {fileID: 0}
     - target: {fileID: 7737517903121187239, guid: 290d4e4496f5b8e4c8f786abea7f4f19, type: 3}
       propertyPath: m_LocalPosition.x
       value: -3.5
@@ -1367,10 +1367,6 @@ PrefabInstance:
     - target: {fileID: 7737517903121187239, guid: 290d4e4496f5b8e4c8f786abea7f4f19, type: 3}
       propertyPath: m_LocalEulerAnglesHint.z
       value: 0
-      objectReference: {fileID: 0}
-    - target: {fileID: 4024069584258491591, guid: 290d4e4496f5b8e4c8f786abea7f4f19, type: 3}
-      propertyPath: m_Name
-      value: Enemy_Armored
       objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
@@ -1656,10 +1652,6 @@ PrefabInstance:
     serializedVersion: 3
     m_TransformParent: {fileID: 2010000001}
     m_Modifications:
-    - target: {fileID: 8154170451709764044, guid: dae6c0cb1a8bfb942bd01aaed01eb5bc, type: 3}
-      propertyPath: m_Name
-      value: Enemy_Knife
-      objectReference: {fileID: 0}
     - target: {fileID: 3283155655556875436, guid: dae6c0cb1a8bfb942bd01aaed01eb5bc, type: 3}
       propertyPath: m_LocalPosition.x
       value: 1
@@ -1699,6 +1691,10 @@ PrefabInstance:
     - target: {fileID: 3283155655556875436, guid: dae6c0cb1a8bfb942bd01aaed01eb5bc, type: 3}
       propertyPath: m_LocalEulerAnglesHint.z
       value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 8154170451709764044, guid: dae6c0cb1a8bfb942bd01aaed01eb5bc, type: 3}
+      propertyPath: m_Name
+      value: Enemy_Knife
       objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []

@@ -50,15 +50,23 @@ namespace ArkhamCombat.Tests
 
         private static ActionDefinition ActionAt(string pathUnderActions) => AssetDatabase.LoadAssetAtPath<ActionDefinition>($"{ActionsFolder}/{pathUnderActions}.asset");
 
-        private static IEnumerable<ActionDefinition> ActionsIn(string folder) =>
-            AssetDatabase.FindAssets("t:ActionDefinition", new[] { folder })
-                .Select(AssetDatabase.GUIDToAssetPath)
-                .Where(path => Path.GetDirectoryName(path).Replace(Path.DirectorySeparatorChar, '/') == folder)
-                .Select(AssetDatabase.LoadAssetAtPath<ActionDefinition>);
-
-        private void AssertEachHasAClip(IEnumerable<ActionDefinition> actions)
+        // FindAssets searches the subfolders too, and hands back the folder with the platform's separator.
+        private static IEnumerable<ActionDefinition> ActionsDirectlyInside(string folder)
         {
-            Assert.IsNotEmpty(actions);
+            foreach (string guid in AssetDatabase.FindAssets("t:ActionDefinition", new[] { folder }))
+            {
+                string path = AssetDatabase.GUIDToAssetPath(guid);
+                string folderOfTheAction = Path.GetDirectoryName(path).Replace(Path.DirectorySeparatorChar, '/');
+                if (folderOfTheAction == folder)
+                {
+                    yield return AssetDatabase.LoadAssetAtPath<ActionDefinition>(path);
+                }
+            }
+        }
+
+        private void AssertEachHasAClip(IEnumerable<ActionDefinition> actions, string folder)
+        {
+            Assert.IsNotEmpty(actions, $"no actions directly inside {folder}");
             foreach (ActionDefinition action in actions)
             {
                 Assert.IsTrue(clips.TryFindEntry(action, out _), $"{action.name} would play as a hold");
@@ -104,10 +112,15 @@ namespace ArkhamCombat.Tests
         }
 
         [Test]
-        public void EveryActionOfItsOwn_HasAClip() => AssertEachHasAClip(ActionsIn(ownActionsFolder));
+        public void EveryActionOfItsOwn_HasAClip() => AssertEachHasAClip(ActionsDirectlyInside(ownActionsFolder), ownActionsFolder);
 
         [Test]
-        public void EveryReaction_HasAClip_ExceptTheHold() =>
-            AssertEachHasAClip(ActionsIn($"{ActionsFolder}/Reactions").Where(reaction => reaction.name != TheOneReactionThatIsAHold));
+        public void EveryReaction_HasAClip_ExceptTheHold()
+        {
+            string reactionsFolder = $"{ActionsFolder}/Reactions";
+            IEnumerable<ActionDefinition> reactionsThatPlayAClip = ActionsDirectlyInside(reactionsFolder).Where(reaction => reaction.name != TheOneReactionThatIsAHold);
+
+            AssertEachHasAClip(reactionsThatPlayAClip, reactionsFolder);
+        }
     }
 }
