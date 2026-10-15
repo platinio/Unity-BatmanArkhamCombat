@@ -36,6 +36,8 @@ namespace ArkhamCombat.Presentation
         public float MoveForward => playback != null ? playback.MoveForward : 0f;
         public string FrameDataLine => playback != null ? playback.FrameDataLine : string.Empty;
 
+        internal CharacterClips Clips => clips;
+
         public float Speed
         {
             get => clock.Speed;
