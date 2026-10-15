@@ -88,6 +88,19 @@ MonoBehaviour:
         arguments: []
       priority: 0
       destinationId: S1
+  - id: Stun
+    action: {fileID: 11400000, guid: 57e7fec828f96954e935dc871784cee9, type: 2}
+    pool:
+      attacks: []
+      policy:
+        rid: 3135146639645999347
+    edges:
+    - intentKind: {fileID: 11400000, guid: ba9cd6679aa44c144bb87a8e99f640be, type: 2}
+      condition:
+        function: {fileID: 0}
+        arguments: []
+      priority: 0
+      destinationId: S1
   globalEdges:
   - intentKind: {fileID: 11400000, guid: fd7d3c32ea399d546bb3da590da64df3, type: 2}
     condition:
@@ -101,6 +114,12 @@ MonoBehaviour:
       arguments: []
     priority: 0
     destinationId: Counter
+  - intentKind: {fileID: 11400000, guid: f9caf163a3e751242a74cd88f6f962be, type: 2}
+    condition:
+      function: {fileID: 0}
+      arguments: []
+    priority: 0
+    destinationId: Stun
   chainResetSeconds: 0.6
   references:
     version: 2
@@ -121,5 +140,8 @@ MonoBehaviour:
       type: {class: NoRepeatPolicy, ns: ArkhamCombat.Combat, asm: ArkhamCombat.Combat}
       data: 
     - rid: 3135146639645999339
+      type: {class: NoRepeatPolicy, ns: ArkhamCombat.Combat, asm: ArkhamCombat.Combat}
+      data: 
+    - rid: 3135146639645999347
       type: {class: NoRepeatPolicy, ns: ArkhamCombat.Combat, asm: ArkhamCombat.Combat}
       data: 

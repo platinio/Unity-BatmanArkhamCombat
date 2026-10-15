@@ -6,7 +6,8 @@ namespace ArkhamCombat.Combat
         Flinch,
         Stagger,
         Knockdown,
-        Death
+        Death,
+        Stun
     }
 
     public static class AppliedReactionWeight
@@ -23,12 +24,14 @@ namespace ArkhamCombat.Combat
                     return 0;
                 case AppliedReaction.Flinch:
                     return 1;
-                case AppliedReaction.Stagger:
+                case AppliedReaction.Stun:
                     return 2;
-                case AppliedReaction.Knockdown:
+                case AppliedReaction.Stagger:
                     return 3;
-                case AppliedReaction.Death:
+                case AppliedReaction.Knockdown:
                     return 4;
+                case AppliedReaction.Death:
+                    return 5;
                 default:
                     throw new System.ArgumentOutOfRangeException(nameof(reaction), reaction, "No weight for this reaction.");
             }

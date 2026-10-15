@@ -8,7 +8,8 @@ namespace ArkhamCombat.Combat
     {
         Flinch,
         Stagger,
-        Knockdown
+        Knockdown,
+        Stun
     }
 
     /// <summary>

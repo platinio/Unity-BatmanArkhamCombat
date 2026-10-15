@@ -118,6 +118,18 @@ namespace ArkhamCombat.Tests
         }
 
         [Test]
+        public void TheStunPress_PlaysAnAttackThatAsksForAStun_FromAnywhere()
+        {
+            UnityEngine.Object stunKind = AssetDatabase.LoadAssetAtPath<UnityEngine.Object>("Assets/ArkhamCombat/Intents/Stun.asset");
+            ActionDefinition stun = WhatThePressPlaysFromAnywhere(Ground(), stunKind);
+            List<string> errors = new List<string>();
+
+            Assert.IsInstanceOf<AttackDefinition>(stun);
+            Assert.AreEqual(HitReaction.Stun, ((AttackDefinition)stun).Reaction);
+            Assert.IsTrue(stun.Validate(errors), string.Join("\n", errors));
+        }
+
+        [Test]
         public void ThePlayer_HasAStateToEvadeIn()
         {
             CollectionAssert.Contains(StatesThePlayerCanBeIn(), nameof(EvadingStateBinding));
