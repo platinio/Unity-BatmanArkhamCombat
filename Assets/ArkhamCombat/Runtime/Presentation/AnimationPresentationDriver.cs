@@ -5,11 +5,6 @@ using Zenject;
 
 namespace ArkhamCombat.Presentation
 {
-    /// <summary>
-    /// The runner's clock stays the one truth, as on the capsules: hit windows, warp and hit-stop mean
-    /// the same on a character, and the clip only follows it. Cues that bend a capsule stay silent
-    /// here; colour cues tint every renderer of the model.
-    /// </summary>
     [RequireComponent(typeof(Animator))]
     public sealed class AnimationPresentationDriver : MonoBehaviour, IPresentationDriver, ICueTarget
     {
@@ -37,23 +32,9 @@ namespace ArkhamCombat.Presentation
 
         public float ClipSeconds => playback != null ? playback.ClipSeconds : 0f;
         public float ClipWeight => playback != null ? playback.Weight : 0f;
-
-        public string FrameDataLine
-        {
-            get
-            {
-                if (playback == null)
-                {
-                    return string.Empty;
-                }
-
-                bool isAHold = clock.IsPlaying && !playback.IsShowingAClip;
-                return isAHold ? $"hold  weight {playback.Weight:0.00}" : playback.FrameDataLine;
-            }
-        }
-
-        [Inject]
-        internal void Construct(ILocomotionSignal locomotionSignal) => this.locomotionSignal = locomotionSignal;
+        public float MoveRight => playback != null ? playback.MoveRight : 0f;
+        public float MoveForward => playback != null ? playback.MoveForward : 0f;
+        public string FrameDataLine => playback != null ? playback.FrameDataLine : string.Empty;
 
         public float Speed
         {
@@ -61,33 +42,28 @@ namespace ArkhamCombat.Presentation
             set
             {
                 clock.Speed = value;
-
-                bool isFrozen = value <= 0f;
-                if (isFrozen)
-                {
-                    CueTweens.Freeze(this);
-                }
-                else
-                {
-                    CueTweens.Resume(this);
-                }
+                CueTweens.FollowSpeed(this, value);
             }
         }
 
-        private void Awake()
+        [Inject]
+        internal void Construct(ILocomotionSignal locomotionSignal) => this.locomotionSignal = locomotionSignal;
+
+        internal void Awake()
         {
+            tintedRenderers = GetComponentsInChildren<Renderer>();
+            standingPose = BodyPose.Of(transform);
+            restPose = standingPose;
+            clock.CueDue += PlayCue;
+
             if (clips == null)
             {
-                Debug.LogError($"[{nameof(AnimationPresentationDriver)}] No character clips assigned on '{name}', so every action plays as a hold.", this);
+                Debug.LogError($"[{nameof(AnimationPresentationDriver)}] No character clips assigned on '{name}', so every action plays as a hold with only its colour cues.", this);
                 return;
             }
 
             ReportAuthoringErrors();
             playback = new ActionClipPlayback(GetComponent<Animator>(), clips);
-            tintedRenderers = GetComponentsInChildren<Renderer>();
-            standingPose = BodyPose.Of(transform);
-            restPose = standingPose;
-            clock.CueDue += PlayCue;
         }
 
         private void OnDestroy()
@@ -120,16 +96,16 @@ namespace ArkhamCombat.Presentation
             }
 
             playback.FollowTheClock(clock.NormalizedTime);
-            playback.Blend(deltaTime * clock.Speed);
-            playback.MoveAt(locomotionSignal.PlanarVelocity);
+            playback.StepTheBlend(deltaTime * clock.Speed);
+            playback.ShowLocomotionAt(locomotionSignal.PlanarVelocity);
         }
 
         public void RestAt(BodyPose pose) => restPose = pose;
 
         private void PlayCue(PresentationCue cue)
         {
-            bool playsHere = cue.Kind != null && cue.Kind.CanPlayOnARiggedBody;
-            if (playsHere)
+            bool canPlayHere = cue.Kind != null && cue.Kind.CanPlayOnARiggedBody;
+            if (canPlayHere)
             {
                 cue.Kind.Play(this, cue);
             }

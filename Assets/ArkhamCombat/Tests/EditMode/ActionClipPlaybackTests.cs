@@ -1,13 +1,13 @@
 using ArkhamCombat.Combat;
 using ArkhamCombat.Presentation;
 using NUnit.Framework;
+using UnityEditor;
 using UnityEditor.Animations;
 using UnityEngine;
 using static ArkhamCombat.Tests.CombatTestDoubles;
 
 namespace ArkhamCombat.Tests
 {
-    // The graph is evaluated by hand, so the pose the Animator writes is what the tests read.
     public class ActionClipPlaybackTests
     {
         private const float ClipSeconds = 2f;
@@ -129,10 +129,22 @@ namespace ArkhamCombat.Tests
             PlaybackWith(WholeClipFor(jab, blendInSeconds: 0.1f)).Show(jab);
             Assert.AreEqual(0f, playback.Weight);
 
-            playback.Blend(0.05f);
+            playback.StepTheBlend(0.05f);
             Assert.AreEqual(0.5f, playback.Weight, 1e-4f);
-            playback.Blend(0.05f);
+            playback.StepTheBlend(0.05f);
             Assert.AreEqual(1f, playback.Weight, 1e-4f);
+        }
+
+        [Test]
+        public void HalfWayThroughTheBlend_ThePoseIsHalfWayBetweenLocomotionAndTheClip()
+        {
+            PlaybackWith(WholeClipFor(jab, blendInSeconds: 0.1f)).Show(jab);
+            playback.FollowTheClock(0.5f);
+
+            playback.StepTheBlend(0.05f);
+            EvaluateTheGraphByHand();
+
+            Assert.AreEqual(IdleBoneX * 0.5f + 0.5f * 0.5f, bone.localPosition.x, 1e-3f, "half the blend is half way between locomotion and the clip");
         }
 
         [Test]
@@ -145,10 +157,10 @@ namespace ArkhamCombat.Tests
 
             Assert.IsFalse(playback.IsShowingAClip);
             Assert.AreEqual(1f, playback.Weight, "the fade starts from where the clip was");
-            playback.Blend(0.05f);
+            playback.StepTheBlend(0.05f);
             Assert.AreEqual(0.5f, playback.Weight, 1e-4f);
             Assert.AreEqual(ClipSeconds, playback.ClipSeconds, 1e-4f, "the clip fades out at the pose it stopped in");
-            playback.Blend(0.05f);
+            playback.StepTheBlend(0.05f);
             Assert.AreEqual(0f, playback.Weight, 1e-4f);
             Assert.AreEqual(0f, playback.ClipSeconds, "the faded clip is dropped");
             EvaluateTheGraphByHand();
@@ -176,7 +188,7 @@ namespace ArkhamCombat.Tests
 
             Assert.IsFalse(playback.IsShowingAClip);
             Assert.AreEqual(1f, playback.Weight);
-            playback.Blend(0.1f);
+            playback.StepTheBlend(0.1f);
             Assert.AreEqual(0.5f, playback.Weight, 1e-4f);
         }
 
@@ -184,12 +196,29 @@ namespace ArkhamCombat.Tests
         public void AFollowUp_TakesTheWeightTheOldClipHad()
         {
             PlaybackWith(WholeClipFor(jab, blendInSeconds: 0.1f), WholeClipFor(cross, blendInSeconds: 0.1f)).Show(jab);
-            playback.Blend(0.1f);
+            playback.StepTheBlend(0.1f);
 
+            int playablesBefore = playback.Graph.GetPlayableCount();
             Assert.DoesNotThrow(() => playback.Show(cross));
 
             Assert.AreSame(cross, playback.Entry.Action);
             Assert.AreEqual(1f, playback.Weight, "a follow-up at full weight is a cut, not a dip through locomotion");
+            Assert.AreEqual(playablesBefore, playback.Graph.GetPlayableCount(), "the old clip's playable is gone");
+        }
+
+        [Test]
+        public void ALoopingClip_IsNeverSampledAtItsEnd_WhichWouldBeItsFirstFrame()
+        {
+            AnimationClipSettings settings = AnimationUtility.GetAnimationClipSettings(clip);
+            settings.loopTime = true;
+            AnimationUtility.SetAnimationClipSettings(clip, settings);
+            PlaybackWith(WholeClipFor(jab)).Show(jab);
+
+            playback.FollowTheClock(1f);
+            EvaluateTheGraphByHand();
+
+            Assert.Less(playback.ClipSeconds, ClipSeconds);
+            Assert.AreEqual(1f, bone.localPosition.x, 1e-2f, "the end of the clip, not its start");
         }
 
         [Test]

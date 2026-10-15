@@ -111,6 +111,32 @@ namespace ArkhamCombat.Tests
         }
 
         [Test]
+        public void AFlash_TintsEveryMaterialOfARenderer_EachFromItsOwnRestColour()
+        {
+            Renderer twoMaterials = body.GetComponent<Renderer>();
+            Material skin = new Material(twoMaterials.sharedMaterial) { color = Color.red, hideFlags = HideFlags.HideAndDontSave };
+            Material cloth = new Material(twoMaterials.sharedMaterial) { color = Color.blue, hideFlags = HideFlags.HideAndDontSave };
+            twoMaterials.sharedMaterials = new[] { skin, cloth };
+            TintedCueTarget twoMaterialTarget = new TintedCueTarget(body.transform, twoMaterials);
+            try
+            {
+                new FlashCue().Play(twoMaterialTarget, new PresentationCue(firesAt: 0f, new FlashCue(), 0.3f));
+                DOTween.TweensById(twoMaterialTarget.TweenId)[0].Goto(0f);
+
+                MaterialPropertyBlock clothBlock = new MaterialPropertyBlock();
+                twoMaterials.GetPropertyBlock(clothBlock, 1);
+                Assert.IsTrue(twoMaterials.HasPropertyBlock(), "the skin is tinted");
+                Assert.AreEqual(Color.blue, clothBlock.GetColor(MaterialColourProperty.Of(cloth)), "the cloth starts from its own colour, not the skin's");
+            }
+            finally
+            {
+                DOTween.Kill(twoMaterialTarget.TweenId);
+                Object.DestroyImmediate(skin);
+                Object.DestroyImmediate(cloth);
+            }
+        }
+
+        [Test]
         public void AColourCue_OnABodyWithNothingToTint_DoesNothing()
         {
             TintedCueTarget targetWithoutARenderer = new TintedCueTarget(body.transform);

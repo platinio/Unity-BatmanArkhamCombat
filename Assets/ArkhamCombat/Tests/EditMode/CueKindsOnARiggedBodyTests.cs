@@ -6,7 +6,6 @@ using NUnit.Framework;
 
 namespace ArkhamCombat.Tests
 {
-    // On a rigged body the clip is the picture: only a kind that adds to it, such as a colour, plays there.
     public class CueKindsOnARiggedBodyTests
     {
         private static readonly (Type kind, bool playsOnARiggedBody)[] EveryKind =

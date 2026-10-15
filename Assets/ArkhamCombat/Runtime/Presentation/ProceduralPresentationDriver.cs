@@ -47,16 +47,7 @@ namespace ArkhamCombat.Presentation
             set
             {
                 clock.Speed = value;
-
-                bool isFrozen = value <= 0f;
-                if (isFrozen)
-                {
-                    CueTweens.Freeze(this);
-                }
-                else
-                {
-                    CueTweens.Resume(this);
-                }
+                CueTweens.FollowSpeed(this, value);
             }
         }
 
