@@ -9,6 +9,8 @@ using ArcaneOnyx.TPCharacterController.Inputs;
 using ArkhamCombat.Combat;
 using ArkhamCombat.Encounter;
 using ArkhamCombat.Player;
+using ArkhamCombat.Presentation;
+using NUnit.Framework;
 using UnityEngine;
 
 namespace ArkhamCombat.Tests
@@ -17,6 +19,15 @@ namespace ArkhamCombat.Tests
     {
         // Hidden and never saved, so the open scene is left untouched.
         public static GameObject HiddenObject(string name) => new GameObject(name) { hideFlags = HideFlags.HideAndDontSave };
+
+        public static void AssertThePictureSitsOnTheBodyChild(GameObject character)
+        {
+            ProceduralPresentationDriver driver = character.GetComponentInChildren<ProceduralPresentationDriver>();
+
+            Assert.IsNotNull(driver);
+            Assert.AreNotSame(character.transform, driver.transform, "a driver on the root would still be found once the capsule child is deactivated");
+            Assert.AreSame(driver.transform, driver.Body);
+        }
 
         // The machine on the agent is never woken: it only gives the node its agent, and the test ticks the graph by hand.
         public static BehaviorTreeGraph TreeOfOne<TNode>(GameObject agent, out TNode node) where TNode : BehaviorTreeNode, new()

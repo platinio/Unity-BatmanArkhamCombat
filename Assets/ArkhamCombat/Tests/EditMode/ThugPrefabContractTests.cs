@@ -3,11 +3,11 @@ using ArkhamCombat.Characters;
 using ArkhamCombat.Combat;
 using ArkhamCombat.Encounter;
 using ArkhamCombat.Enemies;
-using ArkhamCombat.Presentation;
 using NUnit.Framework;
 using UnityEditor;
 using UnityEngine;
 using UnityEngine.AI;
+using static ArkhamCombat.Tests.CombatTestDoubles;
 
 namespace ArkhamCombat.Tests
 {
@@ -68,14 +68,7 @@ namespace ArkhamCombat.Tests
         }
 
         [Test]
-        public void ThePictureSitsOnTheBodyChild_SoAVariantSwapsItByDeactivatingThatChild()
-        {
-            ProceduralPresentationDriver driver = thug.GetComponentInChildren<ProceduralPresentationDriver>();
-
-            Assert.IsNotNull(driver);
-            Assert.AreNotSame(thug.transform, driver.transform, "a driver on the root would still be found once the capsule child is deactivated");
-            Assert.AreSame(driver.transform, driver.Body);
-        }
+        public void ThePictureSitsOnTheBodyChild_SoAVariantSwapsItByDeactivatingThatChild() => AssertThePictureSitsOnTheBodyChild(thug);
 
         [Test]
         public void OnlyTheTreeTurnsTheThug()

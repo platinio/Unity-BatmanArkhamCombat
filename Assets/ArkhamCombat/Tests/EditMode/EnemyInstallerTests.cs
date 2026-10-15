@@ -4,6 +4,7 @@ using ArkhamCombat.Characters;
 using ArkhamCombat.Combat;
 using ArkhamCombat.Encounter;
 using ArkhamCombat.Enemies;
+using ArkhamCombat.Presentation;
 using NUnit.Framework;
 using Unity.VisualScripting;
 using UnityEditor;
@@ -117,6 +118,25 @@ namespace ArkhamCombat.Tests
             Assert.IsInstanceOf<NullPresentationDriver>(enemyContainer.Resolve<IPresentationDriver>());
             Assert.IsInstanceOf<NullActionTargetPicker>(enemyContainer.Resolve<IActionTargetPicker>());
             Assert.IsInstanceOf<NullTravelDirectionPicker>(enemyContainer.Resolve<ITravelDirectionPicker>());
+        }
+
+        [Test]
+        public void ADriverOnADeactivatedBody_IsNotTheOneBound_TheActiveBodysIs()
+        {
+            ProceduralPresentationDriver driverOnTheCapsule = DriverOnAChildCalled("Capsule");
+            driverOnTheCapsule.gameObject.SetActive(false);
+            ProceduralPresentationDriver driverOnTheModel = DriverOnAChildCalled("Model");
+
+            InstallTheEnemyWithItsArchetype();
+
+            Assert.AreSame(driverOnTheModel, enemyContainer.Resolve<IPresentationDriver>(), "a variant swaps the picture by deactivating the capsule child");
+        }
+
+        private ProceduralPresentationDriver DriverOnAChildCalled(string childName)
+        {
+            GameObject body = HiddenObject(childName);
+            body.transform.SetParent(enemy.transform);
+            return body.AddComponent<ProceduralPresentationDriver>();
         }
 
         [Test]

@@ -393,12 +393,12 @@ both generated assemblies reference it.
   `AttackingStateBinding`, and for a character that can be hit the four reaction bindings
   (`FlinchStateBinding`, `StaggerStateBinding`, `KnockedDownStateBinding`, `DeadStateBinding`), each with
   its action picked.
-- **A prefab**: `Prefabs/Player.prefab` is the model, and the arena places it. Next to `CharacterBrain`, a `GameObjectContext` whose Mono Installers list holds the
+- **A prefab**: `Prefabs/Player.prefab` is the model, and the arena places it. Next to `CharacterBrain` sits a `GameObjectContext` whose Mono Installers list holds the
   `CombatCharacterInstaller` on the same object, with the stance set on the installer. Then the
   `CharacterBrain`'s list of character components reads, top to bottom: `CombatFactsUpdater`,
   `ComboTracker`, `CombatActions`, `AttackingStateSwitch`, `HitReactionSwitch`. `PlayerStatus`, with a
   hit receiver profile picked on the installer, is what lets it be hit. `CombatTargeting` gives it targets, and a
-  `ProceduralPresentationDriver` on the body child, with that child, an optional fist and the body renderer, gives it a
+  `ProceduralPresentationDriver` on the capsule child, with that child, an optional fist and its renderer, gives it a
   body: the driver sits on the picture it draws, so a variant with another body deactivates the capsule child and the driver leaves with it. Leaving out the facts updater, the combo tracker, the targeting, the driver or the state switch
   gives a character without that piece; `CombatActions` is what plays actions at all. The scene also needs the Hermes object described under Events.
 - **A reaction action**: Create → ArkhamCombat → Action, with its duration and cues, beside the five in

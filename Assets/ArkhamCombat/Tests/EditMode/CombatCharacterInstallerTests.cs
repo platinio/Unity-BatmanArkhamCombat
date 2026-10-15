@@ -206,6 +206,37 @@ namespace ArkhamCombat.Tests
         }
 
         [Test]
+        public void ADriverOnADeactivatedBody_IsNotTheOneBound_TheActiveBodysIs()
+        {
+            GiveTheCharacterAStanceWithoutConditions();
+            ProceduralPresentationDriver driverOnTheCapsule = DriverOnAChildCalled("Capsule");
+            driverOnTheCapsule.gameObject.SetActive(false);
+            ProceduralPresentationDriver driverOnTheModel = DriverOnAChildCalled("Model");
+
+            InstallTheCharacter();
+
+            Assert.AreSame(driverOnTheModel, characterContainer.Resolve<IPresentationDriver>(), "a variant swaps the picture by deactivating the capsule child");
+        }
+
+        [Test]
+        public void ACharacterWhoseOnlyBodyIsDeactivated_HasNoPicture()
+        {
+            GiveTheCharacterAStanceWithoutConditions();
+            DriverOnAChildCalled("Capsule").gameObject.SetActive(false);
+
+            InstallTheCharacter();
+
+            Assert.IsInstanceOf<NullPresentationDriver>(characterContainer.Resolve<IPresentationDriver>());
+        }
+
+        private ProceduralPresentationDriver DriverOnAChildCalled(string childName)
+        {
+            GameObject body = HiddenObject(childName);
+            body.transform.SetParent(character.transform);
+            return body.AddComponent<ProceduralPresentationDriver>();
+        }
+
+        [Test]
         public void TheCharactersOwnMotorIsBound_NotTheOneTheSceneFound()
         {
             GiveTheCharacterAStanceWithoutConditions();
