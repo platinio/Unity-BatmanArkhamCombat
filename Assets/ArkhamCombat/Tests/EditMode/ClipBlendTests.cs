@@ -36,6 +36,20 @@ namespace ArkhamCombat.Tests
         }
 
         [Test]
+        public void CutTo_LandsAtOnce_AndStaysThere()
+        {
+            blend.BlendTo(1f, FullBlendSeconds);
+
+            blend.CutTo(0.25f);
+
+            Assert.AreEqual(0.25f, blend.Weight);
+            Assert.AreEqual(0.25f, blend.Target);
+            Assert.IsTrue(blend.HasReachedItsTarget);
+            blend.Step(FullBlendSeconds);
+            Assert.AreEqual(0.25f, blend.Weight, "a cut has nowhere left to go");
+        }
+
+        [Test]
         public void ZeroSeconds_IsACut()
         {
             blend.BlendTo(1f, secondsForAFullBlend: 0f);

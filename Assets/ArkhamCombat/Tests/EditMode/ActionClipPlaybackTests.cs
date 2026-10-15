@@ -87,8 +87,8 @@ namespace ArkhamCombat.Tests
             return playback;
         }
 
-        private ClipEntry WholeClipFor(ActionDefinition action, float blendInSeconds = ACut, float blendOutSeconds = ACut) =>
-            new ClipEntry(action, clip, 0f, 1f, blendInSeconds, blendOutSeconds);
+        private ClipEntry WholeClipFor(ActionDefinition action, float blendInSeconds = ACut, float blendOutSeconds = ACut, float crossfadeSeconds = ACut) =>
+            new ClipEntry(action, clip, 0f, 1f, blendInSeconds, blendOutSeconds, crossfadeSeconds: crossfadeSeconds);
 
         private void EvaluateTheGraphByHand() => playback.Graph.Evaluate();
 
@@ -228,8 +228,127 @@ namespace ArkhamCombat.Tests
             Assert.DoesNotThrow(() => playback.Show(cross));
 
             Assert.AreSame(cross, playback.Entry.Action);
-            Assert.AreEqual(1f, playback.Weight, "a follow-up at full weight is a cut, not a dip through locomotion");
-            Assert.AreEqual(playablesBefore, playback.Graph.GetPlayableCount(), "the old clip's playable is gone");
+            Assert.AreEqual(1f, playback.Weight, "a follow-up at full weight never dips through locomotion");
+            Assert.AreEqual(playablesBefore, playback.Graph.GetPlayableCount(), "with no crossfade the old clip's playable is gone");
+        }
+
+        [Test]
+        public void AFollowUpWithACrossfade_HalfWayThrough_ShowsHalfOfEachClip()
+        {
+            PlaybackWith(WholeClipFor(jab), WholeClipFor(cross, crossfadeSeconds: 0.1f)).Show(jab);
+            playback.FollowTheClock(0.5f);
+
+            playback.Show(cross);
+            playback.StepTheBlend(0.05f);
+            EvaluateTheGraphByHand();
+
+            Assert.AreEqual(0.5f * 0.5f + 0.5f * 0f, bone.localPosition.x, 1e-3f, "half the crossfade is half way between the clip before, where it was, and the new clip's start");
+        }
+
+        [Test]
+        public void OnceTheCrossfadeEnds_TheClipBeforeIsDropped()
+        {
+            PlaybackWith(WholeClipFor(jab), WholeClipFor(cross, crossfadeSeconds: 0.1f)).Show(jab);
+            int playablesWithOneClip = playback.Graph.GetPlayableCount();
+
+            playback.Show(cross);
+
+            Assert.IsTrue(playback.IsCrossfading);
+            Assert.AreEqual(playablesWithOneClip + 1, playback.Graph.GetPlayableCount(), "both clips play while the crossfade runs");
+
+            playback.StepTheBlend(0.1f);
+
+            Assert.IsFalse(playback.IsCrossfading);
+            Assert.AreEqual(playablesWithOneClip, playback.Graph.GetPlayableCount(), "the clip before is gone once the crossfade ends");
+        }
+
+        [Test]
+        public void AFollowUpWithNoCrossfade_ShowsTheNewClipAtOnce()
+        {
+            PlaybackWith(WholeClipFor(jab), WholeClipFor(cross)).Show(jab);
+            playback.FollowTheClock(0.5f);
+
+            playback.Show(cross);
+            EvaluateTheGraphByHand();
+
+            Assert.IsFalse(playback.IsCrossfading);
+            Assert.AreEqual(0f, bone.localPosition.x, 1e-3f, "a crossfade of zero seconds is a cut");
+        }
+
+        [Test]
+        public void TheFirstClipAfterLocomotion_HasNothingToCrossfadeFrom()
+        {
+            PlaybackWith(WholeClipFor(jab, crossfadeSeconds: 0.1f)).Show(jab);
+
+            Assert.IsFalse(playback.IsCrossfading);
+        }
+
+        [Test]
+        public void AKeptLastPose_CrossfadesIntoTheNextClip()
+        {
+            PlaybackWith(new ClipEntry(jab, clip, 0f, 1f, ACut, ACut, keepsItsLastPose: true), WholeClipFor(cross, crossfadeSeconds: 0.1f)).Show(jab);
+            playback.FollowTheClock(1f);
+            playback.FadeOut();
+            playback.StepTheBlend(1f);
+
+            playback.Show(cross);
+            playback.StepTheBlend(0.05f);
+            EvaluateTheGraphByHand();
+
+            Assert.IsTrue(playback.IsCrossfading);
+            Assert.AreEqual(0.5f * 1f + 0.5f * 0f, bone.localPosition.x, 1e-3f, "half way between the kept last frame and the new clip's start");
+        }
+
+        [Test]
+        public void AClipFadingOut_CrossfadesIntoTheNextClip_FromTheWeightItHad()
+        {
+            PlaybackWith(WholeClipFor(jab, blendOutSeconds: 0.1f), WholeClipFor(cross, blendInSeconds: 0.1f, crossfadeSeconds: 0.1f)).Show(jab);
+            playback.FadeOut();
+            playback.StepTheBlend(0.05f);
+
+            playback.Show(cross);
+
+            Assert.IsTrue(playback.IsCrossfading);
+            Assert.AreEqual(0.5f, playback.Weight, 1e-4f, "the clips' share carries on from where the fade had got");
+        }
+
+        [Test]
+        public void ASecondFollowUpInsideTheCrossfade_DropsTheOldestClip()
+        {
+            PlaybackWith(WholeClipFor(jab, crossfadeSeconds: 0.1f), WholeClipFor(cross, crossfadeSeconds: 0.1f)).Show(jab);
+            int playablesWithOneClip = playback.Graph.GetPlayableCount();
+            playback.Show(cross);
+            playback.StepTheBlend(0.05f);
+
+            Assert.DoesNotThrow(() => playback.Show(jab));
+
+            Assert.IsTrue(playback.IsCrossfading);
+            Assert.AreEqual(playablesWithOneClip + 1, playback.Graph.GetPlayableCount(), "two clips at most: the new one and the one before it");
+        }
+
+        [Test]
+        public void AFadeOutInsideTheCrossfade_StillDropsTheClipBefore()
+        {
+            PlaybackWith(WholeClipFor(jab), WholeClipFor(cross, blendOutSeconds: 0.1f, crossfadeSeconds: 0.1f));
+            int playablesWithNoClip = playback.Graph.GetPlayableCount();
+            playback.Show(jab);
+            playback.Show(cross);
+
+            playback.FadeOut();
+            playback.StepTheBlend(0.1f);
+
+            Assert.AreEqual(playablesWithNoClip, playback.Graph.GetPlayableCount(), "both clips are gone once the fade and the crossfade end");
+        }
+
+        [Test]
+        public void TheFrameDataLine_SaysHowFarTheCrossfadeIs()
+        {
+            PlaybackWith(WholeClipFor(jab), WholeClipFor(cross, crossfadeSeconds: 0.1f)).Show(jab);
+
+            playback.Show(cross);
+            playback.StepTheBlend(0.05f);
+
+            StringAssert.Contains("crossfade 0.50", playback.FrameDataLine);
         }
 
         [Test]

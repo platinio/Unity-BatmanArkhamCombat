@@ -109,6 +109,7 @@ namespace ArkhamCombat.Presentation
     {
         public const float DefaultBlendInSeconds = 0.08f;
         public const float DefaultBlendOutSeconds = 0.12f;
+        public const float DefaultCrossfadeSeconds = 0.15f;
 
         // A looping clip wraps at its length, so a sample there is its first frame.
         private const float JustBeforeTheEnd = 0.001f;
@@ -132,9 +133,12 @@ namespace ArkhamCombat.Presentation
         [Tooltip("The clip's last frame stays on the body after the action ends, until the next action: a knockdown waits lying down for the get-up, and death stays down.")]
         [SerializeField] private bool keepsItsLastPose;
 
+        [Tooltip("Seconds the clip before fades out under this one when a clip is still showing as this action starts. 0 is a cut.")]
+        [SerializeField, Min(0f)] private float crossfadeSeconds = DefaultCrossfadeSeconds;
+
         public ClipEntry() { }
 
-        public ClipEntry(ActionDefinition action, AnimationClip clip, float start = 0f, float end = 1f, float blendInSeconds = DefaultBlendInSeconds, float blendOutSeconds = DefaultBlendOutSeconds, bool keepsItsLastPose = false)
+        public ClipEntry(ActionDefinition action, AnimationClip clip, float start = 0f, float end = 1f, float blendInSeconds = DefaultBlendInSeconds, float blendOutSeconds = DefaultBlendOutSeconds, bool keepsItsLastPose = false, float crossfadeSeconds = DefaultCrossfadeSeconds)
         {
             this.action = action;
             this.clip = clip;
@@ -143,6 +147,7 @@ namespace ArkhamCombat.Presentation
             this.blendInSeconds = blendInSeconds;
             this.blendOutSeconds = blendOutSeconds;
             this.keepsItsLastPose = keepsItsLastPose;
+            this.crossfadeSeconds = crossfadeSeconds;
         }
 
         public ActionDefinition Action => action;
@@ -152,6 +157,7 @@ namespace ArkhamCombat.Presentation
         public float BlendInSeconds => blendInSeconds;
         public float BlendOutSeconds => blendOutSeconds;
         public bool KeepsItsLastPose => keepsItsLastPose;
+        public float CrossfadeSeconds => crossfadeSeconds;
 
         public float ClipSecondsAt(float normalizedActionTime)
         {

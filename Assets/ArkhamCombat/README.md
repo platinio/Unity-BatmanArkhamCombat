@@ -221,9 +221,9 @@ The ordered list of per-frame jobs is the controller's too: `CharacterComponent`
 |---|---|
 | `ProceduralPresentationDriver` | The demo's driver: the `ActionClock` plus DOTween cues on a body child. Every tween a cue starts carries the driver as its id, so `Play` and `Stop` kill them as a group and `Speed` zero pauses them. `Stop` blends the body back to its rest pose, which is the standing pose it remembered at `Awake` (a `BodyPose`: position, rotation and scale) until a cue moves it with `RestAt`. Never moves the root |
 | `AnimationPresentationDriver` | The character's driver, on the model child that carries the `Animator`: the same `ActionClock` plus an `ActionClipPlayback`. `Play` shows the action's clip from the character's `CharacterClips` and plays the clock; `Tick` ticks the clock first, then sets the clip's time from it, then steps the blend by `deltaTime * Speed`, so hit-stop freezes the pose and the blend alike, then writes the injected `ILocomotionSignal`'s velocity into the locomotion controller's `MoveRight` and `MoveForward`, in the model's own frame. Its `FrameDataLine` names the action, the clip's seconds and the weight for the overlay, or says `hold`, `clip kept` or `clip fading out`. A cue plays only if its kind answers `CanPlayOnARiggedBody`; colour cues tint every renderer under the model. Reports the clips asset's authoring errors at `Awake` |
-| `ActionClipPlayback` | The Playables graph: one mixer with the locomotion controller on input 0 and the action's clip on input 1, at speed zero, its time set by hand as `lerp(start, end, normalizedTime) * clip.length`, so the part of the clip the entry uses is stretched to the action's duration. An action with no entry is a hold: the mixer fades to locomotion. A follow-up keeps the weight the old clip had, so at full weight it is a cut and never dips through locomotion. `FadeOut` blends back over the entry's seconds and drops the clip once faded, unless the entry keeps its last pose, in which case the clip stays on its last frame until the next action. Turns the Animator's root motion off: gameplay moves the character |
-| `ClipBlend` | The weight of the clip against locomotion, moved at a steady rate so a full blend takes the seconds it was given at any frame rate; zero seconds is a cut |
-| `CharacterClips`, `ClipEntry` | A ScriptableObject per character (Create, ArkhamCombat, Character Clips): the locomotion controller, one entry per action with its clip, the part of the clip used (`start`, `end`, as shares of its length), its blend in and out, whether its last frame stays on the body until the next action (`keepsItsLastPose`: a knockdown waits lying down for the get-up, death stays down), and the seconds a clip fades when a hold starts. Clips live here and not on the action because both arenas share the action assets and two characters play different clips for the same action. `Validate` reports an entry with no action, no clip or an end not after its start, a doubled action and a missing controller |
+| `ActionClipPlayback` | The Playables graph: one mixer with the locomotion controller on input 0, the action's clip on input 1 and the clip before on input 2, the clips at speed zero with their time set by hand as `lerp(start, end, normalizedTime) * clip.length`, so the part of the clip the entry uses is stretched to the action's duration. An action with no entry is a hold: the mixer fades to locomotion. A follow-up keeps the weight the old clip had, so it never dips through locomotion, and the clip before (an action's, a kept pose or one fading out) stays on its last frame while the new clip takes over the clips' share over the new entry's `crossfadeSeconds`; at zero seconds it is a cut, and the clip before is dropped once the crossfade ends. A third clip arriving inside a crossfade drops the oldest at once, so an interrupt landing within those seconds pops the pose by one frame; the chain's steps are far enough apart never to. `FadeOut` blends back over the entry's seconds and drops the clip once faded, unless the entry keeps its last pose, in which case the clip stays on its last frame until the next action. Turns the Animator's root motion off: gameplay moves the character |
+| `ClipBlend` | A weight moved at a steady rate so a full blend takes the seconds it was given at any frame rate; zero seconds, or `CutTo`, is a cut. One blends the clips against locomotion, another crossfades the new clip over the clip before |
+| `CharacterClips`, `ClipEntry` | A ScriptableObject per character (Create, ArkhamCombat, Character Clips): the locomotion controller, one entry per action with its clip, the part of the clip used (`start`, `end`, as shares of its length), its blend in and out, the seconds the clip before fades out under it when a clip is still showing as its action starts (`crossfadeSeconds`, 0.15 by default; 0 is a cut), whether its last frame stays on the body until the next action (`keepsItsLastPose`: a knockdown waits lying down for the get-up, death stays down), and the seconds a clip fades when a hold starts. Clips live here and not on the action because both arenas share the action assets and two characters play different clips for the same action. `Validate` reports an entry with no action, no clip or an end not after its start, a doubled action and a missing controller |
 | `LeanCue`, `PunchCue`, `SquashCue`, `SpinCue`, `FlashCue`, `PulseCue` | The cue kinds. A pulse is a flash repeated for the cue's duration: the nearest whole number of flashes of about `secondsPerFlash`, stretched so the pulse ends exactly when its cue does. It is the picture of a telegraph, so it should last as long as the telegraph window. One class each; a new kind is one file and appears in the dropdown on every action |
 | `FallCue`, `RiseCue`, `CrumpleCue` | The reactions' cues. Fall lays the body down by its strength in degrees, backward when positive, and makes lying the rest pose, so a knocked-down or dead body stays down when its action ends. The body is lowered by what it is taller than deep, scaled by how far it turned, measured on the standing body's mesh and never on the pose it was hit in. Rise stands it up and makes standing the rest pose again. A held pose carries the standing scale, so a body that fell while crumpled is not left squashed. Crumple squashes and tilts and is released by `Stop` like any other cue |
 
@@ -542,8 +542,12 @@ models and clips until they are imported. To play it:
    nothing in it can loop a clip whose import does not.
 3. Open `Assets/CombatDemo.unity` and press Play. The presses are the arena's.
 
-Nothing about the fight changes: the runner's clock is still the one truth, and each clip is stretched to its
-action's duration, so hit windows, warps, counters and the trees run exactly as on the capsules. The thugs run
+The runner's clock is still the one truth, and each clip is stretched to its action's duration, so hit windows,
+warps, counters and the trees run the same on the capsules and on the characters. The player's three-step chain is
+the one place the fight was tuned to the art rather than the other way round: `Jab_L` and `Jab_R`, `Cross` and
+`RoundhouseKick` play the first two parts of Frank's `Combo02` and his jumping spinning kick (`Attack05`) at the clips'
+own pace, with each hit window opening on the clip's contact frame, so the same timings hold on the capsules. One
+clip crossfades into the next over the entry's `crossfadeSeconds`, since the kick is not cut from the same take. The thugs run
 the same roots and sub-trees, through the same Play Action and Set Nav Agent Speed nodes; what the bodies add is
 that the trees become legible: a prowling Guard sidesteps on the sideways walk because the locomotion is
 two-dimensional (`MoveRight`, `MoveForward`, the velocity in the model's own frame), Set Nav Agent Speed reads
@@ -559,10 +563,17 @@ body materials under `Materials/Characters` (`Thug_Guard_Body_01` and so on); th
 brighter tint overridden on its instance, as in the arena), the two clips assets and `Characters/Frank.Locomotion.controller`,
 one freeform 2D blend tree over Frank's fighting idle and his eight-way walk and run that both characters share.
 The clips report no root speed, so the walk sits at 1.6 m/s and the run at 4 m/s by hand; tune them in the
-Animator window. The clips are whole for now: trim an entry's `start` and `end` on the clips asset until a clip's
-contact lines up with its action's hit window, with the overlay's clip line (action, seconds into the clip, weight)
-to read it by. Knockdown and Death hold their last frame, so a downed character stays down until the get-up or
-for good. Every Frank clip sub-asset is named `Take 001`, which is why the overlay names the action rather than the clip.
+Animator window. An entry's `start` and `end` on the clips asset trim the clip to the part the action plays, with the overlay's
+clip line (action, seconds into the clip, weight) to read it by; the chain's three clips are trimmed, every other
+clip is whole.
+
+| Step | Actions | Clip, part used | Duration | Hit window | What the clip does there |
+|---|---|---|---|---|---|
+| S1 | `Jab_L`, `Jab_R` | `Combo02_1_IP`, 0 to 0.8 | 0.70 s | 0.33 to 0.50 | the first of two slashes; the second lands in the combo window |
+| S2 | `Cross` | `Combo02_2_IP`, 0 to 0.8 | 0.80 s | 0.30 to 0.55 | the second and third swings of a crouching flurry |
+| S3 | `RoundhouseKick` | `Attack05_IP`, 0 to 0.85 | 0.94 s | 0.37 to 0.47 | a leap into a spinning kick, the foot at full reach at the top of the jump, landing at 0.65 where the combo window opens |
+
+Knockdown and Death hold their last frame, so a downed character stays down until the get-up or for good. Every Frank clip sub-asset is named `Take 001`, which is why the overlay names the action rather than the clip.
 
 ## Tests
 

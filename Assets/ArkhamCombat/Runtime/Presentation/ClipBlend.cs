@@ -24,6 +24,12 @@ namespace ArkhamCombat.Presentation
             }
         }
 
+        public void CutTo(float weight)
+        {
+            Target = Mathf.Clamp01(weight);
+            Weight = Target;
+        }
+
         public void Step(float deltaTime)
         {
             if (HasReachedItsTarget)
