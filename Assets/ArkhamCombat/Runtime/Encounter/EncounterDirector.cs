@@ -21,6 +21,7 @@ namespace ArkhamCombat.Encounter
             public bool IsTelegraphingACounterableAttack;
             public float TokenHeldFor;
             public float SecondsWithoutAToken;
+            public float SecondsWaitingInsideTheRing;
             public float ReacquireCooldown;
             public int AttacksLeftInItsTurn;
             public int Slot = UnassignedSlot;
@@ -319,12 +320,22 @@ namespace ArkhamCombat.Encounter
         /// </summary>
         public Vector3 GetStandingPosition(IEncounterAgent agent)
         {
-            bool isInTheEncounter = agent != null && stateByAgent.ContainsKey(agent);
-            return isInTheEncounter && IsInsideTheRing(agent) ? agent.Position : GetSlotPosition(agent);
+            bool staysWhereItIs = agent != null
+                                  && stateByAgent.TryGetValue(agent, out AgentState state)
+                                  && IsInsideTheRing(agent)
+                                  && !HasWaitedInsideTheRingLongEnoughToStepBackOut(state);
+            return staysWhereItIs ? agent.Position : GetSlotPosition(agent);
         }
 
         private bool IsInsideTheRing(IEncounterAgent agent) =>
             DistanceOnTheGround(agent.Position, targetPosition) < settings.SlotRadius;
+
+        private bool HasWaitedInsideTheRingLongEnoughToStepBackOut(AgentState state)
+        {
+            float secondsBeforeSteppingBackOut = settings.SecondsBeforeAWaitingAgentStepsBackOut;
+            bool doesAWaitingAgentEverStepBackOut = secondsBeforeSteppingBackOut > 0.0f;
+            return doesAWaitingAgentEverStepBackOut && state.SecondsWaitingInsideTheRing >= secondsBeforeSteppingBackOut;
+        }
 
         public Vector3 GetFreePositionCloserToTarget(IEncounterAgent agent, float distanceFromTarget, float roomEachAgentKeeps)
         {
@@ -406,6 +417,7 @@ namespace ArkhamCombat.Encounter
             AgeReacquireCooldowns(deltaTime);
             AgeHeldTokens(deltaTime);
             AgeTheWaitsForAToken(deltaTime);
+            AgeTheWaitsInsideTheRing(deltaTime);
             TakeBackTokensHeldTooLong();
             TakeBackTokensNobodyCameBackFor();
             GrantFreeTokensToTheBestRequests();
@@ -460,6 +472,16 @@ namespace ArkhamCombat.Encounter
                 {
                     agentStates[i].SecondsWithoutAToken += deltaTime;
                 }
+            }
+        }
+
+        private void AgeTheWaitsInsideTheRing(float deltaTime)
+        {
+            for (int i = 0; i < agentStates.Count; i++)
+            {
+                AgentState state = agentStates[i];
+                bool isWaitingInsideTheRing = !state.HasToken && IsInsideTheRing(state.Agent);
+                state.SecondsWaitingInsideTheRing = isWaitingInsideTheRing ? state.SecondsWaitingInsideTheRing + deltaTime : 0.0f;
             }
         }
 
