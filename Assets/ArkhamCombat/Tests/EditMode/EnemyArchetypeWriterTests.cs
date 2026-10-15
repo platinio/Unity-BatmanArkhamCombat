@@ -77,6 +77,18 @@ namespace ArkhamCombat.Tests
         }
 
         [Test]
+        public void WritesTheArchetypesTauntChanceOntoTheAgent()
+        {
+            const float tauntChance = 0.4f;
+            archetype.ConfigureTauntChance(tauntChance);
+            writer.Construct(archetype);
+
+            writer.WriteTunables();
+
+            Assert.AreEqual(tauntChance, (float)facts.Get(EnemyVariableNames.TauntChance), Tolerance);
+        }
+
+        [Test]
         public void WritesTheArchetypesAttackOntoTheAgent()
         {
             archetype.ConfigureAttack(haymaker);
