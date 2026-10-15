@@ -1,0 +1,171 @@
+using System.Collections.Generic;
+using System.Linq;
+using ArcaneOnyx.BehaviorTree;
+using ArkhamCombat.Combat;
+using ArkhamCombat.Enemies;
+using NUnit.Framework;
+using UnityEditor;
+using UnityEngine;
+using static ArkhamCombat.Tests.TreeAssets;
+
+namespace ArkhamCombat.Tests
+{
+    // Every enemy is a root that lists the shared sub-trees. What must hold on each root, and what
+    // sets one enemy apart from another, is drawn on canvases, so these read the authored assets.
+    public class EnemyRootContractTests
+    {
+        private const string RootsFolder = TreesFolder + "/Roots";
+        private const string PrefabsFolder = "Assets/ArkhamCombat/Prefabs/";
+        private const string KindOfReactionAskedAbout = "kind";
+        private const int JobsEveryEnemyTicks = 4;
+
+        private static readonly string[] ReactionsAStatusCanPublish =
+        {
+            nameof(AppliedReaction.Flinch), nameof(AppliedReaction.Stagger), nameof(AppliedReaction.Knockdown), nameof(AppliedReaction.Stun)
+        };
+
+        private static string[] EveryRoot() =>
+            AssetDatabase.FindAssets("t:BehaviorTreeGraphAsset", new[] { RootsFolder })
+                .Select(AssetDatabase.GUIDToAssetPath)
+                .Select(System.IO.Path.GetFileNameWithoutExtension)
+                .ToArray();
+
+        private static BehaviorTreeGraph Root(string rootName) => Tree($"{RootsFolder}/{rootName}.asset").graph;
+
+        private static List<string> BranchesInPriorityOrder(string rootName)
+        {
+            BehaviorTreeGraph root = Root(rootName);
+            return root.ChildrenInPriorityOrder(root.Nodes.OfType<Selector>().Single()).Select(SubTreeRunBy).ToList();
+        }
+
+        private static ConditionalExecution GuardOf(string rootName, string subTree) =>
+            Root(rootName).Nodes.OfType<ConditionalExecution>().Single(guard => SubTreeRunBy(guard.Owner) == subTree);
+
+        private static List<string> ReactionsWithABranchOn(string rootName)
+        {
+            List<string> kinds = new List<string>();
+            foreach (VisualScriptGraphVariable functionCall in Root(rootName).Nodes.OfType<VisualScriptGraphVariable>())
+            {
+                ValueInput kind = functionCall.valueInputs.FirstOrDefault(input => input.key == KindOfReactionAskedAbout);
+                if (kind != null)
+                {
+                    kinds.Add(kind.GetValue<string>());
+                }
+            }
+
+            return kinds;
+        }
+
+        private static GameObject Prefab(string prefabName)
+        {
+            GameObject prefab = AssetDatabase.LoadAssetAtPath<GameObject>(PrefabsFolder + prefabName + ".prefab");
+            Assert.IsNotNull(prefab, $"no prefab named {prefabName}");
+            return prefab;
+        }
+
+        private static EnemyArchetype ArchetypeOf(GameObject prefab) =>
+            (EnemyArchetype)new SerializedObject(prefab.GetComponent<EnemyInstaller>()).FindProperty("archetype").objectReferenceValue;
+
+        [Test]
+        public void ThereIsMoreThanOneKindOfEnemy()
+        {
+            CollectionAssert.IsSupersetOf(EveryRoot(), new[] { "ThugRoot", "ArmoredRoot" });
+        }
+
+        [TestCaseSource(nameof(EveryRoot))]
+        public void EveryRoot_HasABranchForEveryReactionAStatusCanPublish(string rootName)
+        {
+            CollectionAssert.AreEquivalent(
+                ReactionsAStatusCanPublish, ReactionsWithABranchOn(rootName),
+                "a reaction with no branch is a fact nothing plays and nothing clears, so the enemy stays in it for ever");
+        }
+
+        [TestCaseSource(nameof(EveryRoot))]
+        public void EveryRoot_TriesDeathFirst_AndEveryReactionBeforeAnythingItChoosesToDo(string rootName)
+        {
+            List<string> branches = BranchesInPriorityOrder(rootName);
+            int lastReaction = new[] { "KnockedDown", "Stunned", "Stagger", "Flinch" }.Max(branches.IndexOf);
+
+            Assert.AreEqual("Death", branches[0]);
+            Assert.Less(lastReaction, branches.IndexOf("Attack"));
+            Assert.AreEqual("Idle", branches.Last());
+        }
+
+        [TestCaseSource(nameof(EveryRoot))]
+        public void OnEveryRoot_AKnockedDownEnemyGetsUpBeforeAnythingLighterIsHeard(string rootName)
+        {
+            ReactiveGuard guard = (ReactiveGuard)GuardOf(rootName, "KnockedDown");
+
+            Assert.IsTrue(guard.TakesOverLowerPriority);
+            Assert.IsFalse(guard.StopsItsOwnBranch);
+        }
+
+        [TestCaseSource(nameof(EveryRoot))]
+        public void OnEveryRoot_ASwingThatStartedIsNotCutShortByItsOwnGuard(string rootName)
+        {
+            Assert.IsNotInstanceOf<ReactiveGuard>(GuardOf(rootName, "Attack"));
+        }
+
+        [TestCaseSource(nameof(EveryRoot))]
+        public void EveryRoot_HandsItsAttackBranchTheAttackAndTheSpeedTheArchetypeWriterWrites(string rootName)
+        {
+            BehaviorTreeNode attackBranch = Root(rootName).Nodes.OfType<RunBehaviorTreeGraphNode>().Single(call => SubTreeRunBy(call) == "Attack");
+
+            GetVariable attackRead = (GetVariable)WhatFeeds(attackBranch, EnemyVariableNames.Attack);
+            VisualScriptGraphVariable speedRead = (VisualScriptGraphVariable)WhatFeeds(attackBranch, EnemyVariableNames.MoveSpeed);
+
+            Assert.AreEqual(EnemyVariableNames.Attack, attackRead.defaultValues[nameof(GetVariable.Key)]);
+            CollectionAssert.AreEquivalent(new[] { EnemyVariableNames.MoveSpeed }, speedRead.Function.DeriveReadKeys());
+        }
+
+        [Test]
+        public void TheArmoredEnemy_HoldsItsPlaceWhereAThugProwls_AndNeverTaunts()
+        {
+            CollectionAssert.AreEqual(
+                new[] { "Death", "KnockedDown", "Stunned", "Stagger", "Flinch", "Attack", "HoldSlot", "Approach", "Idle" },
+                BranchesInPriorityOrder("ArmoredRoot"));
+        }
+
+        [TestCase("Armored", "ArmoredRoot")]
+        public void AnEnemyPrefab_RunsItsOwnRoot_AndKeepsTheJobsOfTheThugItIsAVariantOf(string prefabName, string rootName)
+        {
+            GameObject prefab = Prefab(prefabName);
+            SerializedProperty jobs = new SerializedObject(prefab.GetComponent<ArcaneOnyx.TPCharacterController.CharacterComponentUpdater>()).FindProperty("characterComponents");
+
+            Assert.AreEqual(rootName, prefab.GetComponent<BehaviorTreeMachine>().nest.macro.name);
+            Assert.AreEqual("Thug", PrefabUtility.GetCorrespondingObjectFromSource(prefab).name);
+            Assert.AreEqual(JobsEveryEnemyTicks, jobs.arraySize);
+        }
+
+        [TestCase("Armored")]
+        public void AnEnemyPrefab_NamesAnArchetypeOfItsOwnThatIsWellFormed(string prefabName)
+        {
+            EnemyArchetype archetype = ArchetypeOf(Prefab(prefabName));
+            List<string> errors = new List<string>();
+
+            Assert.IsNotNull(archetype, $"{prefabName} names no archetype");
+            Assert.AreEqual(prefabName, archetype.Name);
+            Assert.IsTrue(archetype.Validate(errors), string.Join("\n", errors));
+        }
+
+        [Test]
+        public void TheArmoredEnemy_IsArmored_CannotBeKnockedDown_AndSwingsSomethingThatCanBeCountered()
+        {
+            EnemyArchetype armored = ArchetypeOf(Prefab("Armored"));
+
+            Assert.IsTrue(armored.HitReceiverProfile.IsArmored);
+            Assert.IsFalse(armored.HitReceiverProfile.CanBeKnockedDown);
+            Assert.IsTrue(armored.Attack.IsCounterable);
+            Assert.AreEqual(0f, armored.TauntChance);
+        }
+
+        [Test]
+        public void TheArmoredEnemysSwing_WarnsLongerThanTheThugs()
+        {
+            AttackDefinition heavySwing = ArchetypeOf(Prefab("Armored")).Attack;
+            AttackDefinition haymaker = ArchetypeOf(Prefab("Thug")).Attack;
+
+            Assert.Greater(heavySwing.TelegraphWindow.Length * heavySwing.Duration, haymaker.TelegraphWindow.Length * haymaker.Duration);
+        }
+    }
+}

@@ -1,0 +1,21 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: a0e48880e2ff4a747a37a932bb4aa5e5, type: 3}
+  m_Name: ArmoredRoot.moveSpeedRead
+  m_EditorClassIdentifier: ArcaneOnyx.VisualScriptingExtension.Runtime::ArcaneOnyx.VisualScriptingExtension.FunctionGraphAsset
+  _data:
+    _json: '{"pure":true,"watchedKeys":["moveSpeed"],"description":null,"graph":{"variables":{"Kind":"Flow","collection":{"$content":[],"$version":"A"},"$version":"A"},"controlInputDefinitions":[{"key":"Enter","label":"Enter","summary":null,"hideLabel":false}],"controlOutputDefinitions":[{"key":"Exit","label":"Exit","summary":null,"hideLabel":false}],"valueInputDefinitions":[],"valueOutputDefinitions":[{"_type":"System.Object","key":"Result","label":"Result","summary":null,"hideLabel":false}],"title":null,"summary":null,"pan":{"x":0.0,"y":0.0},"zoom":1.0,"elements":[{"defaultValues":{},"position":{"x":-320.0,"y":0.0},"guid":"6d63caa3-8079-477e-9afc-672d77268bb2","$version":"A","$type":"ArcaneOnyx.VisualScriptingExtension.ScriptGraphInput","$id":"13"},{"defaultValues":{},"position":{"x":320.0,"y":0.0},"guid":"b4a04fcb-1c57-4e13-be7a-805d9f0d2d8e","$version":"A","$type":"ArcaneOnyx.VisualScriptingExtension.ScriptGraphOutput","$id":"15"},{"specifyFallback":true,"kind":"Object","defaultValues":{"name":{"$content":"moveSpeed","$type":"System.String"},"object":null},"position":{"x":-120.0,"y":0.0},"guid":"962bdca7-e56a-4156-b1c2-5ca9397a51b7","$version":"A","$type":"Unity.VisualScripting.GetVariable","$id":"17"},{"type":"System.Single","value":{"$content":3.5,"$type":"System.Single"},"defaultValues":{},"position":{"x":-320.0,"y":140.0},"guid":"70a96f30-e7a3-4463-8caf-9eef9fac383e","$version":"A","$type":"Unity.VisualScripting.Literal","$id":"19"},{"sourceUnit":{"$ref":"13"},"sourceKey":"Enter","destinationUnit":{"$ref":"15"},"destinationKey":"Exit","guid":"70a0c04d-4a8d-45f3-846b-ad20082a614a","$type":"Unity.VisualScripting.ControlConnection"},{"sourceUnit":{"$ref":"19"},"sourceKey":"output","destinationUnit":{"$ref":"17"},"destinationKey":"fallback","guid":"e6ede8a1-9217-431c-bed8-0e8ced7e83e8","$type":"Unity.VisualScripting.ValueConnection"},{"sourceUnit":{"$ref":"17"},"sourceKey":"value","destinationUnit":{"$ref":"15"},"destinationKey":"Result","guid":"3b7ce13a-645c-4666-82a5-a873f80796a0","$type":"Unity.VisualScripting.ValueConnection"}],"$version":"A"}}'
+    _objectReferences: []
+  pure: 1
+  watchedKeys:
+  - moveSpeed
+  description: 
