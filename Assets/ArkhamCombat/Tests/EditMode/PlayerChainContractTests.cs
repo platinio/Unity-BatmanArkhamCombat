@@ -11,7 +11,7 @@ namespace ArkhamCombat.Tests
     {
         private const string StancePath = "Assets/ArkhamCombat/Stances/Ground.asset";
         private const string ClipsPath = "Assets/ArkhamCombat/Characters/Adam.CharacterClips.asset";
-        private const string FranksSecondCombo = "Frank_RPG_Assassin_Combo02_";
+        private static readonly string[] ClipOfEachStep = { "Frank_RPG_Assassin_Combo02_1_IP", "Frank_RPG_Assassin_Combo02_2_IP", "Frank_RPG_Assassin_Attack05_IP" };
         private const float PaceToleranceSeconds = 0.02f;
 
         private static bool ThePackIsImported => AssetDatabase.IsValidFolder("Assets/Frank_Assassin");
@@ -123,18 +123,18 @@ namespace ArkhamCombat.Tests
         }
 
         [Test]
-        public void EachStepOfTheChain_PlaysThatPartOfFranksSecondCombo()
+        public void TheChain_PlaysTwoPartsOfFranksSecondCombo_ThenHisJumpingKick()
         {
             CharacterClips clips = AdamsClips();
             List<ChainNode> steps = TheStepsOfTheChain(out _);
 
+            Assert.AreEqual(ClipOfEachStep.Length, steps.Count);
             for (int i = 0; i < steps.Count; i++)
             {
-                string expectedClipFile = $"{FranksSecondCombo}{i + 1}_IP";
                 foreach (AttackDefinition attack in AttacksOf(steps[i]))
                 {
                     string clipPath = AssetDatabase.GetAssetPath(EntryOf(clips, attack).Clip);
-                    StringAssert.Contains(expectedClipFile, clipPath, $"step {i + 1} ('{steps[i].Id}') plays {attack.name} from the wrong clip");
+                    StringAssert.Contains(ClipOfEachStep[i], clipPath, $"step {i + 1} ('{steps[i].Id}') plays {attack.name} from the wrong clip");
                 }
             }
         }

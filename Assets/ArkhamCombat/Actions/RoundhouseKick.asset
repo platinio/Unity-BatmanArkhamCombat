@@ -12,7 +12,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: e26aa5865e262ac43b6c78b7660354b3, type: 3}
   m_Name: RoundhouseKick
   m_EditorClassIdentifier: ArkhamCombat.Combat::ArkhamCombat.Combat.AttackDefinition
-  duration: 0.54
+  duration: 0.94
   cues:
   - firesAt: 0
     kind:
@@ -109,17 +109,17 @@ MonoBehaviour:
     start: 0
     end: 0
   hitWindow:
-    start: 0.4
-    end: 0.55
+    start: 0.37
+    end: 0.47
   comboWindow:
-    start: 0.55
+    start: 0.65
     end: 0.95
   evadeWindow:
     start: 0
-    end: 0.4
+    end: 0.37
   warpWindow:
     start: 0
-    end: 0.4
+    end: 0.37
   telegraphWindow:
     start: 0
     end: 0
