@@ -71,6 +71,8 @@ namespace ArkhamCombat.Tests
         private static AnimatorController ControllerPlaying(AnimationClip clip)
         {
             AnimatorController controller = new AnimatorController { hideFlags = HideFlags.HideAndDontSave };
+            controller.AddParameter(LocomotionParameterNames.MoveRight, AnimatorControllerParameterType.Float);
+            controller.AddParameter(LocomotionParameterNames.MoveForward, AnimatorControllerParameterType.Float);
             controller.AddLayer("Locomotion");
             controller.layers[0].stateMachine.AddState("Idle").motion = clip;
             return controller;
@@ -188,6 +190,62 @@ namespace ArkhamCombat.Tests
 
             Assert.AreSame(cross, playback.Entry.Action);
             Assert.AreEqual(1f, playback.Weight, "a follow-up at full weight is a cut, not a dip through locomotion");
+        }
+
+        [Test]
+        public void ASidewaysVelocity_ReadsAsMoveRight()
+        {
+            PlaybackWith();
+
+            playback.MoveAt(Vector3.right * 2f);
+
+            Assert.AreEqual(2f, playback.MoveRight, 1e-4f);
+            Assert.AreEqual(0f, playback.MoveForward, 1e-4f);
+        }
+
+        [Test]
+        public void TheLocomotionParameters_FollowTheModelsTurn()
+        {
+            PlaybackWith();
+            model.transform.rotation = Quaternion.Euler(0f, 90f, 0f);
+
+            playback.MoveAt(Vector3.right * 2f);
+
+            Assert.AreEqual(0f, playback.MoveRight, 1e-4f, "facing +X, a velocity along +X is straight ahead");
+            Assert.AreEqual(2f, playback.MoveForward, 1e-4f);
+        }
+
+        [Test]
+        public void WithoutALocomotionController_MovingIsHarmless()
+        {
+            clips.Configure(locomotion: null, new ClipEntry[0]);
+            playback = new ActionClipPlayback(animator, clips);
+
+            Assert.DoesNotThrow(() => playback.MoveAt(Vector3.forward));
+            Assert.AreEqual(0f, playback.MoveForward);
+        }
+
+        [Test]
+        public void TheFrameDataLine_NamesTheActionItsClipTimeAndTheWeight()
+        {
+            PlaybackWith(WholeClipFor(jab)).Show(jab);
+            playback.FollowTheClock(0.5f);
+
+            Assert.AreEqual("clip Jab  1.00s  weight 1.00", playback.FrameDataLine);
+        }
+
+        [Test]
+        public void TheFrameDataLine_SaysWhenAClipIsFadingOut_AndNothingAtRest()
+        {
+            PlaybackWith(WholeClipFor(jab, blendOutSeconds: 0.1f)).Show(jab);
+            Assert.AreEqual(string.Empty, PlaybackWith().FrameDataLine, "nothing to say at rest");
+
+            playback = PlaybackWith(WholeClipFor(jab, blendOutSeconds: 0.1f));
+            playback.Show(jab);
+            playback.FadeOut();
+            playback.Blend(0.05f);
+
+            Assert.AreEqual("clip fading out  weight 0.50", playback.FrameDataLine);
         }
 
         [Test]

@@ -87,8 +87,22 @@ namespace ArkhamCombat.Shell
             float y = origin.y;
             GUI.Label(new Rect(origin.x, y, LabelWidth, HeaderHeight), HeaderText());
             y += HeaderSpacing;
+            y = DrawTheDriversLine(y);
 
             DrawRecordsNewestFirst(origin.x, y);
+        }
+
+        // Only a driver with something to say takes a line: the capsule's never does.
+        private float DrawTheDriversLine(float y)
+        {
+            string driversLine = runner.Driver.FrameDataLine;
+            if (driversLine.Length == 0)
+            {
+                return y;
+            }
+
+            GUI.Label(new Rect(origin.x, y, LabelWidth, HeaderHeight), driversLine);
+            return y + HeaderSpacing;
         }
 
         private string HeaderText()

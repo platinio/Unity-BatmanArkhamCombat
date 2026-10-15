@@ -1,6 +1,7 @@
 using System.Collections.Generic;
 using ArkhamCombat.Combat;
 using UnityEngine;
+using Zenject;
 
 namespace ArkhamCombat.Presentation
 {
@@ -16,6 +17,7 @@ namespace ArkhamCombat.Presentation
         [SerializeField] private CharacterClips clips;
 
         private readonly ActionClock clock = new ActionClock();
+        private ILocomotionSignal locomotionSignal = new StillLocomotionSignal();
         private ActionClipPlayback playback;
         private Renderer[] tintedRenderers = new Renderer[0];
         private BodyPose standingPose;
@@ -35,6 +37,23 @@ namespace ArkhamCombat.Presentation
 
         public float ClipSeconds => playback != null ? playback.ClipSeconds : 0f;
         public float ClipWeight => playback != null ? playback.Weight : 0f;
+
+        public string FrameDataLine
+        {
+            get
+            {
+                if (playback == null)
+                {
+                    return string.Empty;
+                }
+
+                bool isAHold = clock.IsPlaying && !playback.IsShowingAClip;
+                return isAHold ? $"hold  weight {playback.Weight:0.00}" : playback.FrameDataLine;
+            }
+        }
+
+        [Inject]
+        internal void Construct(ILocomotionSignal locomotionSignal) => this.locomotionSignal = locomotionSignal;
 
         public float Speed
         {
@@ -95,8 +114,14 @@ namespace ArkhamCombat.Presentation
         public void Tick(float deltaTime)
         {
             clock.Tick(deltaTime);
-            playback?.FollowTheClock(clock.NormalizedTime);
-            playback?.Blend(deltaTime * clock.Speed);
+            if (playback == null)
+            {
+                return;
+            }
+
+            playback.FollowTheClock(clock.NormalizedTime);
+            playback.Blend(deltaTime * clock.Speed);
+            playback.MoveAt(locomotionSignal.PlanarVelocity);
         }
 
         public void RestAt(BodyPose pose) => restPose = pose;

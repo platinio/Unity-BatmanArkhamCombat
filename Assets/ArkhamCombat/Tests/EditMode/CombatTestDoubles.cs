@@ -350,6 +350,32 @@ namespace ArkhamCombat.Tests
             }
         }
 
+        public sealed class RecordingPresentationDriver : IPresentationDriver
+        {
+            private readonly NullPresentationDriver clock = new NullPresentationDriver();
+
+            public int TickCount { get; private set; }
+
+            public bool IsPlaying => clock.IsPlaying;
+            public float NormalizedTime => clock.NormalizedTime;
+
+            public float Speed
+            {
+                get => clock.Speed;
+                set => clock.Speed = value;
+            }
+
+            public void Play(ActionDefinition action) => clock.Play(action);
+
+            public void Stop() => clock.Stop();
+
+            public void Tick(float deltaTime)
+            {
+                clock.Tick(deltaTime);
+                TickCount++;
+            }
+        }
+
         public sealed class RecordingCue : ICueKind
         {
             public readonly List<float> PlayedAt = new List<float>();

@@ -97,6 +97,7 @@ namespace ArkhamCombat.Combat
         /// </summary>
         public IActionTarget CurrentActionTarget { get; private set; }
 
+        public IPresentationDriver Driver => driver;
         public bool IsPlaying => isPlaying;
 
         public bool IsStillPlaying(ActionDefinition action) => isPlaying && CurrentAction == action;
@@ -128,6 +129,7 @@ namespace ArkhamCombat.Combat
             }
             else
             {
+                driver.Tick(deltaTime);
                 AdvanceIdleTime(deltaTime);
                 RestartComboAfterLongIdle();
             }
