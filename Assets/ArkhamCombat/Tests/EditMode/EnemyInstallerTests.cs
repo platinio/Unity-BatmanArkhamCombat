@@ -121,6 +121,24 @@ namespace ArkhamCombat.Tests
         }
 
         [Test]
+        public void AnEnemyThatWalks_HasItsAgentAsLocomotionSignal()
+        {
+            enemy.AddComponent<UnityEngine.AI.NavMeshAgent>();
+
+            InstallTheEnemyWithItsArchetype();
+
+            Assert.IsInstanceOf<NavMeshAgentLocomotionSignal>(enemyContainer.Resolve<ILocomotionSignal>());
+        }
+
+        [Test]
+        public void AnEnemyWithoutAnAgent_StandsStill()
+        {
+            InstallTheEnemyWithItsArchetype();
+
+            Assert.IsInstanceOf<StillLocomotionSignal>(enemyContainer.Resolve<ILocomotionSignal>());
+        }
+
+        [Test]
         public void ADriverOnADeactivatedBody_IsNotTheOneBound_TheActiveBodysIs()
         {
             ProceduralPresentationDriver driverOnTheCapsule = DriverOnAChildCalled("Capsule");

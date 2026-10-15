@@ -22,5 +22,7 @@ namespace ArkhamCombat.Combat
 
         /// <summary>Every frame, playing or not: a picture that blends back to rest keeps moving between actions.</summary>
         void Tick(float deltaTime);
+
+        string FrameDataLine => string.Empty;
     }
 }

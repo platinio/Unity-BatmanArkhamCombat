@@ -1,6 +1,7 @@
 using System.Collections.Generic;
 using ArkhamCombat.Combat;
 using UnityEngine;
+using Zenject;
 
 namespace ArkhamCombat.Presentation
 {
@@ -11,6 +12,7 @@ namespace ArkhamCombat.Presentation
         [SerializeField] private CharacterClips clips;
 
         private readonly ActionClock clock = new ActionClock();
+        private ILocomotionSignal locomotionSignal = new StillLocomotionSignal();
         private ActionClipPlayback playback;
         private Renderer[] tintedRenderers = new Renderer[0];
         private BodyPose standingPose;
@@ -30,6 +32,9 @@ namespace ArkhamCombat.Presentation
 
         public float ClipSeconds => playback != null ? playback.ClipSeconds : 0f;
         public float ClipWeight => playback != null ? playback.Weight : 0f;
+        public float MoveRight => playback != null ? playback.MoveRight : 0f;
+        public float MoveForward => playback != null ? playback.MoveForward : 0f;
+        public string FrameDataLine => playback != null ? playback.FrameDataLine : string.Empty;
 
         public float Speed
         {
@@ -40,6 +45,9 @@ namespace ArkhamCombat.Presentation
                 CueTweens.FollowSpeed(this, value);
             }
         }
+
+        [Inject]
+        internal void Construct(ILocomotionSignal locomotionSignal) => this.locomotionSignal = locomotionSignal;
 
         internal void Awake()
         {
@@ -82,8 +90,14 @@ namespace ArkhamCombat.Presentation
         public void Tick(float deltaTime)
         {
             clock.Tick(deltaTime);
-            playback?.FollowTheClock(clock.NormalizedTime);
-            playback?.StepTheBlend(deltaTime * clock.Speed);
+            if (playback == null)
+            {
+                return;
+            }
+
+            playback.FollowTheClock(clock.NormalizedTime);
+            playback.StepTheBlend(deltaTime * clock.Speed);
+            playback.ShowLocomotionAt(locomotionSignal.PlanarVelocity);
         }
 
         public void RestAt(BodyPose pose) => restPose = pose;

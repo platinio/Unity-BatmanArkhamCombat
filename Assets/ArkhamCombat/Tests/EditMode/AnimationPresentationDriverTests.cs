@@ -41,6 +41,8 @@ namespace ArkhamCombat.Tests
             clip = new AnimationClip { hideFlags = HideFlags.HideAndDontSave };
             clip.SetCurve("Bone", typeof(Transform), "m_LocalPosition.x", AnimationCurve.Linear(0f, 0f, ClipSeconds, 1f));
             locomotion = new AnimatorController { hideFlags = HideFlags.HideAndDontSave };
+            locomotion.AddParameter(LocomotionParameterNames.MoveRight, AnimatorControllerParameterType.Float);
+            locomotion.AddParameter(LocomotionParameterNames.MoveForward, AnimatorControllerParameterType.Float);
             locomotion.AddLayer("Locomotion");
             clips = ScriptableObject.CreateInstance<CharacterClips>();
             jab = Action("Jab", ActionSeconds);
@@ -126,6 +128,34 @@ namespace ArkhamCombat.Tests
             DOTween.TweensById(driver.TweenId)[0].Goto(0.15f);
 
             Assert.IsTrue(skin.GetComponent<Renderer>().HasPropertyBlock());
+        }
+
+        [Test]
+        public void TheInjectedSignal_DrivesTheWalk_InTheModelsFrame()
+        {
+            WakeWith(TheJabOnTheWholeClip());
+            driver.Construct(new SidewaysLocomotionSignal());
+            model.transform.rotation = Quaternion.Euler(0f, 90f, 0f);
+
+            driver.Tick(0.05f);
+
+            Assert.AreEqual(2f, driver.MoveForward, 1e-4f, "facing +X, a velocity along +X is straight ahead");
+            Assert.AreEqual(0f, driver.MoveRight, 1e-4f);
+        }
+
+        [Test]
+        public void AnActionWithNoClip_ReadsAsAHoldOnTheOverlay()
+        {
+            WakeWith();
+
+            driver.Play(jab);
+
+            StringAssert.StartsWith("hold", driver.FrameDataLine);
+        }
+
+        private sealed class SidewaysLocomotionSignal : ILocomotionSignal
+        {
+            public Vector3 PlanarVelocity => Vector3.right * 2f;
         }
 
         [Test]

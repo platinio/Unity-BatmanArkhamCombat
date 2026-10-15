@@ -37,6 +37,7 @@ namespace ArkhamCombat.Player
             BindFacts();
             BindConditions();
             BindPresentation();
+            BindLocomotionSignal();
             BindWarpAndHits();
             BindTargeting();
             BindTravelDirection();
@@ -100,6 +101,8 @@ namespace ArkhamCombat.Player
 
             Container.Bind<IPresentationDriver>().FromInstance(hasBody ? driverOnTheBody : new NullPresentationDriver());
         }
+
+        private void BindLocomotionSignal() => Container.Bind<ILocomotionSignal>().To<MotorLocomotionSignal>().AsSingle();
 
         private void BindWarpAndHits()
         {

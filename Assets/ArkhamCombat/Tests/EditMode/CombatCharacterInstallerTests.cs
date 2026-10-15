@@ -237,6 +237,16 @@ namespace ArkhamCombat.Tests
         }
 
         [Test]
+        public void TheLocomotionSignal_IsTheCharactersMotor()
+        {
+            GiveTheCharacterAStanceWithoutConditions();
+
+            InstallTheCharacter();
+
+            Assert.IsInstanceOf<MotorLocomotionSignal>(characterContainer.Resolve<ILocomotionSignal>());
+        }
+
+        [Test]
         public void TheCharactersOwnMotorIsBound_NotTheOneTheSceneFound()
         {
             GiveTheCharacterAStanceWithoutConditions();

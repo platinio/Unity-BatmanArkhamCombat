@@ -356,6 +356,8 @@ namespace ArkhamCombat.Tests
 
             public int TickCount { get; private set; }
 
+            public float LastTickSeconds { get; private set; }
+
             public bool IsPlaying => clock.IsPlaying;
             public float NormalizedTime => clock.NormalizedTime;
 
@@ -373,6 +375,7 @@ namespace ArkhamCombat.Tests
             {
                 clock.Tick(deltaTime);
                 TickCount++;
+                LastTickSeconds = deltaTime;
             }
         }
 

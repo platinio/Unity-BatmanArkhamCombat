@@ -5,6 +5,7 @@ using ArkhamCombat.Characters;
 using ArkhamCombat.Combat;
 using ArkhamCombat.Encounter;
 using UnityEngine;
+using UnityEngine.AI;
 using Zenject;
 
 namespace ArkhamCombat.Enemies
@@ -36,6 +37,7 @@ namespace ArkhamCombat.Enemies
             BindFacts();
             BindConditions();
             BindPresentation();
+            BindLocomotionSignal();
             BindWarpAndHits();
             BindTargeting();
             BindTravelDirection();
@@ -70,6 +72,14 @@ namespace ArkhamCombat.Enemies
             bool hasBody = driverOnTheBody != null;
 
             Container.Bind<IPresentationDriver>().FromInstance(hasBody ? driverOnTheBody : new NullPresentationDriver());
+        }
+
+        private void BindLocomotionSignal()
+        {
+            bool hasAnAgent = TryGetComponent(out NavMeshAgent agent);
+
+            Container.Bind<ILocomotionSignal>()
+                .FromInstance(hasAnAgent ? new NavMeshAgentLocomotionSignal(agent) : new StillLocomotionSignal());
         }
 
         private void BindWarpAndHits()

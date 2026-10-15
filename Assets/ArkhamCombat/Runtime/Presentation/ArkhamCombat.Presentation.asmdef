@@ -3,7 +3,8 @@
     "rootNamespace": "ArkhamCombat.Presentation",
     "references": [
         "ArkhamCombat.Combat",
-        "MackySoft.SerializeReferenceExtensions"
+        "MackySoft.SerializeReferenceExtensions",
+        "Zenject"
     ],
     "includePlatforms": [],
     "excludePlatforms": [],

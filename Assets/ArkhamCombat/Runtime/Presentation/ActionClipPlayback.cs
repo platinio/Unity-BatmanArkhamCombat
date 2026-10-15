@@ -15,14 +15,18 @@ namespace ArkhamCombat.Presentation
 
         private readonly CharacterClips clips;
         private readonly ClipBlend blend = new ClipBlend();
+        private readonly Transform model;
         private PlayableGraph graph;
         private AnimationMixerPlayable mixer;
+        private AnimatorControllerPlayable locomotionPlayable;
         private AnimationClipPlayable clipPlayable;
         private ClipEntry entry;
+        private bool isHoldingAnAction;
 
         public ActionClipPlayback(Animator animator, CharacterClips clips)
         {
             this.clips = clips;
+            model = animator.transform;
             LeaveMovingTheCharacterToGameplay(animator);
             BuildGraph(animator);
         }
@@ -34,6 +38,29 @@ namespace ArkhamCombat.Presentation
         public float ClipSeconds => clipPlayable.IsValid() ? (float)clipPlayable.GetTime() : 0f;
 
         public float Weight => blend.Weight;
+
+        public float MoveRight => LocomotionParameter(LocomotionParameterNames.MoveRight);
+
+        public float MoveForward => LocomotionParameter(LocomotionParameterNames.MoveForward);
+
+        public string FrameDataLine
+        {
+            get
+            {
+                if (IsShowingAClip)
+                {
+                    return $"clip {entry.Action.name}  {ClipSeconds:0.00}s  weight {blend.Weight:0.00}";
+                }
+
+                if (isHoldingAnAction)
+                {
+                    return $"hold  weight {blend.Weight:0.00}";
+                }
+
+                bool isFadingOut = blend.Weight > 0f;
+                return isFadingOut ? $"clip fading out  weight {blend.Weight:0.00}" : string.Empty;
+            }
+        }
 
         internal PlayableGraph Graph => graph;
 
@@ -65,10 +92,23 @@ namespace ArkhamCombat.Presentation
             DropTheClipOnceFadedOut();
         }
 
+        public void ShowLocomotionAt(Vector3 worldPlanarVelocity)
+        {
+            if (!locomotionPlayable.IsValid())
+            {
+                return;
+            }
+
+            Vector3 velocityInTheModelsFrame = model.InverseTransformDirection(worldPlanarVelocity);
+            locomotionPlayable.SetFloat(LocomotionParameterNames.MoveRight, velocityInTheModelsFrame.x);
+            locomotionPlayable.SetFloat(LocomotionParameterNames.MoveForward, velocityInTheModelsFrame.z);
+        }
+
         public void FadeOut()
         {
             float seconds = IsShowingAClip ? entry.BlendOutSeconds : clips.HoldBlendOutSeconds;
             entry = null;
+            isHoldingAnAction = false;
             blend.BlendTo(0f, seconds);
             ApplyWeights();
         }
@@ -89,8 +129,9 @@ namespace ArkhamCombat.Presentation
             mixer = AnimationMixerPlayable.Create(graph, InputCount);
             if (clips.Locomotion != null)
             {
-                AnimatorControllerPlayable locomotion = AnimatorControllerPlayable.Create(graph, clips.Locomotion);
-                graph.Connect(locomotion, 0, mixer, LocomotionInput);
+                locomotionPlayable = AnimatorControllerPlayable.Create(graph, clips.Locomotion);
+                graph.Connect(locomotionPlayable, 0, mixer, LocomotionInput);
+                ReportMissingLocomotionParameters();
             }
 
             ApplyWeights();
@@ -100,10 +141,37 @@ namespace ArkhamCombat.Presentation
             graph.Play();
         }
 
+        private void ReportMissingLocomotionParameters()
+        {
+            foreach (string parameterName in new[] { LocomotionParameterNames.MoveRight, LocomotionParameterNames.MoveForward })
+            {
+                if (!HasLocomotionParameter(parameterName))
+                {
+                    Debug.LogError($"[{nameof(ActionClipPlayback)}] '{clips.Locomotion.name}' has no float parameter '{parameterName}', so the character cannot walk.", clips);
+                }
+            }
+        }
+
+        private bool HasLocomotionParameter(string parameterName)
+        {
+            for (int i = 0; i < locomotionPlayable.GetParameterCount(); i++)
+            {
+                if (locomotionPlayable.GetParameter(i).name == parameterName)
+                {
+                    return true;
+                }
+            }
+
+            return false;
+        }
+
+        private float LocomotionParameter(string parameterName) => locomotionPlayable.IsValid() ? locomotionPlayable.GetFloat(parameterName) : 0f;
+
         private void ShowClip(ClipEntry entryToShow)
         {
             DropTheClip();
             entry = entryToShow;
+            isHoldingAnAction = false;
             clipPlayable = AnimationClipPlayable.Create(graph, entry.Clip);
             clipPlayable.SetSpeed(ClipNeverAdvancesOnItsOwn);
             clipPlayable.SetTime(entry.ClipSecondsAt(0f));
@@ -115,6 +183,7 @@ namespace ArkhamCombat.Presentation
         private void Hold()
         {
             entry = null;
+            isHoldingAnAction = true;
             blend.BlendTo(0f, clips.HoldBlendOutSeconds);
             ApplyWeights();
         }

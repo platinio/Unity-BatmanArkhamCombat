@@ -699,6 +699,7 @@ namespace ArkhamCombat.Tests
 
             Assert.IsFalse(runner.IsPlaying);
             Assert.AreEqual(1, recordingDriver.TickCount);
+            Assert.AreEqual(TickSeconds, recordingDriver.LastTickSeconds, "the idle tick carries the frame's seconds, or a fade-out would freeze");
         }
 
         private ActionRunner CreateRunner()

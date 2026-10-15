@@ -87,8 +87,21 @@ namespace ArkhamCombat.Shell
             float y = origin.y;
             GUI.Label(new Rect(origin.x, y, LabelWidth, HeaderHeight), HeaderText());
             y += HeaderSpacing;
+            y = DrawTheDriversLine(y);
 
             DrawRecordsNewestFirst(origin.x, y);
+        }
+
+        private float DrawTheDriversLine(float y)
+        {
+            string driversLine = runner.PresentationFrameDataLine;
+            if (string.IsNullOrEmpty(driversLine))
+            {
+                return y;
+            }
+
+            GUI.Label(new Rect(origin.x, y, LabelWidth, HeaderHeight), driversLine);
+            return y + HeaderSpacing;
         }
 
         private string HeaderText()
