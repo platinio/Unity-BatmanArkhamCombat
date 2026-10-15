@@ -167,17 +167,19 @@ namespace ArkhamCombat.Presentation
         }
     }
 
-    /// <summary>A model of many materials flashes as one: each renderer keeps its own rest colour and its own property block.</summary>
+    /// <summary>A model of many materials flashes as one.</summary>
     internal sealed class TintedRenderer
     {
         private readonly Renderer renderer;
+        private readonly int materialIndex;
         private readonly int colourProperty;
         private readonly Color restColour;
         private readonly MaterialPropertyBlock propertyBlock = new MaterialPropertyBlock();
 
-        private TintedRenderer(Renderer renderer, Material material)
+        private TintedRenderer(Renderer renderer, int materialIndex, Material material)
         {
             this.renderer = renderer;
+            this.materialIndex = materialIndex;
             colourProperty = MaterialColourProperty.Of(material);
             restColour = material.GetColor(colourProperty);
         }
@@ -187,15 +189,27 @@ namespace ArkhamCombat.Presentation
             List<TintedRenderer> tinted = new List<TintedRenderer>();
             for (int i = 0; i < renderers.Count; i++)
             {
-                Renderer renderer = renderers[i];
-                Material material = renderer != null ? renderer.sharedMaterial : null;
-                if (material != null)
-                {
-                    tinted.Add(new TintedRenderer(renderer, material));
-                }
+                AddEveryMaterialOf(renderers[i], tinted);
             }
 
             return tinted;
+        }
+
+        private static void AddEveryMaterialOf(Renderer renderer, List<TintedRenderer> tinted)
+        {
+            if (renderer == null)
+            {
+                return;
+            }
+
+            Material[] materials = renderer.sharedMaterials;
+            for (int materialIndex = 0; materialIndex < materials.Length; materialIndex++)
+            {
+                if (materials[materialIndex] != null)
+                {
+                    tinted.Add(new TintedRenderer(renderer, materialIndex, materials[materialIndex]));
+                }
+            }
         }
 
         public void Tint(Color colour, float share)
@@ -206,14 +220,14 @@ namespace ArkhamCombat.Presentation
             }
 
             propertyBlock.SetColor(colourProperty, Color.Lerp(restColour, colour, share));
-            renderer.SetPropertyBlock(propertyBlock);
+            renderer.SetPropertyBlock(propertyBlock, materialIndex);
         }
 
         public void Clear()
         {
             if (renderer != null)
             {
-                renderer.SetPropertyBlock(null);
+                renderer.SetPropertyBlock(null, materialIndex);
             }
         }
     }

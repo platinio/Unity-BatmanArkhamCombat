@@ -31,10 +31,9 @@ namespace ArkhamCombat.Combat
         /// <summary>Optional. A punch cue falls back to the body when there is none.</summary>
         Transform Fist { get; }
 
-        /// <summary>Optional. A fall measures how tall the body is on it.</summary>
+        /// <summary>Optional.</summary>
         Renderer BodyRenderer { get; }
 
-        /// <summary>Colour cues tint every one of these and do nothing with none.</summary>
         IReadOnlyList<Renderer> TintedRenderers { get; }
 
         /// <summary>Where <c>Stop</c> returns the body to: the standing pose until a cue that holds a pose moves it.</summary>

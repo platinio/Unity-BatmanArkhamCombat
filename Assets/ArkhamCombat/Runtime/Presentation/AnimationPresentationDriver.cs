@@ -4,11 +4,6 @@ using UnityEngine;
 
 namespace ArkhamCombat.Presentation
 {
-    /// <summary>
-    /// The runner's clock stays the one truth, as on the capsules: hit windows, warp and hit-stop mean
-    /// the same on a character, and the clip only follows it. Cues that bend a capsule stay silent
-    /// here; colour cues tint every renderer of the model.
-    /// </summary>
     [RequireComponent(typeof(Animator))]
     public sealed class AnimationPresentationDriver : MonoBehaviour, IPresentationDriver, ICueTarget
     {
@@ -42,33 +37,25 @@ namespace ArkhamCombat.Presentation
             set
             {
                 clock.Speed = value;
-
-                bool isFrozen = value <= 0f;
-                if (isFrozen)
-                {
-                    CueTweens.Freeze(this);
-                }
-                else
-                {
-                    CueTweens.Resume(this);
-                }
+                CueTweens.FollowSpeed(this, value);
             }
         }
 
-        private void Awake()
+        internal void Awake()
         {
+            tintedRenderers = GetComponentsInChildren<Renderer>();
+            standingPose = BodyPose.Of(transform);
+            restPose = standingPose;
+            clock.CueDue += PlayCue;
+
             if (clips == null)
             {
-                Debug.LogError($"[{nameof(AnimationPresentationDriver)}] No character clips assigned on '{name}', so every action plays as a hold.", this);
+                Debug.LogError($"[{nameof(AnimationPresentationDriver)}] No character clips assigned on '{name}', so every action plays as a hold with only its colour cues.", this);
                 return;
             }
 
             ReportAuthoringErrors();
             playback = new ActionClipPlayback(GetComponent<Animator>(), clips);
-            tintedRenderers = GetComponentsInChildren<Renderer>();
-            standingPose = BodyPose.Of(transform);
-            restPose = standingPose;
-            clock.CueDue += PlayCue;
         }
 
         private void OnDestroy()
@@ -96,15 +83,15 @@ namespace ArkhamCombat.Presentation
         {
             clock.Tick(deltaTime);
             playback?.FollowTheClock(clock.NormalizedTime);
-            playback?.Blend(deltaTime * clock.Speed);
+            playback?.StepTheBlend(deltaTime * clock.Speed);
         }
 
         public void RestAt(BodyPose pose) => restPose = pose;
 
         private void PlayCue(PresentationCue cue)
         {
-            bool playsHere = cue.Kind != null && cue.Kind.CanPlayOnARiggedBody;
-            if (playsHere)
+            bool canPlayHere = cue.Kind != null && cue.Kind.CanPlayOnARiggedBody;
+            if (canPlayHere)
             {
                 cue.Kind.Play(this, cue);
             }

@@ -5,10 +5,6 @@ using UnityEngine;
 
 namespace ArkhamCombat.Presentation
 {
-    /// <summary>
-    /// Clips live here and not on the action: the capsule arena and the character arena share the
-    /// action assets, and two characters play different clips for the same action.
-    /// </summary>
     [CreateAssetMenu(menuName = "ArkhamCombat/Character Clips", fileName = "CharacterClips")]
     public sealed class CharacterClips : ScriptableObject
     {
@@ -19,25 +15,24 @@ namespace ArkhamCombat.Presentation
         [SerializeField] private List<ClipEntry> entries = new List<ClipEntry>();
 
         [Tooltip("Seconds a playing clip takes to fade back to locomotion when an action with no entry starts.")]
-        [SerializeField, Min(0f)] private float holdBlendOutSeconds = 0.12f;
+        [SerializeField, Min(0f)] private float holdBlendOutSeconds = ClipEntry.DefaultBlendOutSeconds;
 
         public RuntimeAnimatorController Locomotion => locomotion;
         public IReadOnlyList<ClipEntry> Entries => entries;
         public float HoldBlendOutSeconds => holdBlendOutSeconds;
 
-        public void Configure(RuntimeAnimatorController locomotion, IEnumerable<ClipEntry> entries, float holdBlendOutSeconds = 0.12f)
+        public void Configure(RuntimeAnimatorController locomotion, IEnumerable<ClipEntry> entries, float holdBlendOutSeconds = ClipEntry.DefaultBlendOutSeconds)
         {
             this.locomotion = locomotion;
             this.entries = new List<ClipEntry>(entries);
             this.holdBlendOutSeconds = holdBlendOutSeconds;
         }
 
-        /// <summary>An entry with no clip is a hold until it is fixed; <see cref="Validate"/> reports it.</summary>
         public bool TryFindEntry(ActionDefinition action, out ClipEntry entry)
         {
             for (int i = 0; i < entries.Count; i++)
             {
-                bool isTheActionsClip = entries[i] != null && entries[i].Action == action && entries[i].Clip != null;
+                bool isTheActionsClip = entries[i].Action == action && entries[i].Clip != null;
                 if (isTheActionsClip)
                 {
                     entry = entries[i];
@@ -49,10 +44,6 @@ namespace ArkhamCombat.Presentation
             return false;
         }
 
-        /// <summary>
-        /// Adds one line to <paramref name="errors"/> for each authoring mistake in this asset, and
-        /// answers whether it added none.
-        /// </summary>
         public bool Validate(List<string> errors)
         {
             int errorCountBefore = errors.Count;
@@ -83,12 +74,6 @@ namespace ArkhamCombat.Presentation
 
         private void ReportWhenEntryIsBroken(int index, ClipEntry entry, List<string> errors)
         {
-            if (entry == null)
-            {
-                errors.Add($"'{name}': entry {index} is null.");
-                return;
-            }
-
             if (entry.Action == null)
             {
                 errors.Add($"'{name}': entry {index} names no action.");
@@ -110,7 +95,7 @@ namespace ArkhamCombat.Presentation
             HashSet<ActionDefinition> actionsSeen = new HashSet<ActionDefinition>();
             foreach (ClipEntry entry in entries)
             {
-                bool isMappedAgain = entry != null && entry.Action != null && !actionsSeen.Add(entry.Action);
+                bool isMappedAgain = entry.Action != null && !actionsSeen.Add(entry.Action);
                 if (isMappedAgain)
                 {
                     errors.Add($"'{name}': '{entry.Action.name}' has two entries; the first one plays.");
@@ -119,13 +104,15 @@ namespace ArkhamCombat.Presentation
         }
     }
 
-    /// <summary>
-    /// The part of the clip used is how a designer lines a clip up with gameplay: a punch whose contact
-    /// sits at 40% of the clip, for a jab whose hit window opens at 30%, is trimmed until they meet.
-    /// </summary>
     [Serializable]
     public sealed class ClipEntry
     {
+        public const float DefaultBlendInSeconds = 0.08f;
+        public const float DefaultBlendOutSeconds = 0.12f;
+
+        // A looping clip wraps at its length, so a sample there is its first frame.
+        private const float JustBeforeTheEnd = 0.001f;
+
         [SerializeField] private ActionDefinition action;
 
         [SerializeField] private AnimationClip clip;
@@ -137,14 +124,14 @@ namespace ArkhamCombat.Presentation
         [SerializeField, Range(0f, 1f)] private float end = 1f;
 
         [Tooltip("Seconds from locomotion to this clip when the action starts.")]
-        [SerializeField, Min(0f)] private float blendInSeconds = 0.08f;
+        [SerializeField, Min(0f)] private float blendInSeconds = DefaultBlendInSeconds;
 
         [Tooltip("Seconds back to locomotion when the action ends or is stopped.")]
-        [SerializeField, Min(0f)] private float blendOutSeconds = 0.12f;
+        [SerializeField, Min(0f)] private float blendOutSeconds = DefaultBlendOutSeconds;
 
         public ClipEntry() { }
 
-        public ClipEntry(ActionDefinition action, AnimationClip clip, float start = 0f, float end = 1f, float blendInSeconds = 0.08f, float blendOutSeconds = 0.12f)
+        public ClipEntry(ActionDefinition action, AnimationClip clip, float start = 0f, float end = 1f, float blendInSeconds = DefaultBlendInSeconds, float blendOutSeconds = DefaultBlendOutSeconds)
         {
             this.action = action;
             this.clip = clip;
@@ -161,6 +148,10 @@ namespace ArkhamCombat.Presentation
         public float BlendInSeconds => blendInSeconds;
         public float BlendOutSeconds => blendOutSeconds;
 
-        public float ClipSecondsAt(float normalizedActionTime) => Mathf.Lerp(start, end, normalizedActionTime) * clip.length;
+        public float ClipSecondsAt(float normalizedActionTime)
+        {
+            float clipSeconds = Mathf.Lerp(start, end, normalizedActionTime) * clip.length;
+            return clip.isLooping ? Mathf.Min(clipSeconds, clip.length - JustBeforeTheEnd) : clipSeconds;
+        }
     }
 }

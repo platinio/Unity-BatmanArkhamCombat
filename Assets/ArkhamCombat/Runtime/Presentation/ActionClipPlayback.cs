@@ -5,11 +5,7 @@ using UnityEngine.Playables;
 
 namespace ArkhamCombat.Presentation
 {
-    /// <summary>
-    /// The clip never advances on its own: its time is set from the gameplay clock, stretched so the
-    /// part of the clip used spans the action, and a stopped clock is a held pose. Locomotion plays
-    /// underneath the whole time and shows through as the clip blends out.
-    /// </summary>
+    /// <summary>The clip never advances on its own: its time is set from the gameplay clock, so a stopped clock is a held pose.</summary>
     public sealed class ActionClipPlayback
     {
         private const int LocomotionInput = 0;
@@ -24,11 +20,10 @@ namespace ArkhamCombat.Presentation
         private AnimationClipPlayable clipPlayable;
         private ClipEntry entry;
 
-        // Gameplay moves the character: the motor, the warp, the dash, the agent. A clip only moves the body around its root.
         public ActionClipPlayback(Animator animator, CharacterClips clips)
         {
             this.clips = clips;
-            animator.applyRootMotion = false;
+            LeaveMovingTheCharacterToGameplay(animator);
             BuildGraph(animator);
         }
 
@@ -63,7 +58,7 @@ namespace ArkhamCombat.Presentation
             }
         }
 
-        public void Blend(float deltaTime)
+        public void StepTheBlend(float deltaTime)
         {
             blend.Step(deltaTime);
             ApplyWeights();
@@ -86,6 +81,8 @@ namespace ArkhamCombat.Presentation
             }
         }
 
+        private static void LeaveMovingTheCharacterToGameplay(Animator animator) => animator.applyRootMotion = false;
+
         private void BuildGraph(Animator animator)
         {
             graph = PlayableGraph.Create($"{animator.name} actions");
@@ -103,7 +100,6 @@ namespace ArkhamCombat.Presentation
             graph.Play();
         }
 
-        // The new clip takes the weight the old one had, so a follow-up at full weight is a cut and never dips through locomotion.
         private void ShowClip(ClipEntry entryToShow)
         {
             DropTheClip();

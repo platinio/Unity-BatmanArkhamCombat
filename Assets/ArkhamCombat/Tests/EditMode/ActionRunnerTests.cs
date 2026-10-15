@@ -689,6 +689,18 @@ namespace ArkhamCombat.Tests
             Assert.AreEqual(ActionTrace.MarkStatus.Consumed, idleBeforeTheLastAttack.Marks[0].Status);
         }
 
+        [Test]
+        public void TheDriverIsTicked_WhileIdleToo_SoThePictureKeepsMovingBetweenActions()
+        {
+            RecordingPresentationDriver recordingDriver = new RecordingPresentationDriver();
+            ActionRunner runner = new ActionRunner(stance, intents, facts, new AlwaysConditionEvaluator(), kinds.InterruptKinds, recordingDriver, warpMover, hitWindowListener);
+
+            runner.Tick(TickSeconds, Vector3.zero, canStartFromIdle: true);
+
+            Assert.IsFalse(runner.IsPlaying);
+            Assert.AreEqual(1, recordingDriver.TickCount);
+        }
+
         private ActionRunner CreateRunner()
         {
             ActionRunner runner = CreateRunnerNobodyListensTo();

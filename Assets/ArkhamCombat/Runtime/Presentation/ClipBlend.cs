@@ -2,10 +2,6 @@ using UnityEngine;
 
 namespace ArkhamCombat.Presentation
 {
-    /// <summary>
-    /// Moves at a steady rate, so a blend from locomotion to a clip takes the seconds it was given at
-    /// any frame rate, and a blend that starts part way takes proportionally less.
-    /// </summary>
     public sealed class ClipBlend
     {
         private float secondsForAFullBlend;
