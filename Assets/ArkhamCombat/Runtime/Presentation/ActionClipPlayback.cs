@@ -22,6 +22,7 @@ namespace ArkhamCombat.Presentation
         private AnimationClipPlayable clipPlayable;
         private ClipEntry entry;
         private bool isHoldingAnAction;
+        private bool isHoldingTheLastPose;
 
         public ActionClipPlayback(Animator animator, CharacterClips clips)
         {
@@ -55,6 +56,11 @@ namespace ArkhamCombat.Presentation
                 if (isHoldingAnAction)
                 {
                     return $"hold  weight {blend.Weight:0.00}";
+                }
+
+                if (isHoldingTheLastPose)
+                {
+                    return $"clip held  weight {blend.Weight:0.00}";
                 }
 
                 bool isFadingOut = blend.Weight > 0f;
@@ -106,6 +112,13 @@ namespace ArkhamCombat.Presentation
 
         public void FadeOut()
         {
+            bool staysInItsLastPose = IsShowingAClip && entry.HoldsItsLastPose;
+            if (staysInItsLastPose)
+            {
+                HoldTheLastPose();
+                return;
+            }
+
             float seconds = IsShowingAClip ? entry.BlendOutSeconds : clips.HoldBlendOutSeconds;
             entry = null;
             isHoldingAnAction = false;
@@ -167,11 +180,19 @@ namespace ArkhamCombat.Presentation
 
         private float LocomotionParameter(string parameterName) => locomotionPlayable.IsValid() ? locomotionPlayable.GetFloat(parameterName) : 0f;
 
+        private void HoldTheLastPose()
+        {
+            clipPlayable.SetTime(entry.ClipSecondsAt(1f));
+            entry = null;
+            isHoldingTheLastPose = true;
+        }
+
         private void ShowClip(ClipEntry entryToShow)
         {
             DropTheClip();
             entry = entryToShow;
             isHoldingAnAction = false;
+            isHoldingTheLastPose = false;
             clipPlayable = AnimationClipPlayable.Create(graph, entry.Clip);
             clipPlayable.SetSpeed(ClipNeverAdvancesOnItsOwn);
             clipPlayable.SetTime(entry.ClipSecondsAt(0f));
@@ -184,6 +205,7 @@ namespace ArkhamCombat.Presentation
         {
             entry = null;
             isHoldingAnAction = true;
+            isHoldingTheLastPose = false;
             blend.BlendTo(0f, clips.HoldBlendOutSeconds);
             ApplyWeights();
         }

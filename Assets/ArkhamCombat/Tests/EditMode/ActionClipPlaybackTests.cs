@@ -170,6 +170,27 @@ namespace ArkhamCombat.Tests
         }
 
         [Test]
+        public void AnEntryThatHoldsItsLastPose_StaysOnTheClipsEnd_UntilTheNextAction()
+        {
+            PlaybackWith(new ClipEntry(jab, clip, 0f, 1f, ACut, ACut, holdsItsLastPose: true), WholeClipFor(cross)).Show(jab);
+            playback.FollowTheClock(0.5f);
+
+            playback.FadeOut();
+            playback.StepTheBlend(1f);
+            EvaluateTheGraphByHand();
+
+            Assert.AreEqual(1f, playback.Weight, "the pose is held, not faded");
+            Assert.AreEqual(ClipSeconds, playback.ClipSeconds, 1e-4f, "held on the clip's end, however far the clock got");
+            Assert.AreEqual(1f, bone.localPosition.x, 1e-3f);
+            Assert.AreEqual("clip held  weight 1.00", playback.FrameDataLine);
+
+            playback.Show(cross);
+
+            Assert.AreSame(cross, playback.Entry.Action);
+            Assert.AreEqual(0f, playback.ClipSeconds, 1e-4f, "the next action takes over");
+        }
+
+        [Test]
         public void AnActionWithNoEntry_IsAHold()
         {
             PlaybackWith().Show(jab);
