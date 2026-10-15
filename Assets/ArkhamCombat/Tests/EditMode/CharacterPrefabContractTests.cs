@@ -1,4 +1,5 @@
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
 using ArkhamCombat.Combat;
 using ArkhamCombat.Presentation;
@@ -9,10 +10,16 @@ using UnityEngine;
 
 namespace ArkhamCombat.Tests
 {
-    // A character variant swaps the picture and nothing else; nothing compiles the prefab, its clips and its controller together, so these read them.
+    // Nothing compiles the prefab, its clips and its controller together, so these read them.
     [TestFixture("Player_Adam")]
     public class CharacterPrefabContractTests
     {
+        private const string ActionsFolder = "Assets/ArkhamCombat/Actions";
+        private const string TheOneReactionThatIsAHold = "Stunned";
+
+        private static bool ThePacksAreImported =>
+            AssetDatabase.IsValidFolder("Assets/Frank_Assassin") && AssetDatabase.IsValidFolder("Assets/UnityTechnologies/Adam Character Pack");
+
         private readonly string prefabPath;
 
         private GameObject character;
@@ -24,13 +31,22 @@ namespace ArkhamCombat.Tests
         [SetUp]
         public void SetUp()
         {
+            Assume.That(ThePacksAreImported, "needs the Adam Character Pack and the Frank RPG Assassin pack at their default paths");
             character = AssetDatabase.LoadAssetAtPath<GameObject>(prefabPath);
             Assert.IsNotNull(character, $"no prefab at {prefabPath}");
             driver = character.GetComponentInChildren<AnimationPresentationDriver>();
             Assert.IsNotNull(driver, "the model child carries the animation driver");
-            clips = (CharacterClips)new SerializedObject(driver).FindProperty("clips").objectReferenceValue;
+            clips = driver.Clips;
             Assert.IsNotNull(clips, "the driver names the character's clips");
         }
+
+        private static ActionDefinition ActionAt(string pathUnderActions) => AssetDatabase.LoadAssetAtPath<ActionDefinition>($"{ActionsFolder}/{pathUnderActions}.asset");
+
+        private static IEnumerable<ActionDefinition> ActionsIn(string folder) =>
+            AssetDatabase.FindAssets("t:ActionDefinition", new[] { folder })
+                .Select(AssetDatabase.GUIDToAssetPath)
+                .Where(path => Path.GetDirectoryName(path).Replace(Path.DirectorySeparatorChar, '/') == folder)
+                .Select(AssetDatabase.LoadAssetAtPath<ActionDefinition>);
 
         [Test]
         public void TheAnimationDriver_IsTheOneTheInstallerFinds_BecauseTheCapsuleChildIsDeactivated()
@@ -39,7 +55,7 @@ namespace ArkhamCombat.Tests
         }
 
         [Test]
-        public void TheDriverSitsOnTheModel_BesideItsAnimator()
+        public void TheDriverSitsBesideAHumanoidAnimator()
         {
             Assert.IsTrue(driver.TryGetComponent(out Animator animator));
             Assert.IsTrue(animator.isHuman, "Frank's clips are humanoid, so the model must be too");
@@ -57,32 +73,40 @@ namespace ArkhamCombat.Tests
         public void TheLocomotionController_ReadsTheTwoFloatsTheDriverWrites()
         {
             AnimatorController controller = (AnimatorController)clips.Locomotion;
-            IEnumerable<string> floats = controller.parameters.Where(parameter => parameter.type == AnimatorControllerParameterType.Float).Select(parameter => parameter.name);
+            IEnumerable<string> floatParameterNames = controller.parameters.Where(parameter => parameter.type == AnimatorControllerParameterType.Float).Select(parameter => parameter.name);
 
-            CollectionAssert.IsSubsetOf(new[] { LocomotionParameterNames.MoveRight, LocomotionParameterNames.MoveForward }, floats);
+            CollectionAssert.IsSubsetOf(new[] { LocomotionParameterNames.MoveRight, LocomotionParameterNames.MoveForward }, floatParameterNames);
+        }
+
+        [TestCase("Reactions/Knockdown")]
+        [TestCase("Reactions/Death")]
+        public void AClipThatLeavesTheBodyDown_KeepsItsLastPose(string pathUnderActions)
+        {
+            Assert.IsTrue(clips.TryFindEntry(ActionAt(pathUnderActions), out ClipEntry entry), $"{pathUnderActions} has a clip");
+            Assert.IsTrue(entry.KeepsItsLastPose, $"{pathUnderActions} ends lying down and must stay there");
         }
 
         [Test]
-        public void EveryClipThatLeavesTheBodyDown_HoldsItsLastPose()
+        public void EveryPlayerAction_HasAClip()
         {
-            foreach (ClipEntry entry in clips.Entries)
+            IEnumerable<ActionDefinition> playerActions = ActionsIn(ActionsFolder);
+
+            Assert.IsNotEmpty(playerActions);
+            foreach (ActionDefinition action in playerActions)
             {
-                bool leavesTheBodyDown = entry.Action.name == "Knockdown" || entry.Action.name == "Death";
-                if (leavesTheBodyDown)
-                {
-                    Assert.IsTrue(entry.HoldsItsLastPose, $"{entry.Action.name} ends lying down and must stay there");
-                }
+                Assert.IsTrue(clips.TryFindEntry(action, out _), $"{action.name} would play as a hold");
             }
         }
 
         [Test]
-        public void ThePlayersStrikes_EachHaveAClip()
+        public void EveryReaction_HasAClip_ExceptTheHold()
         {
-            foreach (string actionName in new[] { "Jab_L", "Jab_R", "Cross", "RoundhouseKick", "Evade", "Counter", "CapeStun" })
-            {
-                ActionDefinition action = AssetDatabase.LoadAssetAtPath<ActionDefinition>($"Assets/ArkhamCombat/Actions/{actionName}.asset");
+            IEnumerable<ActionDefinition> reactions = ActionsIn($"{ActionsFolder}/Reactions").Where(reaction => reaction.name != TheOneReactionThatIsAHold);
 
-                Assert.IsTrue(clips.TryFindEntry(action, out _), $"{actionName} would play as a hold");
+            Assert.IsNotEmpty(reactions);
+            foreach (ActionDefinition reaction in reactions)
+            {
+                Assert.IsTrue(clips.TryFindEntry(reaction, out _), $"{reaction.name} would play as a hold");
             }
         }
     }

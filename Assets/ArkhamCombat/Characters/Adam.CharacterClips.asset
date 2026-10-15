@@ -20,89 +20,89 @@ MonoBehaviour:
     end: 1
     blendInSeconds: 0.08
     blendOutSeconds: 0.12
-    holdsItsLastPose: 0
+    keepsItsLastPose: 0
   - action: {fileID: 11400000, guid: 86332dfe60f01de49865387f9779acd5, type: 2}
     clip: {fileID: 7400000, guid: 1fd3e6e39ce32924da99676da94b97f4, type: 3}
     start: 0
     end: 1
     blendInSeconds: 0.08
     blendOutSeconds: 0.12
-    holdsItsLastPose: 0
+    keepsItsLastPose: 0
   - action: {fileID: 11400000, guid: 5913c62127663b34ab776301bee1c4c5, type: 2}
     clip: {fileID: 7400000, guid: b82516cfc2b28cc4fb5d8a050d208124, type: 3}
     start: 0
     end: 1
     blendInSeconds: 0.08
     blendOutSeconds: 0.12
-    holdsItsLastPose: 0
+    keepsItsLastPose: 0
   - action: {fileID: 11400000, guid: 7dacb37d8f457a14899983f70b227388, type: 2}
     clip: {fileID: 7400000, guid: ae5da67e25cd89f469bcced4b939a95e, type: 3}
     start: 0
     end: 1
     blendInSeconds: 0.08
     blendOutSeconds: 0.12
-    holdsItsLastPose: 0
+    keepsItsLastPose: 0
   - action: {fileID: 11400000, guid: bc377c4be579dec4085303daceb2ea7d, type: 2}
     clip: {fileID: 7400000, guid: f4b6a15d1ee30ee4bb1f0001b1aab1be, type: 3}
     start: 0
     end: 1
     blendInSeconds: 0.08
     blendOutSeconds: 0.12
-    holdsItsLastPose: 0
+    keepsItsLastPose: 0
   - action: {fileID: 11400000, guid: 0a772da1a0b9f4445a0fdfa95501ff59, type: 2}
     clip: {fileID: 7400000, guid: 104b4945285e9c647873bd8fb0722b2d, type: 3}
     start: 0
     end: 1
     blendInSeconds: 0.08
     blendOutSeconds: 0.12
-    holdsItsLastPose: 0
+    keepsItsLastPose: 0
   - action: {fileID: 11400000, guid: 57e7fec828f96954e935dc871784cee9, type: 2}
     clip: {fileID: 7400000, guid: 2bc141a5715454242bb7336e33ccf332, type: 3}
     start: 0
     end: 1
     blendInSeconds: 0.08
     blendOutSeconds: 0.12
-    holdsItsLastPose: 0
+    keepsItsLastPose: 0
   - action: {fileID: 11400000, guid: b2c60ed6e3697d24aa5bbd628d498b75, type: 2}
     clip: {fileID: 7400000, guid: 208dfb20183bdb340b06cb4331a9bc19, type: 3}
     start: 0
     end: 1
     blendInSeconds: 0.08
     blendOutSeconds: 0.12
-    holdsItsLastPose: 0
+    keepsItsLastPose: 0
   - action: {fileID: 11400000, guid: a9035956a4ea1614b9a94368bbec1bae, type: 2}
     clip: {fileID: 7400000, guid: 7e55793e53d845649bff1209fb9bbfa3, type: 3}
     start: 0
     end: 1
     blendInSeconds: 0.08
     blendOutSeconds: 0.12
-    holdsItsLastPose: 0
+    keepsItsLastPose: 0
   - action: {fileID: 11400000, guid: e9bea067260423b449d1a8624106f965, type: 2}
     clip: {fileID: 7400000, guid: 48cb33b2fd9d55a43a8015648ba77f6d, type: 3}
     start: 0
     end: 1
     blendInSeconds: 0.08
     blendOutSeconds: 0.12
-    holdsItsLastPose: 0
+    keepsItsLastPose: 0
   - action: {fileID: 11400000, guid: 9855ac607fae59b49af1ea8407b96f2c, type: 2}
     clip: {fileID: 7400000, guid: b30ebf229cff8eb4a8bf9f34a2fd1879, type: 3}
     start: 0
     end: 1
     blendInSeconds: 0.08
     blendOutSeconds: 0.12
-    holdsItsLastPose: 1
+    keepsItsLastPose: 1
   - action: {fileID: 11400000, guid: 53ab710b47b79b2448b826e034e5233a, type: 2}
     clip: {fileID: 7400000, guid: de15d31e3a028ab42aff531dc7375c1c, type: 3}
     start: 0
     end: 1
     blendInSeconds: 0.08
     blendOutSeconds: 0.12
-    holdsItsLastPose: 0
+    keepsItsLastPose: 0
   - action: {fileID: 11400000, guid: 7769e75d9697a44469d3a98b945a53b3, type: 2}
     clip: {fileID: 7400000, guid: 90c1a79ef07854e4bbc8c24eba5beada, type: 3}
     start: 0
     end: 1
     blendInSeconds: 0.08
     blendOutSeconds: 0.12
-    holdsItsLastPose: 1
+    keepsItsLastPose: 1
   holdBlendOutSeconds: 0.12

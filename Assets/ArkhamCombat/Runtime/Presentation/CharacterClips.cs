@@ -130,11 +130,11 @@ namespace ArkhamCombat.Presentation
         [SerializeField, Min(0f)] private float blendOutSeconds = DefaultBlendOutSeconds;
 
         [Tooltip("The clip's last frame stays on the body after the action ends, until the next action: a knockdown waits lying down for the get-up, and death stays down.")]
-        [SerializeField] private bool holdsItsLastPose;
+        [SerializeField] private bool keepsItsLastPose;
 
         public ClipEntry() { }
 
-        public ClipEntry(ActionDefinition action, AnimationClip clip, float start = 0f, float end = 1f, float blendInSeconds = DefaultBlendInSeconds, float blendOutSeconds = DefaultBlendOutSeconds, bool holdsItsLastPose = false)
+        public ClipEntry(ActionDefinition action, AnimationClip clip, float start = 0f, float end = 1f, float blendInSeconds = DefaultBlendInSeconds, float blendOutSeconds = DefaultBlendOutSeconds, bool keepsItsLastPose = false)
         {
             this.action = action;
             this.clip = clip;
@@ -142,7 +142,7 @@ namespace ArkhamCombat.Presentation
             this.end = end;
             this.blendInSeconds = blendInSeconds;
             this.blendOutSeconds = blendOutSeconds;
-            this.holdsItsLastPose = holdsItsLastPose;
+            this.keepsItsLastPose = keepsItsLastPose;
         }
 
         public ActionDefinition Action => action;
@@ -151,7 +151,7 @@ namespace ArkhamCombat.Presentation
         public float End => end;
         public float BlendInSeconds => blendInSeconds;
         public float BlendOutSeconds => blendOutSeconds;
-        public bool HoldsItsLastPose => holdsItsLastPose;
+        public bool KeepsItsLastPose => keepsItsLastPose;
 
         public float ClipSecondsAt(float normalizedActionTime)
         {
