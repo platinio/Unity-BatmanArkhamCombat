@@ -38,6 +38,7 @@ namespace ArkhamCombat.Enemies
             BindPresentation();
             BindWarpAndHits();
             BindTargeting();
+            BindTravelDirection();
             BindStartGate();
             BindRunner();
         }
@@ -83,6 +84,15 @@ namespace ArkhamCombat.Enemies
 
             Container.Bind<IActionTargetPicker>()
                 .FromInstance(hasTargeting ? targetPickerOnTheEnemy : new NullActionTargetPicker());
+        }
+
+        // An enemy's tree says which way its dodge goes, so most enemies have no picker of their own.
+        private void BindTravelDirection()
+        {
+            bool picksItsTravelDirection = TryGetComponent(out ITravelDirectionPicker travelDirectionPickerOnTheEnemy);
+
+            Container.Bind<ITravelDirectionPicker>()
+                .FromInstance(picksItsTravelDirection ? travelDirectionPickerOnTheEnemy : new NullTravelDirectionPicker());
         }
 
         // Without a gate of its own nothing holds an enemy back: its tree may start an action at any time.

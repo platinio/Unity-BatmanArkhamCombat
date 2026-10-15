@@ -68,7 +68,20 @@ MonoBehaviour:
         arguments: []
       priority: 0
       destinationId: S1
-  globalEdges: []
+  - id: Evade
+    action: {fileID: 11400000, guid: bc377c4be579dec4085303daceb2ea7d, type: 2}
+    pool:
+      attacks: []
+      policy:
+        rid: 3135146639645999323
+    edges: []
+  globalEdges:
+  - intentKind: {fileID: 11400000, guid: fd7d3c32ea399d546bb3da590da64df3, type: 2}
+    condition:
+      function: {fileID: 0}
+      arguments: []
+    priority: 0
+    destinationId: Evade
   chainResetSeconds: 0.6
   references:
     version: 2
@@ -83,5 +96,8 @@ MonoBehaviour:
       type: {class: NoRepeatPolicy, ns: ArkhamCombat.Combat, asm: ArkhamCombat.Combat}
       data: 
     - rid: 3135146618665566294
+      type: {class: NoRepeatPolicy, ns: ArkhamCombat.Combat, asm: ArkhamCombat.Combat}
+      data: 
+    - rid: 3135146639645999323
       type: {class: NoRepeatPolicy, ns: ArkhamCombat.Combat, asm: ArkhamCombat.Combat}
       data: 

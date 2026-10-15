@@ -13,6 +13,8 @@ namespace ArkhamCombat.Characters
     /// </summary>
     public sealed class CombatActions : CharacterComponent
     {
+        private const float NegligibleDeltaTime = 1e-6f;
+
         private ActionRunner runner;
         private PendingWarpMovement pendingWarpMovement;
         private IActionStartGate startGate;
@@ -59,6 +61,13 @@ namespace ArkhamCombat.Characters
             runner.Tick(deltaTime, transform.position, startGate.CanStartFromIdle);
 
         public Vector3 TakePendingWarpMovement() => pendingWarpMovement.TakeMovement();
+
+        /// <summary>The frame's warp or dash movement as the velocity that covers it this frame.</summary>
+        public Vector3 TakeWarpVelocity(float deltaTime)
+        {
+            Vector3 warpMovement = TakePendingWarpMovement();
+            return deltaTime > NegligibleDeltaTime ? warpMovement / deltaTime : Vector3.zero;
+        }
 
 #if HERMES_EVENTS_GENERATED
         private GameEventDispatcher SceneEvents => sceneGameEvents.GameEventDispatcher;

@@ -17,7 +17,6 @@ namespace ArkhamCombat.Player
     /// </summary>
     public sealed class AttackingState : ICharacterState
     {
-        private const float NegligibleDeltaTime = 1e-6f;
         private const float NegligibleSqrDistance = 1e-4f;
 
         private readonly CharacterContext context;
@@ -49,18 +48,13 @@ namespace ArkhamCombat.Player
             context.Motor.Tick(
                 new MotionIntent
                 {
-                    PlanarVelocity = TakeWarpVelocity(deltaTime),
+                    PlanarVelocity = combatActions.TakeWarpVelocity(deltaTime),
                     Rotation = TurnTowardTarget(deltaTime),
                     SuppressGravity = Runner.IsWarpWindowOpen
                 },
                 deltaTime);
         }
 
-        private Vector3 TakeWarpVelocity(float deltaTime)
-        {
-            Vector3 warpMovement = combatActions.TakePendingWarpMovement();
-            return deltaTime > NegligibleDeltaTime ? warpMovement / deltaTime : Vector3.zero;
-        }
 
         private Quaternion TurnTowardTarget(float deltaTime)
         {

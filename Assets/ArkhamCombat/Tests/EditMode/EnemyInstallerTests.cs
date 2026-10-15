@@ -116,6 +116,7 @@ namespace ArkhamCombat.Tests
             Assert.IsTrue(enemyContainer.Resolve<IActionStartGate>().CanStartFromIdle);
             Assert.IsInstanceOf<NullPresentationDriver>(enemyContainer.Resolve<IPresentationDriver>());
             Assert.IsInstanceOf<NullActionTargetPicker>(enemyContainer.Resolve<IActionTargetPicker>());
+            Assert.IsInstanceOf<NullTravelDirectionPicker>(enemyContainer.Resolve<ITravelDirectionPicker>());
         }
 
         [Test]

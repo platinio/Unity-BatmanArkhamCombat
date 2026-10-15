@@ -231,6 +231,30 @@ namespace ArkhamCombat.Encounter
             return agent != null && stateByAgent.TryGetValue(agent, out AgentState state) && state.IsTelegraphing;
         }
 
+        public bool TryGetNearestTelegraphingAgent(Vector3 position, out IEncounterAgent nearestAgent)
+        {
+            nearestAgent = null;
+            float nearestDistance = float.MaxValue;
+
+            for (int i = 0; i < agentStates.Count; i++)
+            {
+                AgentState state = agentStates[i];
+                if (!state.IsTelegraphing)
+                {
+                    continue;
+                }
+
+                float distance = DistanceOnTheGround(state.Agent.Position, position);
+                if (distance < nearestDistance)
+                {
+                    nearestDistance = distance;
+                    nearestAgent = state.Agent;
+                }
+            }
+
+            return nearestAgent != null;
+        }
+
         public int HeldTokenCount(AttackTokenType tokenType)
         {
             int count = 0;
