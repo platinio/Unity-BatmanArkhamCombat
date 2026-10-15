@@ -8,6 +8,15 @@ namespace ArkhamCombat.Presentation
     /// <summary>The clip never advances on its own: its time is set from the gameplay clock, so a stopped clock is a held pose.</summary>
     public sealed class ActionClipPlayback
     {
+        private enum ShownPose
+        {
+            Locomotion,
+            TheActionsClip,
+            LocomotionUnderAHold,
+            TheKeptLastFrameOfAClip,
+            AClipFadingOut
+        }
+
         private const int LocomotionInput = 0;
         private const int ActionInput = 1;
         private const int InputCount = 2;
@@ -21,8 +30,7 @@ namespace ArkhamCombat.Presentation
         private AnimatorControllerPlayable locomotionPlayable;
         private AnimationClipPlayable clipPlayable;
         private ClipEntry entry;
-        private bool isHoldingAnAction;
-        private bool isHoldingTheLastPose;
+        private ShownPose shownPose = ShownPose.Locomotion;
 
         public ActionClipPlayback(Animator animator, CharacterClips clips)
         {
@@ -34,7 +42,7 @@ namespace ArkhamCombat.Presentation
 
         public ClipEntry Entry => entry;
 
-        public bool IsShowingAClip => entry != null;
+        public bool IsShowingAClip => shownPose == ShownPose.TheActionsClip;
 
         public float ClipSeconds => clipPlayable.IsValid() ? (float)clipPlayable.GetTime() : 0f;
 
@@ -48,23 +56,14 @@ namespace ArkhamCombat.Presentation
         {
             get
             {
-                if (IsShowingAClip)
+                switch (shownPose)
                 {
-                    return $"clip {entry.Action.name}  {ClipSeconds:0.00}s  weight {blend.Weight:0.00}";
+                    case ShownPose.TheActionsClip: return $"clip {entry.Action.name}  {ClipSeconds:0.00}s  weight {blend.Weight:0.00}";
+                    case ShownPose.LocomotionUnderAHold: return $"hold  weight {blend.Weight:0.00}";
+                    case ShownPose.TheKeptLastFrameOfAClip: return $"clip kept  weight {blend.Weight:0.00}";
+                    case ShownPose.AClipFadingOut: return $"clip fading out  weight {blend.Weight:0.00}";
+                    default: return string.Empty;
                 }
-
-                if (isHoldingAnAction)
-                {
-                    return $"hold  weight {blend.Weight:0.00}";
-                }
-
-                if (isHoldingTheLastPose)
-                {
-                    return $"clip held  weight {blend.Weight:0.00}";
-                }
-
-                bool isFadingOut = blend.Weight > 0f;
-                return isFadingOut ? $"clip fading out  weight {blend.Weight:0.00}" : string.Empty;
             }
         }
 
@@ -112,16 +111,16 @@ namespace ArkhamCombat.Presentation
 
         public void FadeOut()
         {
-            bool staysInItsLastPose = IsShowingAClip && entry.HoldsItsLastPose;
-            if (staysInItsLastPose)
+            bool keepsItsLastPose = IsShowingAClip && entry.KeepsItsLastPose;
+            if (keepsItsLastPose)
             {
-                HoldTheLastPose();
+                KeepTheLastPose();
                 return;
             }
 
             float seconds = IsShowingAClip ? entry.BlendOutSeconds : clips.HoldBlendOutSeconds;
             entry = null;
-            isHoldingAnAction = false;
+            shownPose = ShownPose.AClipFadingOut;
             blend.BlendTo(0f, seconds);
             ApplyWeights();
         }
@@ -180,19 +179,18 @@ namespace ArkhamCombat.Presentation
 
         private float LocomotionParameter(string parameterName) => locomotionPlayable.IsValid() ? locomotionPlayable.GetFloat(parameterName) : 0f;
 
-        private void HoldTheLastPose()
+        private void KeepTheLastPose()
         {
             clipPlayable.SetTime(entry.ClipSecondsAt(1f));
             entry = null;
-            isHoldingTheLastPose = true;
+            shownPose = ShownPose.TheKeptLastFrameOfAClip;
         }
 
         private void ShowClip(ClipEntry entryToShow)
         {
             DropTheClip();
             entry = entryToShow;
-            isHoldingAnAction = false;
-            isHoldingTheLastPose = false;
+            shownPose = ShownPose.TheActionsClip;
             clipPlayable = AnimationClipPlayable.Create(graph, entry.Clip);
             clipPlayable.SetSpeed(ClipNeverAdvancesOnItsOwn);
             clipPlayable.SetTime(entry.ClipSecondsAt(0f));
@@ -204,8 +202,7 @@ namespace ArkhamCombat.Presentation
         private void Hold()
         {
             entry = null;
-            isHoldingAnAction = true;
-            isHoldingTheLastPose = false;
+            shownPose = ShownPose.LocomotionUnderAHold;
             blend.BlendTo(0f, clips.HoldBlendOutSeconds);
             ApplyWeights();
         }
@@ -218,10 +215,11 @@ namespace ArkhamCombat.Presentation
 
         private void DropTheClipOnceFadedOut()
         {
-            bool hasFadedOut = !IsShowingAClip && blend.Weight <= 0f;
+            bool hasFadedOut = shownPose == ShownPose.AClipFadingOut && blend.Weight <= 0f;
             if (hasFadedOut)
             {
                 DropTheClip();
+                shownPose = ShownPose.Locomotion;
             }
         }
 
