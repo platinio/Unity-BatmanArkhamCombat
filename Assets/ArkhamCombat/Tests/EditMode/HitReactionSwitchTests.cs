@@ -155,6 +155,24 @@ namespace ArkhamCombat.Tests
         }
 
         [Test]
+        public void AStun_StaggersThePlayer_WhoHasNoStunnedStateOfItsOwn()
+        {
+            ReactTo(AppliedReaction.Stun);
+
+            Assert.IsInstanceOf<StaggerState>(stateMachine.Current);
+        }
+
+        private static System.Array EveryReaction() => System.Enum.GetValues(typeof(AppliedReaction));
+
+        [TestCaseSource(nameof(EveryReaction))]
+        public void EveryReactionAHitCanCause_HasAnAnswerOnThePlayer(AppliedReaction reaction)
+        {
+            ReactTo(reaction);
+
+            LogAssert.NoUnexpectedReceived();
+        }
+
+        [Test]
         public void AHitThatCausedNoReaction_ChangesNothing()
         {
             ReactTo(AppliedReaction.None);

@@ -152,15 +152,21 @@ namespace ArkhamCombat.Tests
             target.Owner = victimObject;
             target.ResultToGive = HitResult.Evaded;
 
-            listener.HitWindowOpened(jab, target);
+            try
+            {
+                listener.HitWindowOpened(jab, target);
 
-            Assert.AreEqual(1, evadedStrikes.Count);
-            Assert.AreSame(character, evadedStrikes[0].Attacker);
-            Assert.AreSame(jab, evadedStrikes[0].Attack);
-            Assert.AreSame(victimObject, evadedStrikes[0].Target);
-            Assert.IsEmpty(landedStrikes);
-            Assert.IsEmpty(whiffedStrikes);
-            Object.DestroyImmediate(victimObject);
+                Assert.AreEqual(1, evadedStrikes.Count);
+                Assert.AreSame(character, evadedStrikes[0].Attacker);
+                Assert.AreSame(jab, evadedStrikes[0].Attack);
+                Assert.AreSame(victimObject, evadedStrikes[0].Target);
+                Assert.IsEmpty(landedStrikes);
+                Assert.IsEmpty(whiffedStrikes);
+            }
+            finally
+            {
+                Object.DestroyImmediate(victimObject);
+            }
         }
 
         [Test]

@@ -58,7 +58,7 @@ namespace ArkhamCombat.Tests
         [Test]
         public void WithNobodyAttacking_ThereIsNoAttackerToAimAt()
         {
-            Assert.IsNull(targeting.PickAttacker());
+            Assert.IsNull(targeting.PickAttackerToCounter());
         }
 
         [Test]

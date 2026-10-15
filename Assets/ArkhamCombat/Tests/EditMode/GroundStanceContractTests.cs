@@ -7,13 +7,12 @@ using UnityEditor;
 
 namespace ArkhamCombat.Tests
 {
-    // The stance, the config and the player's state list are authored assets that have to agree
-    // with each other and with the code, and nothing compiles them together. So these read them.
     public class GroundStanceContractTests
     {
         private const string StancePath = "Assets/ArkhamCombat/Stances/Ground.asset";
         private const string ConfigPath = "Assets/ArkhamCombat/Settings/CombatConfig.asset";
         private const string PlayerInstallerPath = "Assets/Installers/Static/PlayerStaticInstaller.asset";
+        private const string StunKindPath = "Assets/ArkhamCombat/Intents/Stun.asset";
 
         private static Stance Ground()
         {
@@ -40,7 +39,9 @@ namespace ArkhamCombat.Tests
 
         private static List<string> StatesThePlayerCanBeIn()
         {
-            SerializedProperty states = new SerializedObject(AssetDatabase.LoadAssetAtPath<PlayerStaticInstaller>(PlayerInstallerPath)).FindProperty("states");
+            PlayerStaticInstaller installer = AssetDatabase.LoadAssetAtPath<PlayerStaticInstaller>(PlayerInstallerPath);
+            Assert.IsNotNull(installer, $"no player installer at {PlayerInstallerPath}");
+            SerializedProperty states = new SerializedObject(installer).FindProperty("states");
             List<string> bindings = new List<string>();
             for (int i = 0; i < states.arraySize; i++)
             {
@@ -56,6 +57,22 @@ namespace ArkhamCombat.Tests
             List<string> errors = new List<string>();
 
             Assert.IsTrue(Ground().Validate(errors), string.Join("\n", errors));
+        }
+
+        [Test]
+        public void AfterAnythingAPressStartsFromAnywhere_AStrikeStartsTheChainAgain()
+        {
+            Stance ground = Ground();
+            Edge firstStrike = ground.Root.Edges.Single();
+
+            foreach (Edge fromAnywhere in ground.GlobalEdges)
+            {
+                Assert.IsTrue(ground.TryGetNode(fromAnywhere.DestinationId, out ChainNode node));
+                bool hasTheSameStrikeEdge = node.Edges.Any(edge =>
+                    edge.IntentKind == firstStrike.IntentKind && edge.DestinationId == firstStrike.DestinationId);
+
+                Assert.IsTrue(hasTheSameStrikeEdge, $"a strike pressed after '{node.Id}' would be dropped until the chain resets");
+            }
         }
 
         [Test]
@@ -117,16 +134,28 @@ namespace ArkhamCombat.Tests
             Assert.IsTrue(TheCounter().TelegraphWindow.IsZeroLength);
         }
 
+        private static ActionDefinition TheCapeStun()
+        {
+            UnityEngine.Object stunKind = AssetDatabase.LoadAssetAtPath<UnityEngine.Object>(StunKindPath);
+            Assert.IsNotNull(stunKind, $"no intent kind at {StunKindPath}");
+            return WhatThePressPlaysFromAnywhere(Ground(), stunKind);
+        }
+
         [Test]
         public void TheStunPress_PlaysAnAttackThatAsksForAStun_FromAnywhere()
         {
-            UnityEngine.Object stunKind = AssetDatabase.LoadAssetAtPath<UnityEngine.Object>("Assets/ArkhamCombat/Intents/Stun.asset");
-            ActionDefinition stun = WhatThePressPlaysFromAnywhere(Ground(), stunKind);
+            AttackDefinition capeStun = TheCapeStun() as AttackDefinition;
+
+            Assert.IsNotNull(capeStun, "the stun press does not play an attack");
+            Assert.AreEqual(HitReaction.Stun, capeStun.Reaction);
+        }
+
+        [Test]
+        public void TheCapeStun_IsAnActionThatCanPlay()
+        {
             List<string> errors = new List<string>();
 
-            Assert.IsInstanceOf<AttackDefinition>(stun);
-            Assert.AreEqual(HitReaction.Stun, ((AttackDefinition)stun).Reaction);
-            Assert.IsTrue(stun.Validate(errors), string.Join("\n", errors));
+            Assert.IsTrue(TheCapeStun().Validate(errors), string.Join("\n", errors));
         }
 
         [Test]

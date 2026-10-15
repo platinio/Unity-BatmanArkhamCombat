@@ -6,10 +6,6 @@ using Zenject;
 
 namespace ArkhamCombat.Player
 {
-    /// <summary>
-    /// Entering Evading is all it ever does to the state machine, as
-    /// <see cref="AttackingStateSwitch"/> does for Attacking.
-    /// </summary>
     [RequireComponent(typeof(CharacterBrain))]
     public sealed class EvadingStateSwitch : CharacterComponent
     {

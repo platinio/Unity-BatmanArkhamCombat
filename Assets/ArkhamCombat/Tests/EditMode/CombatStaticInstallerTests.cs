@@ -89,6 +89,7 @@ namespace ArkhamCombat.Tests
                 agent.OnEnable();
 
                 CollectionAssert.AreEqual(new ICombatTarget[] { status }, roster.Targets);
+                Assert.AreSame(roster, container.Resolve<IIncomingAttacks>(), "the roster is also who tells the player what can be countered");
             }
             finally
             {

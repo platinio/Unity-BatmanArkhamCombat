@@ -30,7 +30,6 @@ namespace ArkhamCombat.Enemies
         {
             public ActionRunner Runner;
             public ActionDefinition ActionToPlay;
-            public Vector3 DirectionToTravelIn;
             public bool HasReportedWhyItCannotPlay;
         }
 
@@ -46,12 +45,11 @@ namespace ArkhamCombat.Enemies
         {
             Memory memory = ctx.Memory<Memory>();
             memory.ActionToPlay = ctx.GetValue<ActionDefinition>(Action);
-            memory.DirectionToTravelIn = ctx.GetValue<Vector3>(Direction);
             memory.Runner = RunnerOf(ctx);
 
             if (CanPlay(memory))
             {
-                Play(memory, ctx.transform.position);
+                Play(memory, ctx.transform.position, ctx.GetValue<Vector3>(Direction));
             }
             else
             {
@@ -59,12 +57,12 @@ namespace ArkhamCombat.Enemies
             }
         }
 
-        private static void Play(Memory memory, Vector3 position)
+        private static void Play(Memory memory, Vector3 position, Vector3 directionToTravelIn)
         {
-            bool wasFedADirection = memory.DirectionToTravelIn != Vector3.zero;
+            bool wasFedADirection = directionToTravelIn != Vector3.zero;
             if (wasFedADirection)
             {
-                memory.Runner.PlayAction(memory.ActionToPlay, position, memory.DirectionToTravelIn);
+                memory.Runner.PlayAction(memory.ActionToPlay, position, directionToTravelIn);
             }
             else
             {

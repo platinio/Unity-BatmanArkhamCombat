@@ -52,6 +52,7 @@ namespace ArkhamCombat.Player
                     stateMachine.Change<KnockedDownState>();
                     return;
                 case AppliedReaction.Stagger:
+                case AppliedReaction.Stun:
                     stateMachine.Change<StaggerState>();
                     return;
                 case AppliedReaction.Flinch:

@@ -14,7 +14,6 @@ using static ArkhamCombat.Tests.TreeAssets;
 
 namespace ArkhamCombat.Tests
 {
-    // The Function and the branches that call it are drawn on canvases, so these run and read the authored assets.
     public class ReactionOrDefaultTests
     {
         private const string FunctionPath = "Assets/ArkhamCombat/Trees/Functions/ReactionOrDefault.asset";
@@ -89,17 +88,18 @@ namespace ArkhamCombat.Tests
         {
             BehaviorTreeGraph graph = SubTree(subTree).graph;
             VisualScriptGraphVariable call = graph.Nodes.OfType<VisualScriptGraphVariable>().Single(candidate => candidate.Function == reactionOrDefault);
-            PlayActionNode play = graph.Nodes.OfType<PlayActionNode>().Single(candidate => WhatFeeds(candidate, nameof(PlayActionNode.Action)) == call);
+            PlayActionNode play = graph.Nodes.OfType<PlayActionNode>().SingleOrDefault(candidate => WhatFeeds(candidate, nameof(PlayActionNode.Action)) == call);
             GetVariable ownAction = (GetVariable)WhatFeeds(call, WhatTheBranchPlaysOtherwise);
 
-            Assert.IsNotNull(play);
+            Assert.IsNotNull(play, $"no Play Action of {subTree} is fed by ReactionOrDefault");
             Assert.AreEqual(ownParameter, ownAction.defaultValues[nameof(GetVariable.Key)]);
         }
 
-        [Test]
-        public void AFlinch_IsNeverBorrowed()
+        [TestCase("Flinch")]
+        [TestCase("Stunned")]
+        public void ABranchThatAlwaysPlaysItsOwnAction_NeverBorrows(string subTree)
         {
-            Assert.IsFalse(SubTree("Flinch").graph.Nodes.OfType<VisualScriptGraphVariable>().Any(call => call.Function == reactionOrDefault));
+            Assert.IsFalse(SubTree(subTree).graph.Nodes.OfType<VisualScriptGraphVariable>().Any(call => call.Function == reactionOrDefault));
         }
 
         [Test]

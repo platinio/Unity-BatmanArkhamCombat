@@ -103,7 +103,7 @@ namespace ArkhamCombat.Combat
 
         public void ConfigurePairedReaction(ActionDefinition pairedReaction) => this.pairedReaction = pairedReaction;
 
-        public void AimAtTheAttacker() => isAimedAtTheAttacker = true;
+        public void ConfigureAsAimedAtTheAttacker() => isAimedAtTheAttacker = true;
 
         internal override void GiveItsWindowsTo(ActionRunner runner) => runner.TakeTheWindowsOf(this);
 
@@ -149,12 +149,23 @@ namespace ArkhamCombat.Combat
             ReportWhenWindowEndsBeforeItStarts(nameof(telegraphWindow), telegraphWindow, errors);
             ReportWhenLungeCannotReachStrikeDistance(errors);
             ReportWhenThePairedReactionEndsBeforeTheHit(errors);
+            ReportWhenThePairedReactionWouldNeverPlay(errors);
 
             bool isWellFormed = errors.Count == errorCountBefore;
             return isWellFormed;
         }
 
-        // The hit of a paired attack finds its target already reacting. One that had finished would start reacting again.
+        private void ReportWhenThePairedReactionWouldNeverPlay(List<string> errors)
+        {
+            bool asksForAReactionThatAlwaysPlaysItsOwnAction = reaction == HitReaction.Flinch || reaction == HitReaction.Stun;
+            if (IsPaired && asksForAReactionThatAlwaysPlaysItsOwnAction)
+            {
+                errors.Add(
+                    $"'{name}': it asks for a {reaction}, which always plays its own action, so its paired reaction " +
+                    $"'{pairedReaction.name}' would never play. A paired attack asks for a Stagger or a Knockdown.");
+            }
+        }
+
         private void ReportWhenThePairedReactionEndsBeforeTheHit(List<string> errors)
         {
             if (!IsPaired)

@@ -4,9 +4,9 @@ using UnityEngine;
 namespace ArkhamCombat.Combat
 {
     /// <summary>
-    /// Knows nothing about chains, so the same asset backs any number of chain nodes, and nothing
-    /// about hits; the <see cref="AttackDefinition"/> subclass adds those. Duration is the clock
-    /// for the whole system, which is what lets the demo run without a single authored animation.
+    /// Knows nothing about chains, so the same asset backs any number of chain nodes. Duration is
+    /// the clock for the whole system, which is what lets the demo run without a single authored
+    /// animation.
     /// </summary>
     [CreateAssetMenu(menuName = "ArkhamCombat/Action", fileName = "Action")]
     public class ActionDefinition : ScriptableObject

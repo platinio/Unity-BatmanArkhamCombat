@@ -19,6 +19,7 @@ namespace ArkhamCombat.Tests
         private AttackDefinition jab;
         private AttackDefinition cross;
         private AttackDefinition kick;
+        private ActionDefinition evade;
 
         [SetUp]
         public void SetUp()
@@ -40,6 +41,7 @@ namespace ArkhamCombat.Tests
             Object.DestroyImmediate(jab);
             Object.DestroyImmediate(cross);
             Object.DestroyImmediate(kick);
+            Object.DestroyImmediate(evade);
         }
 
         private void WakeWith(HitReceiverProfile profileToUse)
@@ -60,6 +62,18 @@ namespace ArkhamCombat.Tests
         {
             status.TryTakePendingReaction(out AppliedReaction reaction);
             return reaction;
+        }
+
+        [Test]
+        public void AHitOnAPlayerWhoseActionCannotBeHit_IsEvaded_AndLeavesNoReactionToTake()
+        {
+            status.Construct(profile, RunnerPlayingAnActionThatCannotBeHit(out evade));
+            status.Awake();
+
+            HitResult result = Hit(jab);
+
+            Assert.IsTrue(result.WasEvaded);
+            Assert.IsFalse(status.TryTakePendingReaction(out _));
         }
 
         [Test]

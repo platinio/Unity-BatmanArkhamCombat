@@ -1,5 +1,4 @@
 using ArcaneOnyx.BehaviorTree;
-using ArkhamCombat.Characters;
 using ArkhamCombat.Combat;
 using UnityEngine;
 using Zenject;
@@ -38,7 +37,11 @@ namespace ArkhamCombat.Enemies
         private string ReactionAsTheTreeLeftIt => agentVariables.Read(EnemyVariableNames.Reaction) as string ?? NoReaction;
 
         [Inject]
-        internal void Construct([InjectOptional] HitReceiverProfile profile) => this.profile = profile;
+        internal void Construct([InjectOptional] HitReceiverProfile profile, [InjectOptional] ActionRunner runner = null)
+        {
+            this.profile = profile;
+            this.runner = runner;
+        }
 
         internal void Awake()
         {
@@ -55,7 +58,6 @@ namespace ArkhamCombat.Enemies
                 return;
             }
 
-            runner = CombatActions.RunnerOn(gameObject);
             receiver = new HitReceiver(profile, runner);
         }
 
@@ -86,10 +88,6 @@ namespace ArkhamCombat.Enemies
             }
         }
 
-        /// <summary>
-        /// Whatever it was playing is cut short at once, its own swing included, so a countered
-        /// attacker cannot land the hit it had started.
-        /// </summary>
         public void BeginPairedReaction(AttackDefinition attack)
         {
             if (!IsAlive)
@@ -97,10 +95,12 @@ namespace ArkhamCombat.Enemies
                 return;
             }
 
-            runner?.Cancel();
+            CutShortWhateverItIsPlaying();
             Write(EnemyVariableNames.ReactionOverride, attack.PairedReaction);
             Write(EnemyVariableNames.Reaction, receiver.ReactionToAPairedAttack(attack).ToString());
         }
+
+        private void CutShortWhateverItIsPlaying() => runner?.Cancel();
 
         public HitResult Receive(HitInfo hit)
         {
@@ -118,15 +118,12 @@ namespace ArkhamCombat.Enemies
             return result;
         }
 
-        // The tree clears the reaction when the stun has played out, which is what ends it.
         private bool IsStunned => ReactionAsTheTreeLeftIt == Stunned;
 
         private void PublishHit(AppliedReaction appliedReaction)
         {
             Write(EnemyVariableNames.Health01, ShareOfHealthLeft);
-
-            // The branch a paired attack started is already playing its action; whatever this hit starts plays its own.
-            Write(EnemyVariableNames.ReactionOverride, NoOverride);
+            LetTheNextReactionPlayItsOwnAction();
 
             switch (appliedReaction)
             {
@@ -140,6 +137,8 @@ namespace ArkhamCombat.Enemies
                     return;
             }
         }
+
+        private void LetTheNextReactionPlayItsOwnAction() => Write(EnemyVariableNames.ReactionOverride, NoOverride);
 
         private void Write(string key, object value) => AgentVariableWriter.SetOn(gameObject, key, value, Source);
     }

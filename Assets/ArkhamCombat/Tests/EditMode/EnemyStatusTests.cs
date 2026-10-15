@@ -23,6 +23,7 @@ namespace ArkhamCombat.Tests
         private HitReceiverProfile profile;
         private AttackDefinition jab;
         private AttackDefinition cross;
+        private ActionDefinition evade;
 
         [SetUp]
         public void SetUp()
@@ -43,6 +44,7 @@ namespace ArkhamCombat.Tests
             Object.DestroyImmediate(profile);
             Object.DestroyImmediate(jab);
             Object.DestroyImmediate(cross);
+            Object.DestroyImmediate(evade);
         }
 
         private void WakeWith(HitReceiverProfile profileToUse)
@@ -57,10 +59,31 @@ namespace ArkhamCombat.Tests
             WakeWith(profile);
         }
 
+        private ActionRunner WakeWithARunnerThatCannotBeHitRightNow()
+        {
+            ActionRunner runner = RunnerPlayingAnActionThatCannotBeHit(out evade);
+            status.Construct(profile, runner);
+            status.Awake();
+            return runner;
+        }
+
         private HitResult Hit(AttackDefinition attack) => status.Receive(new HitInfo(attack, Vector3.forward));
 
         private int ReactionFactVersion() =>
             enemy.GetComponent<AgentVariableWriter>().VersionOf(EnemyVariableNames.Reaction);
+
+        [Test]
+        public void AHitOnAnEnemyWhoseActionCannotBeHit_IsEvaded_AndChangesNothing()
+        {
+            WakeWithARunnerThatCannotBeHitRightNow();
+            int versionBeforeTheHit = ReactionFactVersion();
+
+            HitResult result = Hit(jab);
+
+            Assert.IsTrue(result.WasEvaded);
+            Assert.AreEqual(1f, (float)facts.Get(EnemyVariableNames.Health01), Tolerance);
+            Assert.AreEqual(versionBeforeTheHit, ReactionFactVersion());
+        }
 
         [Test]
         public void StartsAlive_WithNoReaction_AndFullHealth()

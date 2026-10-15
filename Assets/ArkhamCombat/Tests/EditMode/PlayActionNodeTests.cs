@@ -13,6 +13,7 @@ namespace ArkhamCombat.Tests
 {
     public class PlayActionNodeTests
     {
+        private const float Tolerance = 1e-4f;
         private const float ActionSeconds = 1f;
         private const float TickSeconds = 0.1f;
 
@@ -85,11 +86,17 @@ namespace ArkhamCombat.Tests
             FeedTheAction(dodge);
             playAction.Direction.SetDefaultValue(Vector3.left);
 
-            graph.OnUpdate();
-            TickTheRunnerFor(ActionSeconds);
+            try
+            {
+                graph.OnUpdate();
+                TickTheRunnerFor(ActionSeconds);
 
-            Assert.Less(Vector3.Distance(Vector3.left * travelDistance, combatActions.TakePendingWarpMovement()), 1e-4f);
-            Object.DestroyImmediate(dodge);
+                Assert.Less(Vector3.Distance(Vector3.left * travelDistance, combatActions.TakePendingWarpMovement()), Tolerance);
+            }
+            finally
+            {
+                Object.DestroyImmediate(dodge);
+            }
         }
 
         [Test]

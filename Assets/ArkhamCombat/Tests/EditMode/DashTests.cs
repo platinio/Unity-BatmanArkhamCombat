@@ -1,4 +1,5 @@
 using System.Collections.Generic;
+using System.Linq;
 using ArcaneOnyx.TPCharacterController.Inputs;
 using ArkhamCombat.Combat;
 using NUnit.Framework;
@@ -14,6 +15,8 @@ namespace ArkhamCombat.Tests
         private const float TravelDistance = 3f;
         private const float Tolerance = 1e-4f;
         private const float PressLifetimeSeconds = 10f;
+        private const float ShortTick = 0.1f;
+        private const int ManySteps = 10;
 
         private static readonly Window TravelsInTheMiddle = new Window(0.2f, 0.7f);
         private static readonly Vector3 East = Vector3.right;
@@ -93,7 +96,7 @@ namespace ArkhamCombat.Tests
             Assert.Less(Vector3.Distance(expected, warpMover.TotalMovement), Tolerance, $"{message} expected {expected}, moved {warpMover.TotalMovement}");
 
         [Test]
-        public void ADashStartedByAPress_GoesWhereTheCharactersPickerSays_AskedWithTheStickAtThePress()
+        public void ADashStartedByAPress_AsksTheCharactersPicker_WithTheStickAtThePress()
         {
             intents.Push(kinds.Evade, StickPushedRight);
 
@@ -144,9 +147,38 @@ namespace ArkhamCombat.Tests
         {
             runner.PlayAction(evade, Vector3.zero, Vector3.back);
 
-            TickInSteps(DashSeconds, 10);
+            TickInSteps(DashSeconds, ManySteps);
 
             AssertHasMovedBy(Vector3.back * TravelDistance);
+        }
+
+        [Test]
+        public void WithADirectionGiven_ThePickerIsNotAsked()
+        {
+            runner.PlayAction(evade, Vector3.zero, Vector3.back);
+
+            Assert.IsEmpty(travelDirectionPicker.AskedDirections);
+        }
+
+        [Test]
+        public void PlayingNothing_LeavesADashThatTravels_OnItsWay()
+        {
+            runner.PlayAction(evade, Vector3.zero);
+
+            runner.PlayAction(null, Vector3.zero, Vector3.back);
+            TickInSteps(DashSeconds, ManySteps);
+
+            AssertHasMovedBy(East * TravelDistance);
+        }
+
+        [Test]
+        public void ADashWithDistanceToCoverAndNoTimeToCoverItIn_IsReported()
+        {
+            evade.ConfigureDash(new Window(0.3f, 0.3f), TravelDistance);
+            List<string> errors = new List<string>();
+
+            Assert.IsFalse(evade.Validate(errors));
+            StringAssert.Contains("travelWindow has no length", errors.Single());
         }
 
         [Test]
@@ -155,7 +187,7 @@ namespace ArkhamCombat.Tests
             Vector3 upAndFarToTheEast = new Vector3(40f, 9f, 0f);
             runner.PlayAction(evade, Vector3.zero, upAndFarToTheEast);
 
-            TickInSteps(DashSeconds, 10);
+            TickInSteps(DashSeconds, ManySteps);
 
             AssertHasMovedBy(East * TravelDistance);
         }
@@ -166,7 +198,7 @@ namespace ArkhamCombat.Tests
             travelDirectionPicker.DirectionToGive = Vector3.zero;
             runner.PlayAction(evade, Vector3.zero);
 
-            TickInSteps(DashSeconds, 10);
+            TickInSteps(DashSeconds, ManySteps);
 
             AssertHasMovedBy(Vector3.zero);
         }
@@ -176,7 +208,7 @@ namespace ArkhamCombat.Tests
         {
             runner.PlayAction(taunt, Vector3.zero);
 
-            TickInSteps(DashSeconds, 10);
+            TickInSteps(DashSeconds, ManySteps);
 
             Assert.IsNull(runner.CurrentDash);
             Assert.AreEqual(0, warpMover.MoveCount);
@@ -193,15 +225,36 @@ namespace ArkhamCombat.Tests
         }
 
         [Test]
-        public void ADash_IsNotAnAttack_SoAPressCannotReplaceIt()
+        public void APressDuringADash_Waits_EvenForAnInterruptThatIsAllowed()
         {
-            runner.PlayAction(evade, Vector3.zero);
-            intents.Push(kinds.Strike, Vector2.zero);
+            Stance stanceWithACounter = Stance("Neutral",
+                new[]
+                {
+                    NodeWithNothingToPlay("Neutral", new Edge(kinds.Strike, "S1")),
+                    new ChainNode("S1", jab),
+                    new ChainNode("Evade", evade),
+                    new ChainNode("Counter", jab)
+                },
+                new[] { new Edge(kinds.Evade, "Evade"), new Edge(kinds.Counter, "Counter") });
+            CombatFacts factsThatAllowACounter = new CombatFacts { IsIncomingAttackCounterable = true };
+            ActionRunner runnerThatCouldCounter = new ActionRunner(
+                stanceWithACounter, intents, factsThatAllowACounter, new AlwaysConditionEvaluator(), kinds.InterruptKinds,
+                new NullPresentationDriver(), warpMover, new NullHitWindowListener(), travelDirectionPicker: travelDirectionPicker);
 
-            Tick(0.1f);
+            try
+            {
+                runnerThatCouldCounter.PlayAction(evade, Vector3.zero);
+                intents.Push(kinds.Counter, Vector2.zero);
 
-            Assert.IsNull(runner.CurrentAttack);
-            Assert.AreSame(evade, runner.CurrentAction);
+                runnerThatCouldCounter.Tick(ShortTick, Vector3.zero, canStartFromIdle: true);
+
+                Assert.AreSame(evade, runnerThatCouldCounter.CurrentAction, "a dash is not cut short by a press");
+                Assert.AreEqual(1, intents.Queued.Count, "the press waits");
+            }
+            finally
+            {
+                Object.DestroyImmediate(stanceWithACounter);
+            }
         }
 
         [Test]

@@ -88,7 +88,6 @@ namespace ArkhamCombat.Combat
         /// <summary>Null while idle or while a plain action plays.</summary>
         public AttackDefinition CurrentAttack { get; private set; }
 
-        /// <summary>Null unless the action that plays is a dash.</summary>
         public DashDefinition CurrentDash { get; private set; }
 
         /// <summary>
@@ -159,12 +158,8 @@ namespace ArkhamCombat.Combat
         public void PlayAction(ActionDefinition action, Vector3 position) =>
             StartAction(null, action, position, isInterrupt: isPlaying, StraightAhead);
 
-        /// <summary>For whoever knows better than the character's own picker which way a dash should go.</summary>
-        public void PlayAction(ActionDefinition action, Vector3 position, Vector3 travelDirection)
-        {
-            PlayAction(action, position);
-            this.travelDirection = OnTheGroundAndOfLengthOne(travelDirection);
-        }
+        public void PlayAction(ActionDefinition action, Vector3 position, Vector3 travelDirection) =>
+            StartAction(null, action, position, isInterrupt: isPlaying, StraightAhead, travelDirection);
 
         /// <summary>For an external interrupt that has nothing to play yet.</summary>
         public void Cancel()
@@ -304,7 +299,8 @@ namespace ArkhamCombat.Combat
         /// hit window never stays open behind it. That action counts as interrupted only when an
         /// interrupt replaced it; the next attack of the combo is something the action allowed.
         /// </summary>
-        private void StartAction(ChainNode node, ActionDefinition action, Vector3 position, bool isInterrupt, Vector2 directionAtPress)
+        private void StartAction(
+            ChainNode node, ActionDefinition action, Vector3 position, bool isInterrupt, Vector2 directionAtPress, Vector3? travelDirectionGiven = null)
         {
             if (action == null)
             {
@@ -324,7 +320,7 @@ namespace ArkhamCombat.Combat
             CurrentAction = action;
             action.GiveItsWindowsTo(this);
             CurrentActionTarget = PickTheTargetOfTheActionThatIsStarting(directionAtPress);
-            travelDirection = CurrentDash != null ? OnTheGroundAndOfLengthOne(travelDirectionPicker.PickTravelDirection(directionAtPress)) : Vector3.zero;
+            travelDirection = TravelDirectionOfTheActionThatIsStarting(directionAtPress, travelDirectionGiven);
             isPlaying = true;
             idleSeconds = 0f;
             WasWarpRefused = false;
@@ -335,18 +331,30 @@ namespace ArkhamCombat.Combat
 
             if (CurrentAttack != null)
             {
-                TellTheTargetAStrikeIsComing();
+                TellTheTargetAStrikeIsComing(position);
                 StartThePairedReactionOfTheTarget(CurrentAttack);
                 HandleWindowsStartingAtZero(CurrentAttack, position);
             }
         }
 
-        private void TellTheTargetAStrikeIsComing()
+        private Vector3 TravelDirectionOfTheActionThatIsStarting(Vector2 directionAtPress, Vector3? travelDirectionGiven)
         {
-            if (HasValidTarget)
+            if (CurrentDash == null)
             {
-                CurrentActionTarget.StrikeIsComing();
+                return Vector3.zero;
+            }
+
+            Vector3 direction = travelDirectionGiven ?? travelDirectionPicker.PickTravelDirection(directionAtPress);
+            return OnTheGroundAndOfLengthOne(direction);
+        }
+
+        private void TellTheTargetAStrikeIsComing(Vector3 position)
+        {
+            bool canTheStrikeReachItsTarget = HasValidTarget && !CurrentAttack.IsBeyondLunge(position, CurrentActionTarget.Position);
+            if (canTheStrikeReachItsTarget)
+            {
                 isTheTargetExpectingAStrike = true;
+                CurrentActionTarget.StrikeIsComing();
             }
         }
 
@@ -354,8 +362,8 @@ namespace ArkhamCombat.Combat
         {
             if (isTheTargetExpectingAStrike)
             {
-                CurrentActionTarget.StrikeIsOver();
                 isTheTargetExpectingAStrike = false;
+                CurrentActionTarget.StrikeIsOver();
             }
         }
 
@@ -369,8 +377,8 @@ namespace ArkhamCombat.Combat
 
         private IActionTarget PickTheTargetOfTheActionThatIsStarting(Vector2 directionAtPress)
         {
-            bool answersAnAttack = CurrentAttack != null && CurrentAttack.IsAimedAtTheAttacker;
-            return answersAnAttack ? targetPicker.PickAttacker() : targetPicker.PickTarget(directionAtPress);
+            bool isAimedAtTheAttacker = CurrentAttack != null && CurrentAttack.IsAimedAtTheAttacker;
+            return isAimedAtTheAttacker ? targetPicker.PickAttackerToCounter() : targetPicker.PickTarget(directionAtPress);
         }
 
         internal void TakeTheWindowsOf(AttackDefinition attack)

@@ -10,8 +10,9 @@ namespace ArkhamCombat.Tests
 {
     public class StrikeAnnouncementTests
     {
-        // The jab lasts one second, so seconds played and normalized time are the same number.
         private const float JabSeconds = 1f;
+        private const string Coming = "coming";
+        private const string Over = "over";
         private const float BeforeTheHit = 0.1f;
         private const float WhenTheHitWindowOpens = 0.3f;
 
@@ -22,16 +23,17 @@ namespace ArkhamCombat.Tests
             public readonly List<string> WhatItWasTold = new List<string>();
 
             public bool IsValid { get; set; } = true;
-            public Vector3 Position => Vector3.forward;
+            public Vector3 Position { get; set; } = Vector3.forward;
 
-            public void StrikeIsComing() => WhatItWasTold.Add("coming");
+            public void StrikeIsComing() => WhatItWasTold.Add(Coming);
 
-            public void StrikeIsOver() => WhatItWasTold.Add("over");
+            public void StrikeIsOver() => WhatItWasTold.Add(Over);
         }
 
         private AttackDefinition jab;
         private ActionDefinition taunt;
         private TargetThatRecordsWhatItIsTold target;
+        private RecordingActionTargetPicker targetPicker;
         private ActionRunner runner;
         private HitReceiverProfile profile;
         private GameObject enemy;
@@ -44,9 +46,10 @@ namespace ArkhamCombat.Tests
             jab = Attack("Jab", JabSeconds, hitWindow: HitsAfterAWhile);
             taunt = Action("Taunt", JabSeconds);
             target = new TargetThatRecordsWhatItIsTold();
+            targetPicker = new RecordingActionTargetPicker { TargetToGive = target };
             runner = new ActionRunner(
                 stance: null, intents: null, new CombatFacts(), new AlwaysConditionEvaluator(), new InterruptKinds(null, null),
-                new NullPresentationDriver(), new NullWarpMover(), new NullHitWindowListener(), new RecordingActionTargetPicker { TargetToGive = target });
+                new NullPresentationDriver(), new NullWarpMover(), new NullHitWindowListener(), targetPicker);
 
             profile = ReceiverProfile();
             enemy = HiddenObject("Enemy");
@@ -76,7 +79,45 @@ namespace ArkhamCombat.Tests
         {
             runner.PlayAction(jab, Vector3.zero);
 
-            CollectionAssert.AreEqual(new[] { "coming" }, target.WhatItWasTold);
+            CollectionAssert.AreEqual(new[] { Coming }, target.WhatItWasTold);
+        }
+
+        [Test]
+        public void AnAttackAtATargetItCannotReach_AnnouncesNothing()
+        {
+            target.Position = Vector3.forward * 100f;
+
+            runner.PlayAction(jab, Vector3.zero);
+            runner.Cancel();
+
+            CollectionAssert.IsEmpty(target.WhatItWasTold);
+        }
+
+        [Test]
+        public void AnAttackReplacedBeforeItStruck_TellsItsTargetItIsOver_AndTheNextTargetThatAStrikeIsComing()
+        {
+            TargetThatRecordsWhatItIsTold nextTarget = new TargetThatRecordsWhatItIsTold();
+            runner.PlayAction(jab, Vector3.zero);
+            TickUntil(BeforeTheHit);
+
+            targetPicker.TargetToGive = nextTarget;
+            runner.PlayAction(jab, Vector3.zero);
+
+            CollectionAssert.AreEqual(new[] { Coming, Over }, target.WhatItWasTold);
+            CollectionAssert.AreEqual(new[] { Coming }, nextTarget.WhatItWasTold);
+        }
+
+        [Test]
+        public void AnEnemyDestroyedWhileAStrikeWasComing_DoesNotBreakTheAttackersAction()
+        {
+            targetPicker.TargetToGive = status;
+            runner.PlayAction(jab, Vector3.zero);
+            Assert.IsTrue(IsAStrikeComingAtTheEnemy, "the enemy was told");
+
+            Object.DestroyImmediate(enemy);
+
+            Assert.DoesNotThrow(() => runner.Cancel());
+            Assert.IsFalse(runner.IsPlaying);
         }
 
         [Test]
@@ -86,7 +127,7 @@ namespace ArkhamCombat.Tests
 
             TickUntil(BeforeTheHit);
 
-            CollectionAssert.AreEqual(new[] { "coming" }, target.WhatItWasTold);
+            CollectionAssert.AreEqual(new[] { Coming }, target.WhatItWasTold);
         }
 
         [Test]
@@ -96,7 +137,7 @@ namespace ArkhamCombat.Tests
 
             TickUntil(WhenTheHitWindowOpens);
 
-            CollectionAssert.AreEqual(new[] { "coming", "over" }, target.WhatItWasTold);
+            CollectionAssert.AreEqual(new[] { Coming, Over }, target.WhatItWasTold);
         }
 
         [Test]
@@ -107,7 +148,7 @@ namespace ArkhamCombat.Tests
 
             runner.Cancel();
 
-            CollectionAssert.AreEqual(new[] { "coming", "over" }, target.WhatItWasTold);
+            CollectionAssert.AreEqual(new[] { Coming, Over }, target.WhatItWasTold);
         }
 
         [Test]
@@ -117,7 +158,7 @@ namespace ArkhamCombat.Tests
 
             TickUntil(JabSeconds);
 
-            CollectionAssert.AreEqual(new[] { "coming", "over" }, target.WhatItWasTold);
+            CollectionAssert.AreEqual(new[] { Coming, Over }, target.WhatItWasTold);
         }
 
         [Test]

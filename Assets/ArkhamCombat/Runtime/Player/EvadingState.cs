@@ -7,10 +7,6 @@ using Zenject;
 
 namespace ArkhamCombat.Player
 {
-    /// <summary>
-    /// Movement input never moves it: the frame's planar velocity is whatever the runner's dash
-    /// produced. Gravity is held while the dash travels so an evade does not dip.
-    /// </summary>
     public sealed class EvadingState : ICharacterState
     {
         private readonly CharacterContext context;
@@ -29,26 +25,32 @@ namespace ArkhamCombat.Player
         // Movement left over from this evade must not carry into the strike that follows it.
         public void Exit() => combatActions.TakePendingWarpMovement();
 
+        // The runner has ticked already, so the frame a dash ends on still has movement to apply before leaving.
         public void Tick(float deltaTime)
         {
+            MoveByWhatTheDashCoveredThisFrame(deltaTime);
+
             if (!Runner.IsPlaying)
             {
                 context.StateMachine.Change<LocomotionState>();
-                return;
             }
+        }
+
+        private void MoveByWhatTheDashCoveredThisFrame(float deltaTime)
+        {
+            bool shouldHoldGravitySoTheEvadeDoesNotDip = Runner.IsTravelling;
 
             context.Motor.Tick(
                 new MotionIntent
                 {
                     PlanarVelocity = combatActions.TakeWarpVelocity(deltaTime),
                     Rotation = context.Transform.rotation,
-                    SuppressGravity = Runner.IsTravelling
+                    SuppressGravity = shouldHoldGravitySoTheEvadeDoesNotDip
                 },
                 deltaTime);
         }
     }
 
-    /// <summary>Picked in the player installer's state list, next to Attacking.</summary>
     [Serializable]
     public sealed class EvadingStateBinding : ICharacterStateBinding
     {

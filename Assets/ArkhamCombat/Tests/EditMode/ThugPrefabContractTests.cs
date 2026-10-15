@@ -11,17 +11,22 @@ using UnityEngine.AI;
 namespace ArkhamCombat.Tests
 {
     // What the code only works with when the prefab is wired a certain way. Nothing compiles the two together, so these read the prefab.
+    [TestFixture("Thug")]
+    [TestFixture("Armored")]
+    [TestFixture("Knife")]
     public class ThugPrefabContractTests
     {
-        private const string ThugPath = "Assets/ArkhamCombat/Prefabs/Thug.prefab";
+        private readonly string prefabPath;
 
         private GameObject thug;
+
+        public ThugPrefabContractTests(string prefabName) => prefabPath = $"Assets/ArkhamCombat/Prefabs/{prefabName}.prefab";
 
         [SetUp]
         public void SetUp()
         {
-            thug = AssetDatabase.LoadAssetAtPath<GameObject>(ThugPath);
-            Assert.IsNotNull(thug, $"no prefab at {ThugPath}");
+            thug = AssetDatabase.LoadAssetAtPath<GameObject>(prefabPath);
+            Assert.IsNotNull(thug, $"no prefab at {prefabPath}");
         }
 
         [Test]

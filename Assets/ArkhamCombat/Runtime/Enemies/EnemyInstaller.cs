@@ -86,7 +86,6 @@ namespace ArkhamCombat.Enemies
                 .FromInstance(hasTargeting ? targetPickerOnTheEnemy : new NullActionTargetPicker());
         }
 
-        // An enemy's tree says which way its dodge goes, so most enemies have no picker of their own.
         private void BindTravelDirection()
         {
             bool picksItsTravelDirection = TryGetComponent(out ITravelDirectionPicker travelDirectionPickerOnTheEnemy);

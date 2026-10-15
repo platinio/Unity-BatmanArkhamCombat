@@ -22,7 +22,7 @@ namespace ArkhamCombat.Player
             this.incomingAttacks = incomingAttacks;
         }
 
-        public IActionTarget PickAttacker() =>
+        public IActionTarget PickAttackerToCounter() =>
             incomingAttacks.TryGetNearestAttackerThatCanBeCountered(transform.position, out ICombatTarget attacker) ? attacker : null;
 
         public IActionTarget PickTarget(Vector2 direction) =>

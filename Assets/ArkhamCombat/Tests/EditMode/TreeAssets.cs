@@ -9,6 +9,7 @@ namespace ArkhamCombat.Tests
     {
         public const string TreesFolder = "Assets/ArkhamCombat/Trees";
         public const string SubTreesFolder = TreesFolder + "/SubTrees/";
+        public const string ThugRootPath = TreesFolder + "/Roots/ThugRoot.asset";
 
         public static BehaviorTreeGraphAsset Tree(string path)
         {
@@ -23,6 +24,13 @@ namespace ArkhamCombat.Tests
 
         public static BehaviorTreeNode WhatFeeds(BehaviorTreeNode node, string port) =>
             (BehaviorTreeNode)node.valueInputs[port].connection.source.behaviorTreeNode;
+
+        public static string ParameterThatFeeds(BehaviorTreeNode node, string port)
+        {
+            GetVariable read = WhatFeeds(node, port) as GetVariable;
+            Assert.IsNotNull(read, $"{node.GetType().Name}.{port} is not fed by a parameter of its tree");
+            return (string)read.defaultValues[nameof(GetVariable.Key)];
+        }
 
         public static FunctionGraphAsset FunctionAsking(ConditionalExecution guard) =>
             ((VisualScriptGraphVariable)WhatFeeds(guard, "Value")).Function;

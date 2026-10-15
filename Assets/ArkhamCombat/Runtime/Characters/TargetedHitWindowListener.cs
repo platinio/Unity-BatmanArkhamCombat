@@ -26,19 +26,7 @@ namespace ArkhamCombat.Characters
         public void HitWindowOpened(AttackDefinition attack, IActionTarget target)
         {
             HitResult result = StrikeAt(target, attack);
-
-            if (result.HasLanded)
-            {
-                AnnounceStrikeLanded(attack, target);
-            }
-            else if (result.WasEvaded)
-            {
-                AnnounceStrikeEvaded(attack, target);
-            }
-            else
-            {
-                AnnounceStrikeWhiffed(attack);
-            }
+            Announce(result, attack, target);
         }
 
         public void HitWindowClosed() { }
@@ -64,32 +52,26 @@ namespace ArkhamCombat.Characters
         private StrikeOrigin WhereTheStrikeComesFrom() =>
             new StrikeOrigin(character.position + pendingWarpMovement.Movement, character.forward);
 
-        private void AnnounceStrikeLanded(AttackDefinition attack, IActionTarget victim)
+        private void Announce(HitResult result, AttackDefinition attack, IActionTarget victim)
         {
 #if HERMES_EVENTS_GENERATED
-            if (CanAnnounceStrikes)
+            if (!CanAnnounceStrikes)
             {
-                sceneGameEvents.GameEventDispatcher.StrikeLandedGameEvent.Raise(character.gameObject, attack, victim.Owner);
+                return;
             }
-#endif
-        }
 
-        private void AnnounceStrikeEvaded(AttackDefinition attack, IActionTarget victim)
-        {
-#if HERMES_EVENTS_GENERATED
-            if (CanAnnounceStrikes)
+            GameObject attacker = character.gameObject;
+            if (result.HasLanded)
             {
-                sceneGameEvents.GameEventDispatcher.StrikeEvadedGameEvent.Raise(character.gameObject, attack, victim.Owner);
+                sceneGameEvents.GameEventDispatcher.StrikeLandedGameEvent.Raise(attacker, attack, victim.Owner);
             }
-#endif
-        }
-
-        private void AnnounceStrikeWhiffed(AttackDefinition attack)
-        {
-#if HERMES_EVENTS_GENERATED
-            if (CanAnnounceStrikes)
+            else if (result.WasEvaded)
             {
-                sceneGameEvents.GameEventDispatcher.StrikeWhiffedGameEvent.Raise(character.gameObject, attack);
+                sceneGameEvents.GameEventDispatcher.StrikeEvadedGameEvent.Raise(attacker, attack, victim.Owner);
+            }
+            else
+            {
+                sceneGameEvents.GameEventDispatcher.StrikeWhiffedGameEvent.Raise(attacker, attack);
             }
 #endif
         }

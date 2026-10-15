@@ -1,9 +1,11 @@
+using System.Text.RegularExpressions;
 using ArcaneOnyx.BehaviorTree;
 using ArcaneOnyx.GraphCore;
 using ArkhamCombat.Enemies;
 using NUnit.Framework;
 using UnityEngine;
 using UnityEngine.AI;
+using UnityEngine.TestTools;
 using static ArkhamCombat.Tests.CombatTestDoubles;
 
 namespace ArkhamCombat.Tests
@@ -43,10 +45,12 @@ namespace ArkhamCombat.Tests
         }
 
         [Test]
-        public void ItFails_OnAnAgentThatCannotWalk()
+        public void ItFails_OnAnAgentThatCannotWalk_AndSaysSoOnce()
         {
             BehaviorTreeGraph graph = TreeThatSetsTheSpeedTo(ProwlSpeed);
+            LogAssert.Expect(LogType.Error, new Regex("has no NavMeshAgent"));
 
+            Assert.AreEqual(ExecutionStatus.Failure, graph.OnUpdate());
             Assert.AreEqual(ExecutionStatus.Failure, graph.OnUpdate());
         }
     }

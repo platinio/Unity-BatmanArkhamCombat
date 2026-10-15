@@ -15,7 +15,6 @@ using Variables = Unity.VisualScripting.Variables;
 
 namespace ArkhamCombat.Tests
 {
-    // The two Functions and the branch are drawn on canvases, so these run and read the authored assets.
     public class DodgeTests
     {
         private const string CanDodgePath = "Assets/ArkhamCombat/Trees/Functions/CanDodge.asset";
@@ -26,6 +25,8 @@ namespace ArkhamCombat.Tests
         private const float RollOverTheChance = 0.8f;
         private const float Tolerance = 1e-4f;
         private const int EnoughDodgesToSeeBothSides = 40;
+        private const int TimesAGuardMayAskAboutOneStrike = 30;
+        private const float Always = 1f;
 
         private static readonly Vector3 WhereTheEnemyStands = new Vector3(2f, 0f, 3f);
         private static readonly Vector3 WhereItsTargetStands = new Vector3(2f, 0f, -1f);
@@ -95,11 +96,39 @@ namespace ArkhamCombat.Tests
         }
 
         [Test]
-        public void AskedAgainAboutTheSameStrike_TheAnswerIsTheSame()
+        public void AskedManyTimesAboutTheSameStrike_TheAnswerNeverChanges()
         {
             AStrikeIsComingWithTheRoll(RollUnderTheChance);
 
-            Assert.AreEqual(CanDodgeWith(HalfTheTime), CanDodgeWith(HalfTheTime));
+            for (int i = 0; i < TimesAGuardMayAskAboutOneStrike; i++)
+            {
+                Assert.IsTrue(CanDodgeWith(HalfTheTime), $"asked for the {i + 1}th time");
+            }
+        }
+
+        [Test]
+        public void AnEnemyThatAlwaysDodges_CanDodgeEveryStrikeItIsToldOf_UntilThatStrikeIsOver()
+        {
+            HitReceiverProfile profile = ReceiverProfile();
+            EnemyStatus status = agent.AddComponent<EnemyStatus>();
+            status.Construct(profile);
+            status.Awake();
+
+            try
+            {
+                for (int strike = 0; strike < EnoughDodgesToSeeBothSides; strike++)
+                {
+                    status.StrikeIsComing();
+                    Assert.IsTrue(CanDodgeWith(Always), $"strike {strike + 1} was announced");
+
+                    status.StrikeIsOver();
+                    Assert.IsFalse(CanDodgeWith(Always), $"strike {strike + 1} is over");
+                }
+            }
+            finally
+            {
+                Object.DestroyImmediate(profile);
+            }
         }
 
         [Test]

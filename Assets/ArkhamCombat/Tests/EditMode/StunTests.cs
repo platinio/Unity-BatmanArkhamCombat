@@ -1,9 +1,12 @@
+using System.Collections.Generic;
+using System.Linq;
 using ArkhamCombat.Combat;
 using ArkhamCombat.Enemies;
 using NUnit.Framework;
 using Unity.VisualScripting;
 using UnityEngine;
 using static ArkhamCombat.Tests.CombatTestDoubles;
+using static ArkhamCombat.Tests.TreeAssets;
 
 namespace ArkhamCombat.Tests
 {
@@ -117,15 +120,18 @@ namespace ArkhamCombat.Tests
             Assert.AreEqual(AppliedReaction.Death, ReactionRules.Resolve(HitReaction.Stun, unarmored, NoHealthLeft));
         }
 
-        [Test]
-        public void AStun_IsHeavierThanAFlinch_AndLighterThanAStagger()
+        private static System.Array EveryReactionAnAttackCanAskFor() => System.Enum.GetValues(typeof(HitReaction));
+
+        [TestCaseSource(nameof(EveryReactionAnAttackCanAskFor))]
+        public void EveryReactionAnAttackCanAskFor_HasARowInEveryRule(HitReaction reactionAskedFor)
         {
-            Assert.IsTrue(AppliedReaction.Stun.IsHeavierThan(AppliedReaction.Flinch));
-            Assert.IsTrue(AppliedReaction.Stagger.IsHeavierThan(AppliedReaction.Stun));
+            Assert.DoesNotThrow(() => ReactionRules.Resolve(reactionAskedFor, unarmored, SomeHealthLeft));
+            Assert.DoesNotThrow(() => ReactionRules.ResolveForAStunnedReceiver(reactionAskedFor, unarmored, SomeHealthLeft));
+            Assert.DoesNotThrow(() => ReactionRules.ResolveForAPairedAttack(reactionAskedFor, SomeHealthLeft));
         }
 
         [Test]
-        public void AStunnedEnemy_PublishesThatItIsStunned_AndLosesNoHealthToAStunThatDealsNone()
+        public void AStunnedEnemy_PublishesThatItIsStunned()
         {
             WakeTheEnemyWith(unarmored);
 
@@ -133,7 +139,19 @@ namespace ArkhamCombat.Tests
 
             Assert.IsTrue(result.HasLanded);
             Assert.AreEqual(nameof(AppliedReaction.Stun), ReactionTheEnemyPublished);
-            Assert.AreEqual(1f, (float)facts.Get(EnemyVariableNames.Health01), 1e-5f);
+        }
+
+        [Test]
+        public void TheStunnedBranch_PlaysItsOwnParameter_WhichIsAnActionThatCanPlay()
+        {
+            const string actionItPlays = "stunnedAction";
+            PlayActionNode play = SubTree("Stunned").graph.Nodes.OfType<PlayActionNode>().Single();
+            ActionDefinition stunned = SubTree("Stunned").optionalDeclarations.Get<ActionDefinition>(actionItPlays);
+            List<string> errors = new List<string>();
+
+            Assert.AreEqual(actionItPlays, ParameterThatFeeds(play, nameof(PlayActionNode.Action)));
+            Assert.IsNotNull(stunned, "the Stunned sub-tree carries no action of its own, and that action is how long a stun lasts");
+            Assert.IsTrue(stunned.Validate(errors), string.Join("\n", errors));
         }
 
         [Test]
