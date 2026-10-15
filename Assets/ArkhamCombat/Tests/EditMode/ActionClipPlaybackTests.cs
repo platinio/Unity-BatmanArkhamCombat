@@ -284,6 +284,63 @@ namespace ArkhamCombat.Tests
         }
 
         [Test]
+        public void AKeptLastPose_CrossfadesIntoTheNextClip()
+        {
+            PlaybackWith(new ClipEntry(jab, clip, 0f, 1f, ACut, ACut, keepsItsLastPose: true), WholeClipFor(cross, crossfadeSeconds: 0.1f)).Show(jab);
+            playback.FollowTheClock(1f);
+            playback.FadeOut();
+            playback.StepTheBlend(1f);
+
+            playback.Show(cross);
+            playback.StepTheBlend(0.05f);
+            EvaluateTheGraphByHand();
+
+            Assert.IsTrue(playback.IsCrossfading);
+            Assert.AreEqual(0.5f * 1f + 0.5f * 0f, bone.localPosition.x, 1e-3f, "half way between the kept last frame and the new clip's start");
+        }
+
+        [Test]
+        public void AClipFadingOut_CrossfadesIntoTheNextClip_FromTheWeightItHad()
+        {
+            PlaybackWith(WholeClipFor(jab, blendOutSeconds: 0.1f), WholeClipFor(cross, blendInSeconds: 0.1f, crossfadeSeconds: 0.1f)).Show(jab);
+            playback.FadeOut();
+            playback.StepTheBlend(0.05f);
+
+            playback.Show(cross);
+
+            Assert.IsTrue(playback.IsCrossfading);
+            Assert.AreEqual(0.5f, playback.Weight, 1e-4f, "the clips' share carries on from where the fade had got");
+        }
+
+        [Test]
+        public void ASecondFollowUpInsideTheCrossfade_DropsTheOldestClip()
+        {
+            PlaybackWith(WholeClipFor(jab, crossfadeSeconds: 0.1f), WholeClipFor(cross, crossfadeSeconds: 0.1f)).Show(jab);
+            int playablesWithOneClip = playback.Graph.GetPlayableCount();
+            playback.Show(cross);
+            playback.StepTheBlend(0.05f);
+
+            Assert.DoesNotThrow(() => playback.Show(jab));
+
+            Assert.IsTrue(playback.IsCrossfading);
+            Assert.AreEqual(playablesWithOneClip + 1, playback.Graph.GetPlayableCount(), "two clips at most: the new one and the one before it");
+        }
+
+        [Test]
+        public void AFadeOutInsideTheCrossfade_StillDropsTheClipBefore()
+        {
+            PlaybackWith(WholeClipFor(jab), WholeClipFor(cross, blendOutSeconds: 0.1f, crossfadeSeconds: 0.1f));
+            int playablesWithNoClip = playback.Graph.GetPlayableCount();
+            playback.Show(jab);
+            playback.Show(cross);
+
+            playback.FadeOut();
+            playback.StepTheBlend(0.1f);
+
+            Assert.AreEqual(playablesWithNoClip, playback.Graph.GetPlayableCount(), "both clips are gone once the fade and the crossfade end");
+        }
+
+        [Test]
         public void TheFrameDataLine_SaysHowFarTheCrossfadeIs()
         {
             PlaybackWith(WholeClipFor(jab), WholeClipFor(cross, crossfadeSeconds: 0.1f)).Show(jab);

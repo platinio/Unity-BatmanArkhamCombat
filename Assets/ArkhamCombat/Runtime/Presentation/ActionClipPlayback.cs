@@ -19,7 +19,7 @@ namespace ArkhamCombat.Presentation
 
         private const int LocomotionInput = 0;
         private const int ActionInput = 1;
-        private const int OutgoingClipInput = 2;
+        private const int ClipBeforeInput = 2;
         private const int InputCount = 3;
         private const float ClipNeverAdvancesOnItsOwn = 0f;
 
@@ -31,7 +31,7 @@ namespace ArkhamCombat.Presentation
         private AnimationMixerPlayable mixer;
         private AnimatorControllerPlayable locomotionPlayable;
         private AnimationClipPlayable clipPlayable;
-        private AnimationClipPlayable outgoingClipPlayable;
+        private AnimationClipPlayable clipBeforePlayable;
         private ClipEntry entry;
         private ShownPose shownPose = ShownPose.Locomotion;
 
@@ -64,9 +64,9 @@ namespace ArkhamCombat.Presentation
                 switch (shownPose)
                 {
                     case ShownPose.TheActionsClip: return $"clip {entry.Action.name}  {ClipSeconds:0.00}s  weight {blend.Weight:0.00}{CrossfadePartOfTheLine}";
-                    case ShownPose.LocomotionUnderAHold: return $"hold  weight {blend.Weight:0.00}";
-                    case ShownPose.TheKeptLastFrameOfAClip: return $"clip kept  weight {blend.Weight:0.00}";
-                    case ShownPose.AClipFadingOut: return $"clip fading out  weight {blend.Weight:0.00}";
+                    case ShownPose.LocomotionUnderAHold: return $"hold  weight {blend.Weight:0.00}{CrossfadePartOfTheLine}";
+                    case ShownPose.TheKeptLastFrameOfAClip: return $"clip kept  weight {blend.Weight:0.00}{CrossfadePartOfTheLine}";
+                    case ShownPose.AClipFadingOut: return $"clip fading out  weight {blend.Weight:0.00}{CrossfadePartOfTheLine}";
                     default: return string.Empty;
                 }
             }
@@ -219,8 +219,8 @@ namespace ArkhamCombat.Presentation
         private void CrossfadeFromTheClipBefore(float crossfadeSeconds)
         {
             DropTheClipBefore();
-            bool isAClipShowing = clipPlayable.IsValid() && blend.Weight > 0f;
-            if (!isAClipShowing)
+            bool hasAClipToCrossfadeFrom = clipPlayable.IsValid() && blend.Weight > 0f;
+            if (!hasAClipToCrossfadeFrom)
             {
                 DropTheClip();
                 crossfade.CutTo(1f);
@@ -228,8 +228,8 @@ namespace ArkhamCombat.Presentation
             }
 
             graph.Disconnect(mixer, ActionInput);
-            graph.Connect(clipPlayable, 0, mixer, OutgoingClipInput);
-            outgoingClipPlayable = clipPlayable;
+            graph.Connect(clipPlayable, 0, mixer, ClipBeforeInput);
+            clipBeforePlayable = clipPlayable;
             crossfade.CutTo(0f);
             crossfade.BlendTo(1f, crossfadeSeconds);
             DropTheClipBeforeOnceCrossfaded();
@@ -239,7 +239,7 @@ namespace ArkhamCombat.Presentation
         {
             float shareOfTheClips = blend.Weight;
             mixer.SetInputWeight(ActionInput, shareOfTheClips * crossfade.Weight);
-            mixer.SetInputWeight(OutgoingClipInput, shareOfTheClips * (1f - crossfade.Weight));
+            mixer.SetInputWeight(ClipBeforeInput, shareOfTheClips * (1f - crossfade.Weight));
             mixer.SetInputWeight(LocomotionInput, 1f - shareOfTheClips);
         }
 
@@ -272,10 +272,10 @@ namespace ArkhamCombat.Presentation
 
         private void DropTheClipBefore()
         {
-            if (outgoingClipPlayable.IsValid())
+            if (clipBeforePlayable.IsValid())
             {
-                graph.Disconnect(mixer, OutgoingClipInput);
-                outgoingClipPlayable.Destroy();
+                graph.Disconnect(mixer, ClipBeforeInput);
+                clipBeforePlayable.Destroy();
             }
         }
     }

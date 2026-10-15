@@ -133,7 +133,7 @@ namespace ArkhamCombat.Presentation
         [Tooltip("The clip's last frame stays on the body after the action ends, until the next action: a knockdown waits lying down for the get-up, and death stays down.")]
         [SerializeField] private bool keepsItsLastPose;
 
-        [Tooltip("Seconds the clip before fades out under this one when this action follows another. 0 is a cut.")]
+        [Tooltip("Seconds the clip before fades out under this one when a clip is still showing as this action starts. 0 is a cut.")]
         [SerializeField, Min(0f)] private float crossfadeSeconds = DefaultCrossfadeSeconds;
 
         public ClipEntry() { }
