@@ -11,7 +11,7 @@ namespace ArkhamCombat.Presentation
     /// </summary>
     public sealed class ProceduralPresentationDriver : MonoBehaviour, IPresentationDriver, ICueTarget
     {
-        [Tooltip("The child the cues move. Never the root: the motor owns that.")]
+        [Tooltip("What the cues move: this object, a child of the character. Never the character's root: the motor owns that.")]
         [SerializeField] private Transform body;
 
         [Tooltip("Optional. Punch cues push this; the body when empty.")]
@@ -62,7 +62,7 @@ namespace ArkhamCombat.Presentation
         {
             if (body == null)
             {
-                Debug.LogError($"[{nameof(ProceduralPresentationDriver)}] No body child assigned on '{name}'.", this);
+                Debug.LogError($"[{nameof(ProceduralPresentationDriver)}] No body assigned on '{name}'.", this);
                 enabled = false;
                 return;
             }

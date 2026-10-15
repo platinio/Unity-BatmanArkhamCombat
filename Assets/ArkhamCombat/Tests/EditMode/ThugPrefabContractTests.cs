@@ -7,6 +7,7 @@ using NUnit.Framework;
 using UnityEditor;
 using UnityEngine;
 using UnityEngine.AI;
+using static ArkhamCombat.Tests.CombatTestDoubles;
 
 namespace ArkhamCombat.Tests
 {
@@ -65,6 +66,9 @@ namespace ArkhamCombat.Tests
             Assert.IsNotNull(agent);
             Assert.IsTrue(agent.TryGetComponent(out ICombatTarget _), "the roster looks for the target on the agent's own object");
         }
+
+        [Test]
+        public void ThePictureSitsOnTheBodyChild_SoAVariantSwapsItByDeactivatingThatChild() => AssertThePictureSitsOnTheBodyChild(thug);
 
         [Test]
         public void OnlyTheTreeTurnsTheThug()
