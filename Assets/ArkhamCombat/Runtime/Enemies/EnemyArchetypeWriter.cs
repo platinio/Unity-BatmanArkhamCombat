@@ -36,6 +36,7 @@ namespace ArkhamCombat.Enemies
             Write(EnemyVariableNames.MoveSpeed, archetype.MoveSpeed);
             Write(EnemyVariableNames.Attack, archetype.Attack);
             Write(EnemyVariableNames.TauntChance, archetype.TauntChance);
+            Write(EnemyVariableNames.DodgeChance, archetype.DodgeChance);
         }
 
         internal void ApplyMoveSpeed()

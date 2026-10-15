@@ -69,7 +69,7 @@ namespace ArkhamCombat.Tests
         [Test]
         public void ThereIsMoreThanOneKindOfEnemy()
         {
-            CollectionAssert.IsSupersetOf(EveryRoot(), new[] { "ThugRoot", "ArmoredRoot" });
+            CollectionAssert.IsSupersetOf(EveryRoot(), new[] { "ThugRoot", "ArmoredRoot", "KnifeRoot" });
         }
 
         [TestCaseSource(nameof(EveryRoot))]
@@ -126,7 +126,46 @@ namespace ArkhamCombat.Tests
                 BranchesInPriorityOrder("ArmoredRoot"));
         }
 
+        [Test]
+        public void TheKnifeEnemy_CanDodge_AndNeverTaunts()
+        {
+            CollectionAssert.AreEqual(
+                new[] { "Death", "KnockedDown", "Stunned", "Stagger", "Flinch", "Dodge", "Attack", "Prowl", "Approach", "Idle" },
+                BranchesInPriorityOrder("KnifeRoot"));
+        }
+
+        [TestCase("prowlSpeed")]
+        [TestCase("sidestepDistance")]
+        public void TheKnifeEnemy_ProwlsWiderAndQuickerThanAThug_ByWhatItsRootPassesTheBranch(string parameter)
+        {
+            float OnTheRoot(string rootName) =>
+                Root(rootName).Nodes.OfType<RunBehaviorTreeGraphNode>().Single(call => SubTreeRunBy(call) == "Prowl").valueInputs[parameter].GetValue<float>();
+
+            Assert.Greater(OnTheRoot("KnifeRoot"), OnTheRoot("ThugRoot"));
+        }
+
+        [Test]
+        public void TheKnifeEnemy_DodgesSomeStrikes_AndItsSlashCannotBeCountered()
+        {
+            EnemyArchetype knife = ArchetypeOf(Prefab("Knife"));
+
+            Assert.Greater(knife.DodgeChance, 0f);
+            Assert.IsFalse(knife.Attack.IsCounterable, "the only answer to it is to evade");
+            Assert.IsTrue(knife.Attack.IsUnblockable);
+            Assert.IsFalse(knife.HitReceiverProfile.IsArmored);
+        }
+
+        [Test]
+        public void OnlyTheKnifeEnemy_Dodges()
+        {
+            Assert.AreEqual(0f, ArchetypeOf(Prefab("Thug")).DodgeChance);
+            Assert.AreEqual(0f, ArchetypeOf(Prefab("Armored")).DodgeChance);
+            CollectionAssert.DoesNotContain(BranchesInPriorityOrder("ThugRoot"), "Dodge");
+            CollectionAssert.DoesNotContain(BranchesInPriorityOrder("ArmoredRoot"), "Dodge");
+        }
+
         [TestCase("Armored", "ArmoredRoot")]
+        [TestCase("Knife", "KnifeRoot")]
         public void AnEnemyPrefab_RunsItsOwnRoot_AndKeepsTheJobsOfTheThugItIsAVariantOf(string prefabName, string rootName)
         {
             GameObject prefab = Prefab(prefabName);
@@ -138,6 +177,7 @@ namespace ArkhamCombat.Tests
         }
 
         [TestCase("Armored")]
+        [TestCase("Knife")]
         public void AnEnemyPrefab_NamesAnArchetypeOfItsOwnThatIsWellFormed(string prefabName)
         {
             EnemyArchetype archetype = ArchetypeOf(Prefab(prefabName));

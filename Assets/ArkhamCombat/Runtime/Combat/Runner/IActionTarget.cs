@@ -26,5 +26,14 @@ namespace ArkhamCombat.Combat
         /// when the hit lands. A target that plays no reactions lets the attack start without it.
         /// </summary>
         void BeginPairedReaction(AttackDefinition attack) { }
+
+        /// <summary>
+        /// Told as an attack aimed at it starts. A target that does nothing about a strike on its
+        /// way ignores it.
+        /// </summary>
+        void StrikeIsComing() { }
+
+        /// <summary>Told once that attack has struck, hit or miss, or was cut short before it could.</summary>
+        void StrikeIsOver() { }
     }
 }

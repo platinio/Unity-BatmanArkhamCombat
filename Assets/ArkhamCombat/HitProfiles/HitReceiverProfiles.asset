@@ -1,5 +1,23 @@
 %YAML 1.1
 %TAG !u! tag:unity3d.com,2011:
+--- !u!114 &-6411615913016946419
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 23defe2124f995f4a9cd53a78f4ac562, type: 3}
+  m_Name: Knife
+  m_EditorClassIdentifier: ArkhamCombat.Combat::ArkhamCombat.Combat.HitReceiverProfile
+  Name: Knife
+  icon: {fileID: 0}
+  id: e1d889d01db7699409079ff9f9515ac3_3
+  maxHealth: 50
+  isArmored: 0
+  canBeKnockedDown: 1
 --- !u!114 &11400000
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -16,7 +34,8 @@ MonoBehaviour:
   - {fileID: 817436336140980666}
   - {fileID: 8819781258670630746}
   - {fileID: 7596702466812247776}
-  id: 3
+  - {fileID: -6411615913016946419}
+  id: 4
 --- !u!114 &817436336140980666
 MonoBehaviour:
   m_ObjectHideFlags: 0

@@ -33,6 +33,9 @@ namespace ArkhamCombat.Enemies
         [Tooltip("How likely it is to taunt each time it may, from 0 (never) to 1 (every time). How often it may is on the Taunt branch of its tree.")]
         [SerializeField, Range(0f, 1f)] private float tauntChance = 0.25f;
 
+        [Tooltip("How likely it is to dodge a strike aimed at it, from 0 (never) to 1 (every time). It only matters to an enemy whose tree has a Dodge branch.")]
+        [SerializeField, Range(0f, 1f)] private float dodgeChance;
+
         public HitReceiverProfile HitReceiverProfile => hitReceiverProfile;
         public float IdleMin => idleMin;
         public float IdleMax => idleMax;
@@ -41,6 +44,7 @@ namespace ArkhamCombat.Enemies
         public AttackTokenType TokenType => tokenType;
         public AttackDefinition Attack => attack;
         public float TauntChance => tauntChance;
+        public float DodgeChance => dodgeChance;
 
         public void Configure(HitReceiverProfile hitReceiverProfile, float idleMin, float idleMax)
         {
@@ -60,6 +64,8 @@ namespace ArkhamCombat.Enemies
         public void ConfigureAttack(AttackDefinition attack) => this.attack = attack;
 
         public void ConfigureTauntChance(float tauntChance) => this.tauntChance = tauntChance;
+
+        public void ConfigureDodgeChance(float dodgeChance) => this.dodgeChance = dodgeChance;
 
         public bool Validate(List<string> errors)
         {

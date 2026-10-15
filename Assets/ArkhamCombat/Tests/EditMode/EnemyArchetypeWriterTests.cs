@@ -89,6 +89,18 @@ namespace ArkhamCombat.Tests
         }
 
         [Test]
+        public void WritesTheArchetypesDodgeChanceOntoTheAgent()
+        {
+            const float dodgeChance = 0.6f;
+            archetype.ConfigureDodgeChance(dodgeChance);
+            writer.Construct(archetype);
+
+            writer.WriteTunables();
+
+            Assert.AreEqual(dodgeChance, (float)facts.Get(EnemyVariableNames.DodgeChance), Tolerance);
+        }
+
+        [Test]
         public void WritesTheArchetypesAttackOntoTheAgent()
         {
             archetype.ConfigureAttack(haymaker);
