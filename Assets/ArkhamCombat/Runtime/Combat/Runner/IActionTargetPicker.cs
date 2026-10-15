@@ -10,6 +10,12 @@ namespace ArkhamCombat.Combat
         /// an agent aims for an enemy. Zero means straight ahead.
         /// </param>
         IActionTarget PickTarget(Vector2 direction);
+
+        /// <summary>
+        /// Whoever is winding up an attack against this character that it could counter. Nobody,
+        /// unless the picker knows who attacks.
+        /// </summary>
+        IActionTarget PickAttacker() => null;
     }
 
     public sealed class NullActionTargetPicker : IActionTargetPicker

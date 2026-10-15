@@ -52,6 +52,9 @@ namespace ArkhamCombat.Combat
         [Tooltip("Read by enemies and the telegraph colour: this cannot be countered, only evaded.")]
         [SerializeField] private bool isUnblockable;
 
+        [Tooltip("Aimed at whoever is winding up an attack against this character, wherever the stick points: a counter. Off, it is aimed where the stick points.")]
+        [SerializeField] private bool isAimedAtTheAttacker;
+
         [Header("Pair")]
         [Tooltip("What the target plays from the moment this attack starts, in place of the action its reaction would play: the other half of a counter. Leave empty for an ordinary strike, whose target reacts when the hit lands.")]
         [SerializeField] private ActionDefinition pairedReaction;
@@ -67,6 +70,7 @@ namespace ArkhamCombat.Combat
         public HitReaction Reaction => reaction;
         public bool IsCounterable => isCounterable;
         public bool IsUnblockable => isUnblockable;
+        public bool IsAimedAtTheAttacker => isAimedAtTheAttacker;
         public ActionDefinition PairedReaction => pairedReaction;
         public bool IsPaired => pairedReaction != null;
 
@@ -97,6 +101,8 @@ namespace ArkhamCombat.Combat
         public void ConfigureTelegraphWindow(Window telegraphWindow) => this.telegraphWindow = telegraphWindow;
 
         public void ConfigurePairedReaction(ActionDefinition pairedReaction) => this.pairedReaction = pairedReaction;
+
+        public void AimAtTheAttacker() => isAimedAtTheAttacker = true;
 
         internal override void GiveItsWindowsTo(ActionRunner runner) => runner.TakeTheWindowsOf(this);
 

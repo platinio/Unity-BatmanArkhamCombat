@@ -38,7 +38,7 @@ namespace ArkhamCombat.Player
 
         private void BindTargeting()
         {
-            Container.Bind<ITargetRoster>().To<EncounterTargetRoster>().AsSingle();
+            Container.Bind(typeof(ITargetRoster), typeof(IIncomingAttacks)).To<EncounterTargetRoster>().AsSingle();
             Container.Bind<ITargetScorer>().To<StandInTargetScorer>().AsSingle();
             Container.Bind<ITargetForwardSource>().To<MovementFrameTargetForward>().AsSingle();
         }

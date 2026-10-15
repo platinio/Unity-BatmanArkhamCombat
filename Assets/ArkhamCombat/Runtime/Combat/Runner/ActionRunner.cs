@@ -322,7 +322,7 @@ namespace ArkhamCombat.Combat
 
             CurrentAction = action;
             action.GiveItsWindowsTo(this);
-            CurrentActionTarget = targetPicker.PickTarget(directionAtPress);
+            CurrentActionTarget = PickTheTargetOfTheActionThatIsStarting(directionAtPress);
             travelDirection = CurrentDash != null ? OnTheGroundAndOfLengthOne(travelDirectionPicker.PickTravelDirection(directionAtPress)) : Vector3.zero;
             isPlaying = true;
             idleSeconds = 0f;
@@ -345,6 +345,12 @@ namespace ArkhamCombat.Combat
             {
                 CurrentActionTarget.BeginPairedReaction(attack);
             }
+        }
+
+        private IActionTarget PickTheTargetOfTheActionThatIsStarting(Vector2 directionAtPress)
+        {
+            bool answersAnAttack = CurrentAttack != null && CurrentAttack.IsAimedAtTheAttacker;
+            return answersAnAttack ? targetPicker.PickAttacker() : targetPicker.PickTarget(directionAtPress);
         }
 
         internal void TakeTheWindowsOf(AttackDefinition attack)

@@ -10,6 +10,15 @@ namespace ArkhamCombat.Tests
 {
     public class CombatTargetingTests
     {
+        private sealed class NobodyAttacks : IIncomingAttacks
+        {
+            public bool TryGetNearestAttackerThatCanBeCountered(Vector3 position, out ICombatTarget attacker)
+            {
+                attacker = null;
+                return false;
+            }
+        }
+
         private sealed class RecordingTargetScorer : ITargetScorer
         {
             public Vector3 LastDirection;
@@ -39,11 +48,18 @@ namespace ArkhamCombat.Tests
             container.Bind<ITargetScorer>().FromInstance(scorer);
             container.Bind<ITargetingSettings>().FromInstance(new TargetingSettings());
             container.Bind<IMovementFrame>().FromInstance(new WorldMovementFrame());
+            container.Bind<IIncomingAttacks>().FromInstance(new NobodyAttacks());
             container.Inject(targeting);
         }
 
         [TearDown]
         public void TearDown() => Object.DestroyImmediate(character);
+
+        [Test]
+        public void WithNobodyAttacking_ThereIsNoAttackerToAimAt()
+        {
+            Assert.IsNull(targeting.PickAttacker());
+        }
 
         [Test]
         public void AStickAtRest_PicksAlongTheFacing()
