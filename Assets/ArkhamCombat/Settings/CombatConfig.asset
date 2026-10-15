@@ -44,3 +44,4 @@ MonoBehaviour:
     minAttacksPerTurn: 1
     maxAttacksPerTurn: 2
     secondsBetweenTurns: 0.7
+    secondsBeforeAWaitingAgentStepsBackOut: 4
