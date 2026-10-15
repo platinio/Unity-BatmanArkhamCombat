@@ -156,7 +156,7 @@ namespace ArkhamCombat.Player
         }
 
         /// <summary>
-        /// Validates the stance and its attacks once as the character's context is built, so a
+        /// Validates the stance and its actions once as the character's context is built, so a
         /// reversed window or an edge to nowhere is an error in the console rather than a hit window
         /// that never closes.
         /// </summary>
@@ -170,9 +170,9 @@ namespace ArkhamCombat.Player
 
             List<string> errors = new List<string>();
             stance.Validate(errors);
-            foreach (AttackDefinition attack in DistinctAttacksIn(stance))
+            foreach (ActionDefinition action in DistinctActionsIn(stance))
             {
-                attack.Validate(errors);
+                action.Validate(errors);
             }
 
             foreach (string error in errors)
@@ -181,9 +181,9 @@ namespace ArkhamCombat.Player
             }
         }
 
-        private static HashSet<AttackDefinition> DistinctAttacksIn(Stance stance)
+        private static HashSet<ActionDefinition> DistinctActionsIn(Stance stance)
         {
-            HashSet<AttackDefinition> attacks = new HashSet<AttackDefinition>();
+            HashSet<ActionDefinition> actions = new HashSet<ActionDefinition>();
             foreach (ChainNode node in stance.Nodes)
             {
                 if (node == null)
@@ -191,9 +191,9 @@ namespace ArkhamCombat.Player
                     continue;
                 }
 
-                if (node.Attack != null)
+                if (node.Action != null)
                 {
-                    attacks.Add(node.Attack);
+                    actions.Add(node.Action);
                 }
 
                 if (node.Pool != null)
@@ -202,13 +202,13 @@ namespace ArkhamCombat.Player
                     {
                         if (pooledAttack != null)
                         {
-                            attacks.Add(pooledAttack);
+                            actions.Add(pooledAttack);
                         }
                     }
                 }
             }
 
-            return attacks;
+            return actions;
         }
     }
 }

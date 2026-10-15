@@ -1,11 +1,12 @@
 using System;
 using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.Serialization;
 
 namespace ArkhamCombat.Combat
 {
     /// <summary>
-    /// Not an attack; the attack is a separate asset, so the same jab can sit at three positions in
+    /// Not an action; the action is a separate asset, so the same jab can sit at three positions in
     /// three stances.
     /// </summary>
     [Serializable]
@@ -14,10 +15,11 @@ namespace ArkhamCombat.Combat
         [Tooltip("Stable name used by edges, the overlay and tests.")]
         [SerializeField] private string id;
 
-        [Tooltip("One attack. Leave empty to use the pool instead.")]
-        [SerializeField] private AttackDefinition attack;
+        [Tooltip("One action: an attack, or a move that is not one, such as an evade. Leave empty to use the pool instead.")]
+        [FormerlySerializedAs("attack")]
+        [SerializeField] private ActionDefinition action;
 
-        [Tooltip("Used when no single attack is set.")]
+        [Tooltip("Attacks to pick one from, used when no single action is set.")]
         [SerializeField] private VariantPool pool = new VariantPool();
 
         [Tooltip("Ways out, tried lowest priority first.")]
@@ -28,10 +30,10 @@ namespace ArkhamCombat.Combat
 
         public ChainNode() { }
 
-        public ChainNode(string id, AttackDefinition attack, params Edge[] edges)
+        public ChainNode(string id, ActionDefinition action, params Edge[] edges)
         {
             this.id = id;
-            this.attack = attack;
+            this.action = action;
             this.edges = new List<Edge>(edges);
         }
 
@@ -43,16 +45,13 @@ namespace ArkhamCombat.Combat
         }
 
         public string Id => id;
-        public AttackDefinition Attack => attack;
+        public ActionDefinition Action => action;
         public VariantPool Pool => pool;
 
         /// <summary>In priority order once the owning stance has been prepared; authored order before.</summary>
         public IReadOnlyList<Edge> Edges => edgesByPriority ?? edges;
 
-        public bool HasNothingToPlay => attack == null && (pool == null || pool.IsEmpty);
-
-        public AttackDefinition PickAttack(in VariantPickContext context) =>
-            attack != null ? attack : pool?.Pick(context);
+        public bool HasNothingToPlay => action == null && (pool == null || pool.IsEmpty);
 
         internal void SortEdgesByPriority()
         {

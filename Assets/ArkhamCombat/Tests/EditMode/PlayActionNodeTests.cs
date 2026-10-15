@@ -76,6 +76,23 @@ namespace ArkhamCombat.Tests
         }
 
         [Test]
+        public void ADashFedADirection_TravelsAlongIt()
+        {
+            const float travelDistance = 2f;
+            DashDefinition dodge = ScriptableObject.CreateInstance<DashDefinition>();
+            dodge.Configure(ActionSeconds);
+            dodge.ConfigureDash(new Window(0f, 1f), travelDistance);
+            FeedTheAction(dodge);
+            playAction.Direction.SetDefaultValue(Vector3.left);
+
+            graph.OnUpdate();
+            TickTheRunnerFor(ActionSeconds);
+
+            Assert.Less(Vector3.Distance(Vector3.left * travelDistance, combatActions.TakePendingWarpMovement()), 1e-4f);
+            Object.DestroyImmediate(dodge);
+        }
+
+        [Test]
         public void StaysRunning_UntilTheActionEnds_ThenSucceeds()
         {
             FeedTheAction(flinch);

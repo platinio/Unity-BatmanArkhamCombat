@@ -17,13 +17,20 @@ namespace ArkhamCombat.Enemies
         [Unity.VisualScripting.DoNotSerialize]
         public ValueInput Action { get; private set; }
 
+        [Unity.VisualScripting.DoNotSerialize]
+        public ValueInput Direction { get; private set; }
+
         public override string NodeName => "Play Action";
-        public override string Description => "Plays the action on the agent's runner and waits for it to end.";
+
+        public override string Description =>
+            "Plays the action on the agent's runner and waits for it to end.\n" +
+            "An action that travels, such as a dodge, goes along Direction when one is fed.";
 
         private sealed class Memory
         {
             public ActionRunner Runner;
             public ActionDefinition ActionToPlay;
+            public Vector3 DirectionToTravelIn;
             public bool HasReportedWhyItCannotPlay;
         }
 
@@ -32,21 +39,36 @@ namespace ArkhamCombat.Enemies
             base.Definition();
 
             Action = ValueInput<ActionDefinition>(nameof(Action));
+            Direction = ValueInput<Vector3>(nameof(Direction), Vector3.zero);
         }
 
         public override void OnEnter(BTContext ctx)
         {
             Memory memory = ctx.Memory<Memory>();
             memory.ActionToPlay = ctx.GetValue<ActionDefinition>(Action);
+            memory.DirectionToTravelIn = ctx.GetValue<Vector3>(Direction);
             memory.Runner = RunnerOf(ctx);
 
             if (CanPlay(memory))
             {
-                memory.Runner.PlayAction(memory.ActionToPlay, ctx.transform.position);
+                Play(memory, ctx.transform.position);
             }
             else
             {
                 ReportWhyItCannotPlayOnce(ctx, memory);
+            }
+        }
+
+        private static void Play(Memory memory, Vector3 position)
+        {
+            bool wasFedADirection = memory.DirectionToTravelIn != Vector3.zero;
+            if (wasFedADirection)
+            {
+                memory.Runner.PlayAction(memory.ActionToPlay, position, memory.DirectionToTravelIn);
+            }
+            else
+            {
+                memory.Runner.PlayAction(memory.ActionToPlay, position);
             }
         }
 

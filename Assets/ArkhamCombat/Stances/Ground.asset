@@ -15,7 +15,7 @@ MonoBehaviour:
   root: Neutral
   nodes:
   - id: Neutral
-    attack: {fileID: 0}
+    action: {fileID: 0}
     pool:
       attacks: []
       policy:
@@ -28,7 +28,7 @@ MonoBehaviour:
       priority: 2
       destinationId: S1
   - id: S1
-    attack: {fileID: 0}
+    action: {fileID: 0}
     pool:
       attacks:
       - {fileID: 11400000, guid: 57c02750bb6bdf74d8a2f615033df455, type: 2}
@@ -43,7 +43,7 @@ MonoBehaviour:
       priority: 0
       destinationId: S2
   - id: S2
-    attack: {fileID: 11400000, guid: 5913c62127663b34ab776301bee1c4c5, type: 2}
+    action: {fileID: 11400000, guid: 5913c62127663b34ab776301bee1c4c5, type: 2}
     pool:
       attacks: []
       policy:
@@ -56,7 +56,7 @@ MonoBehaviour:
       priority: 0
       destinationId: S3
   - id: S3
-    attack: {fileID: 11400000, guid: 7dacb37d8f457a14899983f70b227388, type: 2}
+    action: {fileID: 11400000, guid: 7dacb37d8f457a14899983f70b227388, type: 2}
     pool:
       attacks: []
       policy:
