@@ -11,7 +11,10 @@ using UnityEngine;
 namespace ArkhamCombat.Tests
 {
     // Nothing compiles the prefab, its clips and its controller together, so these read them.
-    [TestFixture("Player_Adam")]
+    [TestFixture("Player_Adam", "Assets/ArkhamCombat/Actions")]
+    [TestFixture("Thug_Guard", "Assets/ArkhamCombat/Actions/Enemies")]
+    [TestFixture("Knife_Guard", "Assets/ArkhamCombat/Actions/Enemies")]
+    [TestFixture("Armored_Guard", "Assets/ArkhamCombat/Actions/Enemies")]
     public class CharacterPrefabContractTests
     {
         private const string ActionsFolder = "Assets/ArkhamCombat/Actions";
@@ -21,12 +24,17 @@ namespace ArkhamCombat.Tests
             AssetDatabase.IsValidFolder("Assets/Frank_Assassin") && AssetDatabase.IsValidFolder("Assets/UnityTechnologies/Adam Character Pack");
 
         private readonly string prefabPath;
+        private readonly string ownActionsFolder;
 
         private GameObject character;
         private AnimationPresentationDriver driver;
         private CharacterClips clips;
 
-        public CharacterPrefabContractTests(string prefabName) => prefabPath = $"Assets/ArkhamCombat/Prefabs/Characters/{prefabName}.prefab";
+        public CharacterPrefabContractTests(string prefabName, string ownActionsFolder)
+        {
+            prefabPath = $"Assets/ArkhamCombat/Prefabs/Characters/{prefabName}.prefab";
+            this.ownActionsFolder = ownActionsFolder;
+        }
 
         [SetUp]
         public void SetUp()
@@ -42,11 +50,28 @@ namespace ArkhamCombat.Tests
 
         private static ActionDefinition ActionAt(string pathUnderActions) => AssetDatabase.LoadAssetAtPath<ActionDefinition>($"{ActionsFolder}/{pathUnderActions}.asset");
 
-        private static IEnumerable<ActionDefinition> ActionsIn(string folder) =>
-            AssetDatabase.FindAssets("t:ActionDefinition", new[] { folder })
-                .Select(AssetDatabase.GUIDToAssetPath)
-                .Where(path => Path.GetDirectoryName(path).Replace(Path.DirectorySeparatorChar, '/') == folder)
-                .Select(AssetDatabase.LoadAssetAtPath<ActionDefinition>);
+        // FindAssets searches the subfolders too, and hands back the folder with the platform's separator.
+        private static IEnumerable<ActionDefinition> ActionsDirectlyInside(string folder)
+        {
+            foreach (string guid in AssetDatabase.FindAssets("t:ActionDefinition", new[] { folder }))
+            {
+                string path = AssetDatabase.GUIDToAssetPath(guid);
+                string folderOfTheAction = Path.GetDirectoryName(path).Replace(Path.DirectorySeparatorChar, '/');
+                if (folderOfTheAction == folder)
+                {
+                    yield return AssetDatabase.LoadAssetAtPath<ActionDefinition>(path);
+                }
+            }
+        }
+
+        private void AssertEachHasAClip(IEnumerable<ActionDefinition> actions, string folder)
+        {
+            Assert.IsNotEmpty(actions, $"no actions directly inside {folder}");
+            foreach (ActionDefinition action in actions)
+            {
+                Assert.IsTrue(clips.TryFindEntry(action, out _), $"{action.name} would play as a hold");
+            }
+        }
 
         [Test]
         public void TheAnimationDriver_IsTheOneTheInstallerFinds_BecauseTheCapsuleChildIsDeactivated()
@@ -87,27 +112,15 @@ namespace ArkhamCombat.Tests
         }
 
         [Test]
-        public void EveryPlayerAction_HasAClip()
-        {
-            IEnumerable<ActionDefinition> playerActions = ActionsIn(ActionsFolder);
-
-            Assert.IsNotEmpty(playerActions);
-            foreach (ActionDefinition action in playerActions)
-            {
-                Assert.IsTrue(clips.TryFindEntry(action, out _), $"{action.name} would play as a hold");
-            }
-        }
+        public void EveryActionOfItsOwn_HasAClip() => AssertEachHasAClip(ActionsDirectlyInside(ownActionsFolder), ownActionsFolder);
 
         [Test]
         public void EveryReaction_HasAClip_ExceptTheHold()
         {
-            IEnumerable<ActionDefinition> reactions = ActionsIn($"{ActionsFolder}/Reactions").Where(reaction => reaction.name != TheOneReactionThatIsAHold);
+            string reactionsFolder = $"{ActionsFolder}/Reactions";
+            IEnumerable<ActionDefinition> reactionsThatPlayAClip = ActionsDirectlyInside(reactionsFolder).Where(reaction => reaction.name != TheOneReactionThatIsAHold);
 
-            Assert.IsNotEmpty(reactions);
-            foreach (ActionDefinition reaction in reactions)
-            {
-                Assert.IsTrue(clips.TryFindEntry(reaction, out _), $"{reaction.name} would play as a hold");
-            }
+            AssertEachHasAClip(reactionsThatPlayAClip, reactionsFolder);
         }
     }
 }
