@@ -16,5 +16,7 @@ namespace ArkhamCombat.Combat
         public float Damage => Attack.Damage;
 
         public HitReaction RequestedReaction => Attack.Reaction;
+
+        public bool IsPaired => Attack.IsPaired;
     }
 }

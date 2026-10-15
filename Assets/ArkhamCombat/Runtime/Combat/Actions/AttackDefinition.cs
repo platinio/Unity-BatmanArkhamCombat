@@ -52,6 +52,10 @@ namespace ArkhamCombat.Combat
         [Tooltip("Read by enemies and the telegraph colour: this cannot be countered, only evaded.")]
         [SerializeField] private bool isUnblockable;
 
+        [Header("Pair")]
+        [Tooltip("What the target plays from the moment this attack starts, in place of the action its reaction would play: the other half of a counter. Leave empty for an ordinary strike, whose target reacts when the hit lands.")]
+        [SerializeField] private ActionDefinition pairedReaction;
+
         public Window HitWindow => hitWindow;
         public Window ComboWindow => comboWindow;
         public Window EvadeWindow => evadeWindow;
@@ -63,6 +67,8 @@ namespace ArkhamCombat.Combat
         public HitReaction Reaction => reaction;
         public bool IsCounterable => isCounterable;
         public bool IsUnblockable => isUnblockable;
+        public ActionDefinition PairedReaction => pairedReaction;
+        public bool IsPaired => pairedReaction != null;
 
         public void ConfigureAttack(
             Window hitWindow,
@@ -89,6 +95,8 @@ namespace ArkhamCombat.Combat
         }
 
         public void ConfigureTelegraphWindow(Window telegraphWindow) => this.telegraphWindow = telegraphWindow;
+
+        public void ConfigurePairedReaction(ActionDefinition pairedReaction) => this.pairedReaction = pairedReaction;
 
         internal override void GiveItsWindowsTo(ActionRunner runner) => runner.TakeTheWindowsOf(this);
 
@@ -133,9 +141,27 @@ namespace ArkhamCombat.Combat
             ReportWhenWindowEndsBeforeItStarts(nameof(warpWindow), warpWindow, errors);
             ReportWhenWindowEndsBeforeItStarts(nameof(telegraphWindow), telegraphWindow, errors);
             ReportWhenLungeCannotReachStrikeDistance(errors);
+            ReportWhenThePairedReactionEndsBeforeTheHit(errors);
 
             bool isWellFormed = errors.Count == errorCountBefore;
             return isWellFormed;
+        }
+
+        // The hit of a paired attack finds its target already reacting. One that had finished would start reacting again.
+        private void ReportWhenThePairedReactionEndsBeforeTheHit(List<string> errors)
+        {
+            if (!IsPaired)
+            {
+                return;
+            }
+
+            float secondsUntilTheHit = hitWindow.Start * Duration;
+            if (pairedReaction.Duration < secondsUntilTheHit)
+            {
+                errors.Add(
+                    $"'{name}': its paired reaction '{pairedReaction.name}' lasts {pairedReaction.Duration:0.00} s and the hit window opens " +
+                    $"{secondsUntilTheHit:0.00} s in, so the target would have stopped reacting before the hit lands.");
+            }
         }
 
 

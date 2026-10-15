@@ -334,7 +334,16 @@ namespace ArkhamCombat.Combat
 
             if (CurrentAttack != null)
             {
+                StartThePairedReactionOfTheTarget(CurrentAttack);
                 HandleWindowsStartingAtZero(CurrentAttack, position);
+            }
+        }
+
+        private void StartThePairedReactionOfTheTarget(AttackDefinition attack)
+        {
+            if (attack.IsPaired && HasValidTarget)
+            {
+                CurrentActionTarget.BeginPairedReaction(attack);
             }
         }
 

@@ -16,9 +16,11 @@ namespace ArkhamCombat.Enemies
         private const string Source = nameof(EnemyStatus);
         private const string Dead = "Dead";
         private const string NoReaction = nameof(AppliedReaction.None);
+        private const ActionDefinition NoOverride = null;
 
         private HitReceiverProfile profile;
         private HitReceiver receiver;
+        private ActionRunner runner;
         private AgentVariableWriter agentVariables;
 
         public string State => IsAlive ? ReactionAsTheTreeLeftIt : Dead;
@@ -50,14 +52,32 @@ namespace ArkhamCombat.Enemies
                 return;
             }
 
-            receiver = new HitReceiver(profile, CombatActions.RunnerOn(gameObject));
+            runner = CombatActions.RunnerOn(gameObject);
+            receiver = new HitReceiver(profile, runner);
         }
 
         private void PublishStartingFacts()
         {
             Write(EnemyVariableNames.IsAlive, IsAlive);
             Write(EnemyVariableNames.Reaction, NoReaction);
+            Write(EnemyVariableNames.ReactionOverride, NoOverride);
             Write(EnemyVariableNames.Health01, ShareOfHealthLeft);
+        }
+
+        /// <summary>
+        /// Whatever it was playing is cut short at once, its own swing included, so a countered
+        /// attacker cannot land the hit it had started.
+        /// </summary>
+        public void BeginPairedReaction(AttackDefinition attack)
+        {
+            if (!IsAlive)
+            {
+                return;
+            }
+
+            runner?.Cancel();
+            Write(EnemyVariableNames.ReactionOverride, attack.PairedReaction);
+            Write(EnemyVariableNames.Reaction, receiver.ReactionToAPairedAttack(attack).ToString());
         }
 
         public HitResult Receive(HitInfo hit)
@@ -79,6 +99,9 @@ namespace ArkhamCombat.Enemies
         private void PublishHit(AppliedReaction appliedReaction)
         {
             Write(EnemyVariableNames.Health01, ShareOfHealthLeft);
+
+            // The branch a paired attack started is already playing its action; whatever this hit starts plays its own.
+            Write(EnemyVariableNames.ReactionOverride, NoOverride);
 
             switch (appliedReaction)
             {
