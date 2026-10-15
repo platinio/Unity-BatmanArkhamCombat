@@ -1,3 +1,4 @@
+using System.Collections.Generic;
 using ArkhamCombat.Combat;
 using DG.Tweening;
 using UnityEngine;
@@ -17,7 +18,7 @@ namespace ArkhamCombat.Presentation
         [Tooltip("Optional. Punch cues push this; the body when empty.")]
         [SerializeField] private Transform fist;
 
-        [Tooltip("Optional. Colour cues tint this renderer.")]
+        [Tooltip("Optional. Colour cues tint this renderer, and a fall measures the body on it.")]
         [SerializeField] private Renderer bodyRenderer;
 
         [Tooltip("Seconds the body takes to return to its rest pose after an action ends or is stopped.")]
@@ -31,6 +32,7 @@ namespace ArkhamCombat.Presentation
         public Transform Body => body;
         public Transform Fist => fist;
         public Renderer BodyRenderer => bodyRenderer;
+        public IReadOnlyList<Renderer> TintedRenderers => bodyRenderer != null ? new[] { bodyRenderer } : new Renderer[0];
         public BodyPose RestPose => restPose;
         public BodyPose StandingPose => standingPose;
         public Vector3 FistRestLocalPosition => fistRestLocalPosition;
@@ -49,11 +51,11 @@ namespace ArkhamCombat.Presentation
                 bool isFrozen = value <= 0f;
                 if (isFrozen)
                 {
-                    DOTween.Pause(TweenId);
+                    CueTweens.Freeze(this);
                 }
                 else
                 {
-                    DOTween.Play(TweenId);
+                    CueTweens.Resume(this);
                 }
             }
         }
@@ -74,19 +76,19 @@ namespace ArkhamCombat.Presentation
         private void OnDestroy()
         {
             clock.CueDue -= PlayCue;
-            KillCueTweens();
+            CueTweens.Kill(this);
         }
 
         public void Play(ActionDefinition action)
         {
-            KillCueTweens();
+            CueTweens.Kill(this);
             clock.Play(action);
         }
 
         public void Stop()
         {
             clock.Stop();
-            KillCueTweens();
+            CueTweens.Kill(this);
             BlendToRestPose();
         }
 
@@ -112,8 +114,6 @@ namespace ArkhamCombat.Presentation
                 cue.Kind.Play(this, cue);
             }
         }
-
-        private void KillCueTweens() => DOTween.Kill(TweenId);
 
         private void BlendToRestPose()
         {

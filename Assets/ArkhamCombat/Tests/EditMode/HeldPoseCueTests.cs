@@ -1,3 +1,4 @@
+using System.Collections.Generic;
 using ArkhamCombat.Combat;
 using ArkhamCombat.Presentation;
 using DG.Tweening;
@@ -132,6 +133,7 @@ namespace ArkhamCombat.Tests
             public Transform Body { get; }
             public Transform Fist => null;
             public Renderer BodyRenderer { get; }
+            public IReadOnlyList<Renderer> TintedRenderers => BodyRenderer != null ? new[] { BodyRenderer } : new Renderer[0];
             public BodyPose RestPose { get; private set; }
             public BodyPose StandingPose { get; }
             public Vector3 FistRestLocalPosition => Vector3.zero;

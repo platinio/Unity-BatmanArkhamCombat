@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using ArkhamCombat.Combat;
 using DG.Tweening;
 using UnityEngine;
@@ -103,6 +104,8 @@ namespace ArkhamCombat.Presentation
         private const int OneFlash = 1;
 
         public void Play(ICueTarget target, PresentationCue cue) => BodyTint.Flash(target, cue, OneFlash, cue.Duration);
+
+        public bool CanPlayOnARiggedBody => true;
     }
 
     /// <summary>Strength scales how far the colour goes, as for a flash.</summary>
@@ -119,6 +122,8 @@ namespace ArkhamCombat.Presentation
 
             BodyTint.Flash(target, cue, flashes, secondsPerFlashToFillTheCue);
         }
+
+        public bool CanPlayOnARiggedBody => true;
     }
 
     internal static class BodyTint
@@ -128,36 +133,29 @@ namespace ArkhamCombat.Presentation
 
         public static void Flash(ICueTarget target, PresentationCue cue, int flashes, float secondsPerFlash)
         {
-            Renderer renderer = target.BodyRenderer;
-            Material material = renderer != null ? renderer.sharedMaterial : null;
-            if (material == null)
+            List<TintedRenderer> tinted = TintedRenderer.Of(target.TintedRenderers);
+            if (tinted.Count == 0)
             {
                 return;
             }
 
-            int colourProperty = MaterialColourProperty.Of(material);
-            Color restColour = material.GetColor(colourProperty);
-            MaterialPropertyBlock propertyBlock = new MaterialPropertyBlock();
             float secondsToFullTint = secondsPerFlash * 0.5f;
             float tint = 0f;
 
             void ApplyTint(float value)
             {
                 tint = value;
-                if (renderer == null)
+                foreach (TintedRenderer renderer in tinted)
                 {
-                    return;
+                    renderer.Tint(cue.Colour, tint * cue.Strength);
                 }
-
-                propertyBlock.SetColor(colourProperty, Color.Lerp(restColour, cue.Colour, tint * cue.Strength));
-                renderer.SetPropertyBlock(propertyBlock);
             }
 
             void ClearTint()
             {
-                if (renderer != null)
+                foreach (TintedRenderer renderer in tinted)
                 {
-                    renderer.SetPropertyBlock(null);
+                    renderer.Clear();
                 }
             }
 
@@ -166,6 +164,57 @@ namespace ArkhamCombat.Presentation
                 .SetLoops(TintThenUntint * flashes, LoopType.Yoyo)
                 .SetId(target.TweenId)
                 .OnKill(ClearTint);
+        }
+    }
+
+    /// <summary>A model of many materials flashes as one: each renderer keeps its own rest colour and its own property block.</summary>
+    internal sealed class TintedRenderer
+    {
+        private readonly Renderer renderer;
+        private readonly int colourProperty;
+        private readonly Color restColour;
+        private readonly MaterialPropertyBlock propertyBlock = new MaterialPropertyBlock();
+
+        private TintedRenderer(Renderer renderer, Material material)
+        {
+            this.renderer = renderer;
+            colourProperty = MaterialColourProperty.Of(material);
+            restColour = material.GetColor(colourProperty);
+        }
+
+        public static List<TintedRenderer> Of(IReadOnlyList<Renderer> renderers)
+        {
+            List<TintedRenderer> tinted = new List<TintedRenderer>();
+            for (int i = 0; i < renderers.Count; i++)
+            {
+                Renderer renderer = renderers[i];
+                Material material = renderer != null ? renderer.sharedMaterial : null;
+                if (material != null)
+                {
+                    tinted.Add(new TintedRenderer(renderer, material));
+                }
+            }
+
+            return tinted;
+        }
+
+        public void Tint(Color colour, float share)
+        {
+            if (renderer == null)
+            {
+                return;
+            }
+
+            propertyBlock.SetColor(colourProperty, Color.Lerp(restColour, colour, share));
+            renderer.SetPropertyBlock(propertyBlock);
+        }
+
+        public void Clear()
+        {
+            if (renderer != null)
+            {
+                renderer.SetPropertyBlock(null);
+            }
         }
     }
 
