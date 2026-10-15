@@ -25,6 +25,9 @@ namespace ArkhamCombat.Encounter
         public Vector3 SlotPosition => hasJoined ? Director.GetSlotPosition(this) : transform.position;
         public Vector3 StandingPosition => hasJoined ? Director.GetStandingPosition(this) : transform.position;
 
+        public Vector3 FreePositionCloserToTarget(float distanceFromTarget, float roomEachAgentKeeps) =>
+            hasJoined ? Director.GetFreePositionCloserToTarget(this, distanceFromTarget, roomEachAgentKeeps) : transform.position;
+
         private EncounterDirector Director => encounter.Director;
 
         [Inject]

@@ -67,6 +67,16 @@ namespace ArkhamCombat.Tests
         }
 
         [Test]
+        public void WritesTheArchetypesMoveSpeedOntoTheAgent_SoABranchThatWalkedSlowlyCanWalkFastAgain()
+        {
+            writer.Construct(archetype);
+
+            writer.WriteTunables();
+
+            Assert.AreEqual(MoveSpeed, (float)facts.Get(EnemyVariableNames.MoveSpeed), Tolerance);
+        }
+
+        [Test]
         public void WritesTheArchetypesAttackOntoTheAgent()
         {
             archetype.ConfigureAttack(haymaker);

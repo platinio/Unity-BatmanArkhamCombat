@@ -8,6 +8,7 @@ namespace ArkhamCombat.Enemies
         public const string IdleMin = "idleMin";
         public const string IdleMax = "idleMax";
         public const string CombatRange = "combatRange";
+        public const string MoveSpeed = "moveSpeed";
         public const string Attack = "attack";
         public const string HasTarget = "hasTarget";
         public const string TargetDistance = "targetDistance";
