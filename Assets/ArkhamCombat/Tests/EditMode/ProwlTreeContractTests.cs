@@ -54,7 +54,7 @@ namespace ArkhamCombat.Tests
             List<BehaviorTreeNode> steps = StepsOfTheMove();
 
             Assert.AreEqual(4, steps.Count);
-            Assert.IsInstanceOf<SetNavAgentSpeedNode>(steps[0], "it sets the speed it prowls at before it walks");
+            Assert.IsInstanceOf<SetNavAgentSpeed>(steps[0], "it sets the speed it prowls at before it walks");
             Assert.IsInstanceOf<Selector>(steps[1], "where to");
             Assert.IsInstanceOf<ParallelSelector>(steps[2], "the walk");
             Assert.IsInstanceOf<WaitTimeRandomRange>(steps[3], "the rest");
@@ -114,7 +114,7 @@ namespace ArkhamCombat.Tests
             Assert.IsTrue(SubTree(ProwlSubTree).optionalDeclarations.IsDefined(parameter));
         }
 
-        [TestCase(typeof(SetNavAgentSpeedNode), nameof(SetNavAgentSpeedNode.Speed), "prowlSpeed")]
+        [TestCase(typeof(SetNavAgentSpeed), nameof(SetNavAgentSpeed.Speed), "prowlSpeed")]
         [TestCase(typeof(RandomChance), nameof(RandomChance.Chance), "stepInChance")]
         [TestCase(typeof(GetFreePositionCloserToTarget), nameof(GetFreePositionCloserToTarget.DistanceFromTarget), "stepInDistance")]
         [TestCase(typeof(GetFreePositionCloserToTarget), nameof(GetFreePositionCloserToTarget.RoomEachAgentKeeps), "personalSpace")]
@@ -139,9 +139,9 @@ namespace ArkhamCombat.Tests
         [TestCase("Approach")]
         public void ABranchThatWalksFast_SetsTheSpeedItWasHanded(string subTree)
         {
-            BehaviorTreeNode setTheSpeed = SubTree(subTree).graph.Nodes.OfType<SetNavAgentSpeedNode>().Single();
+            BehaviorTreeNode setTheSpeed = SubTree(subTree).graph.Nodes.OfType<SetNavAgentSpeed>().Single();
 
-            Assert.AreEqual(EnemyVariableNames.MoveSpeed, ParameterThatFeeds(setTheSpeed, nameof(SetNavAgentSpeedNode.Speed)));
+            Assert.AreEqual(EnemyVariableNames.MoveSpeed, ParameterThatFeeds(setTheSpeed, nameof(SetNavAgentSpeed.Speed)));
         }
 
         [Test]
@@ -150,7 +150,7 @@ namespace ArkhamCombat.Tests
             BehaviorTreeGraph approach = SubTree("Approach").graph;
             List<BehaviorTreeNode> steps = approach.ChildrenInPriorityOrder(approach.Nodes.OfType<Sequence>().Single());
 
-            Assert.IsInstanceOf<SetNavAgentSpeedNode>(steps[0]);
+            Assert.IsInstanceOf<SetNavAgentSpeed>(steps[0]);
             Assert.IsInstanceOf<SetNavAgentPosition>(steps[1]);
         }
 
