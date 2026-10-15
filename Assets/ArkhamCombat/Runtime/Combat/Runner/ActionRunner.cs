@@ -128,6 +128,7 @@ namespace ArkhamCombat.Combat
             }
             else
             {
+                driver.Tick(deltaTime);
                 AdvanceIdleTime(deltaTime);
                 RestartComboAfterLongIdle();
             }

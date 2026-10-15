@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using UnityEngine;
 
 namespace ArkhamCombat.Combat
@@ -11,6 +12,12 @@ namespace ArkhamCombat.Combat
     public interface ICueKind
     {
         void Play(ICueTarget target, PresentationCue cue);
+
+        /// <summary>
+        /// On a rigged body the clip is the picture, so a kind that bends a capsule stays silent there
+        /// and only a kind that adds to the picture, such as a colour, plays.
+        /// </summary>
+        bool CanPlayOnARiggedBody => false;
     }
 
     /// <summary>
@@ -24,8 +31,10 @@ namespace ArkhamCombat.Combat
         /// <summary>Optional. A punch cue falls back to the body when there is none.</summary>
         Transform Fist { get; }
 
-        /// <summary>Optional. Colour cues do nothing without one.</summary>
+        /// <summary>Optional.</summary>
         Renderer BodyRenderer { get; }
+
+        IReadOnlyList<Renderer> TintedRenderers { get; }
 
         /// <summary>Where <c>Stop</c> returns the body to: the standing pose until a cue that holds a pose moves it.</summary>
         BodyPose RestPose { get; }

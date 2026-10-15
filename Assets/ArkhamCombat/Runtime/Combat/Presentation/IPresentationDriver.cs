@@ -20,6 +20,7 @@ namespace ArkhamCombat.Combat
         /// <summary>One normally. Zero freezes time and every cue; the hit-stop listener sets it briefly.</summary>
         float Speed { get; set; }
 
+        /// <summary>Every frame, playing or not: a picture that blends back to rest keeps moving between actions.</summary>
         void Tick(float deltaTime);
     }
 }

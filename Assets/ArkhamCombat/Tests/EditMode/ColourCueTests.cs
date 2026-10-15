@@ -89,9 +89,57 @@ namespace ArkhamCombat.Tests
         }
 
         [Test]
+        public void AFlash_TintsEveryRendererOfTheBody()
+        {
+            GameObject secondPart = GameObject.CreatePrimitive(PrimitiveType.Sphere);
+            secondPart.hideFlags = HideFlags.HideAndDontSave;
+            Renderer[] parts = { body.GetComponent<Renderer>(), secondPart.GetComponent<Renderer>() };
+            TintedCueTarget twoPartTarget = new TintedCueTarget(body.transform, parts);
+            try
+            {
+                new FlashCue().Play(twoPartTarget, new PresentationCue(firesAt: 0f, new FlashCue(), 0.3f));
+                DOTween.TweensById(twoPartTarget.TweenId)[0].Goto(0.15f);
+
+                Assert.IsTrue(parts[0].HasPropertyBlock(), "the body is tinted");
+                Assert.IsTrue(parts[1].HasPropertyBlock(), "its second part is tinted too");
+            }
+            finally
+            {
+                DOTween.Kill(twoPartTarget.TweenId);
+                Object.DestroyImmediate(secondPart);
+            }
+        }
+
+        [Test]
+        public void AFlash_TintsEveryMaterialOfARenderer_EachFromItsOwnRestColour()
+        {
+            Renderer twoMaterials = body.GetComponent<Renderer>();
+            Material skin = new Material(twoMaterials.sharedMaterial) { color = Color.red, hideFlags = HideFlags.HideAndDontSave };
+            Material cloth = new Material(twoMaterials.sharedMaterial) { color = Color.blue, hideFlags = HideFlags.HideAndDontSave };
+            twoMaterials.sharedMaterials = new[] { skin, cloth };
+            TintedCueTarget twoMaterialTarget = new TintedCueTarget(body.transform, twoMaterials);
+            try
+            {
+                new FlashCue().Play(twoMaterialTarget, new PresentationCue(firesAt: 0f, new FlashCue(), 0.3f));
+                DOTween.TweensById(twoMaterialTarget.TweenId)[0].Goto(0f);
+
+                MaterialPropertyBlock clothBlock = new MaterialPropertyBlock();
+                twoMaterials.GetPropertyBlock(clothBlock, 1);
+                Assert.IsTrue(twoMaterials.HasPropertyBlock(), "the skin is tinted");
+                Assert.AreEqual(Color.blue, clothBlock.GetColor(MaterialColourProperty.Of(cloth)), "the cloth starts from its own colour, not the skin's");
+            }
+            finally
+            {
+                DOTween.Kill(twoMaterialTarget.TweenId);
+                Object.DestroyImmediate(skin);
+                Object.DestroyImmediate(cloth);
+            }
+        }
+
+        [Test]
         public void AColourCue_OnABodyWithNothingToTint_DoesNothing()
         {
-            TintedCueTarget targetWithoutARenderer = new TintedCueTarget(body.transform, bodyRenderer: null);
+            TintedCueTarget targetWithoutARenderer = new TintedCueTarget(body.transform);
 
             Assert.DoesNotThrow(() => new PulseCue().Play(targetWithoutARenderer, new PresentationCue(firesAt: 0f, new PulseCue(), 0.6f)));
             Assert.IsNull(DOTween.TweensById(targetWithoutARenderer.TweenId));
@@ -99,17 +147,18 @@ namespace ArkhamCombat.Tests
 
         private sealed class TintedCueTarget : ICueTarget
         {
-            public TintedCueTarget(Transform body, Renderer bodyRenderer)
+            public TintedCueTarget(Transform body, params Renderer[] tintedRenderers)
             {
                 Body = body;
-                BodyRenderer = bodyRenderer;
+                TintedRenderers = tintedRenderers;
                 StandingPose = BodyPose.Of(body);
                 RestPose = StandingPose;
             }
 
             public Transform Body { get; }
             public Transform Fist => null;
-            public Renderer BodyRenderer { get; }
+            public Renderer BodyRenderer => TintedRenderers.Count > 0 ? TintedRenderers[0] : null;
+            public IReadOnlyList<Renderer> TintedRenderers { get; }
             public BodyPose RestPose { get; private set; }
             public BodyPose StandingPose { get; }
             public Vector3 FistRestLocalPosition => Vector3.zero;
