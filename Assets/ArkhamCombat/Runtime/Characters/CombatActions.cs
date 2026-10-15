@@ -20,6 +20,10 @@ namespace ArkhamCombat.Characters
 
         public ActionRunner Runner => runner;
 
+        /// <summary>Null on a character that plays no actions.</summary>
+        public static ActionRunner RunnerOn(GameObject character) =>
+            character.TryGetComponent(out CombatActions combatActions) ? combatActions.Runner : null;
+
         [Inject]
         internal void Construct(
             ActionRunner runner,

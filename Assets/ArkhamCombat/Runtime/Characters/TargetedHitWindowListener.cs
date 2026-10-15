@@ -25,9 +25,15 @@ namespace ArkhamCombat.Characters
 
         public void HitWindowOpened(AttackDefinition attack, IActionTarget target)
         {
-            if (TryLandOn(target, attack))
+            HitResult result = StrikeAt(target, attack);
+
+            if (result.HasLanded)
             {
                 AnnounceStrikeLanded(attack, target);
+            }
+            else if (result.WasEvaded)
+            {
+                AnnounceStrikeEvaded(attack, target);
             }
             else
             {
@@ -37,20 +43,20 @@ namespace ArkhamCombat.Characters
 
         public void HitWindowClosed() { }
 
-        private bool TryLandOn(IActionTarget victim, AttackDefinition attack)
+        private HitResult StrikeAt(IActionTarget victim, AttackDefinition attack)
         {
             bool hasAVictim = victim != null && victim.IsValid;
             if (!hasAVictim)
             {
-                return false;
+                return HitResult.Missed;
             }
 
             if (!hitResolver.TryLand(attack, WhereTheStrikeComesFrom(), victim.Position, out HitInfo hit))
             {
-                return false;
+                return HitResult.Missed;
             }
 
-            return victim.Receive(hit).HasLanded;
+            return victim.Receive(hit);
         }
 
         // The hit window opens on the tick the warp closes, and that tick's warp share has not
@@ -64,6 +70,16 @@ namespace ArkhamCombat.Characters
             if (CanAnnounceStrikes)
             {
                 sceneGameEvents.GameEventDispatcher.StrikeLandedGameEvent.Raise(character.gameObject, attack, victim.Owner);
+            }
+#endif
+        }
+
+        private void AnnounceStrikeEvaded(AttackDefinition attack, IActionTarget victim)
+        {
+#if HERMES_EVENTS_GENERATED
+            if (CanAnnounceStrikes)
+            {
+                sceneGameEvents.GameEventDispatcher.StrikeEvadedGameEvent.Raise(character.gameObject, attack, victim.Owner);
             }
 #endif
         }

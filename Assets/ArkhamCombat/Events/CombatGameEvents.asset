@@ -104,6 +104,34 @@ MonoBehaviour:
   namespaces:
   - UnityEngine
   - ArkhamCombat.Combat
+--- !u!114 &-2878007811236992765
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: c1a46adf4cb9e314aad7035f65526a82, type: 3}
+  m_Name: StrikeEvaded
+  m_EditorClassIdentifier: Hermes.Runtime::ArcaneOnyx.GameEventGenerator.GameEventDefinition
+  Name: StrikeEvaded
+  icon: {fileID: 0}
+  id: 5b6708d965e4f7a40aa6413fb8ba7637_6
+  description: Raised when a character's strike reaches a target that is invulnerable
+    at that moment, such as one in the middle of an evade. Nothing lands and it is
+    not a whiff. Listeners filter by Attacker or by Target.
+  args:
+  - variableType: GameObject
+    variableName: Attacker
+  - variableType: AttackDefinition
+    variableName: Attack
+  - variableType: GameObject
+    variableName: Target
+  namespaces:
+  - UnityEngine
+  - ArkhamCombat.Combat
 --- !u!114 &11400000
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -123,7 +151,8 @@ MonoBehaviour:
   - {fileID: -8552589171966593529}
   - {fileID: 2425482787602585118}
   - {fileID: 2437310033171860748}
-  id: 6
+  - {fileID: -2878007811236992765}
+  id: 7
   silenced: 0
 --- !u!114 &2425482787602585118
 MonoBehaviour:

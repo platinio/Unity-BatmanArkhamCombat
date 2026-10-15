@@ -20,7 +20,11 @@ namespace ArkhamCombat.Combat
         [Tooltip("Free-form labels Functions can read through the context.")]
         [SerializeField] private List<string> tags = new List<string>();
 
+        [Tooltip("While open (normalized time), a strike that reaches the character does nothing to it. Leave start and end equal for an action that can be hit all the way through.")]
+        [SerializeField] private Window invulnerableWindow = new Window(0f, 0f);
+
         public float Duration => duration;
+        public Window InvulnerableWindow => invulnerableWindow;
         public IReadOnlyList<PresentationCue> Cues => cues;
         public IReadOnlyList<string> Tags => tags;
 
@@ -30,6 +34,10 @@ namespace ArkhamCombat.Combat
             this.cues = cues != null ? new List<PresentationCue>(cues) : new List<PresentationCue>();
             this.tags = tags != null ? new List<string>(tags) : new List<string>();
         }
+
+        public void ConfigureInvulnerableWindow(Window invulnerableWindow) => this.invulnerableWindow = invulnerableWindow;
+
+        public bool IsInvulnerableAt(float normalizedTime) => invulnerableWindow.Contains(normalizedTime);
 
         // A plain action has no windows to give. An attack gives its own, which is how the runner
         // knows an attack is playing without testing the action's type.
@@ -45,6 +53,7 @@ namespace ArkhamCombat.Combat
 
             ReportWhenDurationIsNotPositive(errors);
             ReportEveryBrokenCue(errors);
+            ReportWhenWindowEndsBeforeItStarts(nameof(invulnerableWindow), invulnerableWindow, errors);
 
             bool isWellFormed = errors.Count == errorCountBefore;
             return isWellFormed;
@@ -55,6 +64,14 @@ namespace ArkhamCombat.Combat
             if (duration <= 0f)
             {
                 errors.Add($"'{name}': duration must be positive.");
+            }
+        }
+
+        protected void ReportWhenWindowEndsBeforeItStarts(string windowName, Window window, List<string> errors)
+        {
+            if (!window.IsValid(out string whatIsWrong))
+            {
+                errors.Add($"'{name}': {windowName} {whatIsWrong}.");
             }
         }
 

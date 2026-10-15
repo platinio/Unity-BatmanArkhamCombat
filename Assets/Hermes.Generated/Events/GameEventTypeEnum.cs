@@ -10,6 +10,7 @@ ComboChanged,
 ComboReset,
 ActionStarted,
 ActionEnded,
+StrikeEvaded,
 
     }
 }
