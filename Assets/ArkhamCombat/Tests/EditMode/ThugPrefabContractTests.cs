@@ -3,6 +3,7 @@ using ArkhamCombat.Characters;
 using ArkhamCombat.Combat;
 using ArkhamCombat.Encounter;
 using ArkhamCombat.Enemies;
+using ArkhamCombat.Presentation;
 using NUnit.Framework;
 using UnityEditor;
 using UnityEngine;
@@ -64,6 +65,16 @@ namespace ArkhamCombat.Tests
 
             Assert.IsNotNull(agent);
             Assert.IsTrue(agent.TryGetComponent(out ICombatTarget _), "the roster looks for the target on the agent's own object");
+        }
+
+        [Test]
+        public void ThePictureSitsOnTheBodyChild_SoAVariantSwapsItByDeactivatingThatChild()
+        {
+            ProceduralPresentationDriver driver = thug.GetComponentInChildren<ProceduralPresentationDriver>();
+
+            Assert.IsNotNull(driver);
+            Assert.AreNotSame(thug.transform, driver.transform, "a driver on the root would still be found once the capsule child is deactivated");
+            Assert.AreSame(driver.transform, driver.Body);
         }
 
         [Test]

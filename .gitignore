@@ -43,3 +43,9 @@ Assets/SteamVR_Input/
 Recordings/
 Builds/
 Assets/Unity.VisualScripting.Generated/
+
+# == third-party art: the Asset Store licences forbid redistributing it == #
+Assets/UnityTechnologies/
+Assets/UnityTechnologies.meta
+Assets/Frank_Assassin/
+Assets/Frank_Assassin.meta

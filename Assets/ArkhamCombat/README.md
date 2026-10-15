@@ -393,13 +393,13 @@ both generated assemblies reference it.
   `AttackingStateBinding`, and for a character that can be hit the four reaction bindings
   (`FlinchStateBinding`, `StaggerStateBinding`, `KnockedDownStateBinding`, `DeadStateBinding`), each with
   its action picked.
-- **A prefab**: next to `CharacterBrain`, a `GameObjectContext` whose Mono Installers list holds the
+- **A prefab**: `Prefabs/Player.prefab` is the model, and the arena places it. Next to `CharacterBrain`, a `GameObjectContext` whose Mono Installers list holds the
   `CombatCharacterInstaller` on the same object, with the stance set on the installer. Then the
   `CharacterBrain`'s list of character components reads, top to bottom: `CombatFactsUpdater`,
   `ComboTracker`, `CombatActions`, `AttackingStateSwitch`, `HitReactionSwitch`. `PlayerStatus`, with a
   hit receiver profile picked on the installer, is what lets it be hit. `CombatTargeting` gives it targets, and a
-  `ProceduralPresentationDriver` with the body child, an optional fist and the body renderer gives it a
-  body. Leaving out the facts updater, the combo tracker, the targeting, the driver or the state switch
+  `ProceduralPresentationDriver` on the body child, with that child, an optional fist and the body renderer, gives it a
+  body: the driver sits on the picture it draws, so a variant with another body deactivates the capsule child and the driver leaves with it. Leaving out the facts updater, the combo tracker, the targeting, the driver or the state switch
   gives a character without that piece; `CombatActions` is what plays actions at all. The scene also needs the Hermes object described under Events.
 - **A reaction action**: Create → ArkhamCombat → Action, with its duration and cues, beside the five in
   `Actions/Reactions`. A knockdown's duration is its time on the floor: the body stays down until the
@@ -431,8 +431,8 @@ both generated assemblies reference it.
   `EnemyStatus`, `EnemyArchetypeWriter`, `EncounterAgent`, `EncounterTargetPicker`, `AttackerLane`, the collider, a `NavMeshAgent`
   sized to the collider with its base offset at half the height (the prefab's origin is the capsule's
   centre) and its **Angular Speed at 0**: the tree's Face Target is the only thing that turns an enemy,
-  and a NavMeshAgent that also turned it would fight it. Last, a `ProceduralPresentationDriver` whose body
-  is the capsule child. Drop instances into the scene; the scene context builds them.
+  and a NavMeshAgent that also turned it would fight it. Last, on the capsule child, a `ProceduralPresentationDriver` whose body
+  is that child, so a variant with another body deactivates the child and the driver leaves with it. Drop instances into the scene; the scene context builds them.
 - **A scene enemies fight in**: one object with `EncounterDirectorBehaviour` whose target is the player,
   and a baked NavMesh. In `CombatArena` the walkable level sits under the `Arena` object, whose
   `NavMeshSurface` collects its children's colliders; after moving level geometry, bake it again from
