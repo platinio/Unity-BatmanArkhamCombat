@@ -527,6 +527,43 @@ Watch, and its flight recorder shows which branch ran and who wrote each fact. T
 why anything happened. If the Editor window loses focus play mode stops advancing unless Run In
 Background is on.
 
+### Character demo
+
+The same fight on rigged characters: `Assets/CombatDemo.unity` is a copy of the arena where the player is
+Adam and every enemy is the Guard, both from Unity's Adam Character Pack, playing the clips of the Frank RPG
+Assassin pack. Neither pack is committed (their licences forbid redistributing them; the whole
+`Assets/UnityTechnologies` folder and `Assets/Frank_Assassin` are ignored), so the scene opens with missing
+models and clips until they are imported. To play it:
+
+1. Import the Adam Character Pack and the Frank RPG Assassin pack from the Asset Store, at their default paths.
+2. Tick **Loop Time** on seventeen of Frank's clips, in the import settings of their FBX files under
+   `Assets/Frank_Assassin/Assets/Animations/FBX Animation/Root_Motion`: `Equip_Idle` and the sixteen `8Way_Walk_*`
+   and `8Way_Run_*`. Select them all, Animation tab, Loop Time, Apply. The locomotion blend tree plays them and
+   nothing in it can loop a clip whose import does not.
+3. Open `Assets/CombatDemo.unity` and press Play. The presses are the arena's.
+
+Nothing about the fight changes: the runner's clock is still the one truth, and each clip is stretched to its
+action's duration, so hit windows, warps, counters and the trees run exactly as on the capsules. The thugs run
+the same roots and sub-trees, through the same Play Action and Set Nav Agent Speed nodes; what the bodies add is
+that the trees become legible: a prowling Guard sidesteps on the sideways walk because the locomotion is
+two-dimensional (`MoveRight`, `MoveForward`, the velocity in the model's own frame), Set Nav Agent Speed reads
+as walk against run, the telegraph pulse lands on the Guard's skin, and a taunt is a flourish (`Skill01`).
+BH3's Variable Watch and flight recorder work as in the arena. Stunned is a hold: the body stays in its
+fighting stance and flickers yellow.
+
+What is committed: `Prefabs/Characters/Player_Adam` (a variant of the player with the capsule children
+deactivated and Adam's model under it, carrying the `Animator`, an `AnimationPresentationDriver` and
+`Characters/Adam.CharacterClips`), `Thug_Guard`, `Knife_Guard` and `Armored_Guard` (variants of the three enemy
+prefabs with the Guard model, `Characters/Guard.CharacterClips`, and the kind's tint on copies of the Guard's two
+body materials under `Materials/Characters`; the elite is the thug variant with the `EliteThug` archetype and the
+brighter tint overridden on its instance, as in the arena), the two clips assets and `Characters/Locomotion.controller`,
+one freeform 2D blend tree over Frank's fighting idle and his eight-way walk and run that both characters share.
+The clips report no root speed, so the walk sits at 1.6 m/s and the run at 4 m/s by hand; tune them in the
+Animator window. The clips are whole for now: trim an entry's `start` and `end` on the clips asset until a clip's
+contact lines up with its action's hit window, with the overlay's clip line (action, seconds into the clip, weight)
+to read it by. Knockdown and Death hold their last frame, so a downed character stays down until the get-up or
+for good. Every Frank clip sub-asset is named `Take 001`, which is why the overlay names the action rather than the clip.
+
 ## Tests
 
 `ArkhamCombat.Tests` runs in EditMode and needs no scene. Edit mode runs no `Awake` and no `Start`, so a test that needs what they do calls the component's internal set-up methods by hand, in the order Unity would. It covers: windows, actions, stance validation, pool
@@ -560,3 +597,5 @@ For actions that travel it covers: a dash covering its whole distance over its t
 For invulnerability it covers: a runner being invulnerable exactly inside its action's window (not before, not after, not when idle, not after a cancel, on an attack as on a plain action), a receiver evading a hit at no cost in health, landing one after the window, the dead ignoring rather than evading, the window's validation, the listener announcing an evaded strike as evaded and one out of reach of an invulnerable target as a whiff, and the combo counting its own evade and leaving an attacker whose strike was evaded alone.
 
 For the taunt it covers, from the authored assets: one roll per wait and only some rolls passing, the three steps of a taunt, every number and the action being a parameter, the action it plays unless told being well formed, the root feeding it the archetype's chance, and its guard checking only at the door. A thug taunting between two prowls while another took its turn was seen in play mode with the probe.
+
+For the character demo it covers: the clips asset's validation and lookup, the part of a clip stretched to its action, the blend's rate and its cut, the Playables graph evaluated by hand with the pose read back from the Animator (the clip following the clock, locomotion showing between actions and half way through a blend, a hold, a follow-up keeping its weight, a fade-out dropping the clip, a held last pose, a looping clip never sampled at its end, root motion off, the two locomotion floats written in the model's frame and reported when the controller lacks them), the driver as a component through its internal `Awake` (hit-stop holding clip and blend, a capsule-bending cue silent, a colour cue on every renderer and every material, the fade-out behind a real runner), each cue kind's answer with every kind in the assembly accounted for, the locomotion signal each installer binds, the runner ticking its driver while idle, and from the authored assets: each character variant's driver being the one the installer finds, sitting beside a humanoid Animator, with well-formed clips, a controller carrying the two floats, a clip for every action of its own, and Knockdown and Death holding their last pose.

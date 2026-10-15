@@ -1,0 +1,101 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: e87430fcb1ea4b547a0ec92a49e8ebcf, type: 3}
+  m_Name: Guard.CharacterClips
+  m_EditorClassIdentifier: ArkhamCombat.Presentation::ArkhamCombat.Presentation.CharacterClips
+  locomotion: {fileID: 9100000, guid: d4d69c4152b9ac3499b2d89ae5aec5ec, type: 2}
+  entries:
+  - action: {fileID: 11400000, guid: 6a4778f432f6b5a4880d064477e30186, type: 2}
+    clip: {fileID: 7400000, guid: 02c73676cdf390446accdf98794f9242, type: 3}
+    start: 0
+    end: 1
+    blendInSeconds: 0.08
+    blendOutSeconds: 0.12
+    holdsItsLastPose: 0
+  - action: {fileID: 11400000, guid: 47d4189264801a441bd8971441d241b2, type: 2}
+    clip: {fileID: 7400000, guid: ec427a0279a7f3d4f9f95ab93383041d, type: 3}
+    start: 0
+    end: 1
+    blendInSeconds: 0.08
+    blendOutSeconds: 0.12
+    holdsItsLastPose: 0
+  - action: {fileID: 11400000, guid: 6809121d96415a64588ed6467bfcc033, type: 2}
+    clip: {fileID: 7400000, guid: 18f8241ab7fcf264fa2a74d0b9081bb9, type: 3}
+    start: 0
+    end: 1
+    blendInSeconds: 0.08
+    blendOutSeconds: 0.12
+    holdsItsLastPose: 0
+  - action: {fileID: 11400000, guid: b95270b9e1459ea48b0040fbd5686647, type: 2}
+    clip: {fileID: 7400000, guid: 5d504380a3dee0c4e8fca5cb337683bf, type: 3}
+    start: 0
+    end: 1
+    blendInSeconds: 0.08
+    blendOutSeconds: 0.12
+    holdsItsLastPose: 0
+  - action: {fileID: 11400000, guid: 324b1b5d9239557439436e2a44e289ea, type: 2}
+    clip: {fileID: 7400000, guid: 989e226a054cb5544b142efae0b6eabd, type: 3}
+    start: 0
+    end: 1
+    blendInSeconds: 0.08
+    blendOutSeconds: 0.12
+    holdsItsLastPose: 0
+  - action: {fileID: 11400000, guid: 1f42b409e0a14bb46814e0e63c4b7df2, type: 2}
+    clip: {fileID: 7400000, guid: 2bc141a5715454242bb7336e33ccf332, type: 3}
+    start: 0
+    end: 1
+    blendInSeconds: 0.08
+    blendOutSeconds: 0.12
+    holdsItsLastPose: 0
+  - action: {fileID: 11400000, guid: b2c60ed6e3697d24aa5bbd628d498b75, type: 2}
+    clip: {fileID: 7400000, guid: 208dfb20183bdb340b06cb4331a9bc19, type: 3}
+    start: 0
+    end: 1
+    blendInSeconds: 0.08
+    blendOutSeconds: 0.12
+    holdsItsLastPose: 0
+  - action: {fileID: 11400000, guid: a9035956a4ea1614b9a94368bbec1bae, type: 2}
+    clip: {fileID: 7400000, guid: 7e55793e53d845649bff1209fb9bbfa3, type: 3}
+    start: 0
+    end: 1
+    blendInSeconds: 0.08
+    blendOutSeconds: 0.12
+    holdsItsLastPose: 0
+  - action: {fileID: 11400000, guid: e9bea067260423b449d1a8624106f965, type: 2}
+    clip: {fileID: 7400000, guid: 48cb33b2fd9d55a43a8015648ba77f6d, type: 3}
+    start: 0
+    end: 1
+    blendInSeconds: 0.08
+    blendOutSeconds: 0.12
+    holdsItsLastPose: 0
+  - action: {fileID: 11400000, guid: 9855ac607fae59b49af1ea8407b96f2c, type: 2}
+    clip: {fileID: 7400000, guid: b30ebf229cff8eb4a8bf9f34a2fd1879, type: 3}
+    start: 0
+    end: 1
+    blendInSeconds: 0.08
+    blendOutSeconds: 0.12
+    holdsItsLastPose: 1
+  - action: {fileID: 11400000, guid: 53ab710b47b79b2448b826e034e5233a, type: 2}
+    clip: {fileID: 7400000, guid: de15d31e3a028ab42aff531dc7375c1c, type: 3}
+    start: 0
+    end: 1
+    blendInSeconds: 0.08
+    blendOutSeconds: 0.12
+    holdsItsLastPose: 0
+  - action: {fileID: 11400000, guid: 7769e75d9697a44469d3a98b945a53b3, type: 2}
+    clip: {fileID: 7400000, guid: 90c1a79ef07854e4bbc8c24eba5beada, type: 3}
+    start: 0
+    end: 1
+    blendInSeconds: 0.08
+    blendOutSeconds: 0.12
+    holdsItsLastPose: 1
+  holdBlendOutSeconds: 0.12

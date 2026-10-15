@@ -1,4 +1,5 @@
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
 using ArkhamCombat.Combat;
 using ArkhamCombat.Presentation;
@@ -10,16 +11,26 @@ using UnityEngine;
 namespace ArkhamCombat.Tests
 {
     // A character variant swaps the picture and nothing else; nothing compiles the prefab, its clips and its controller together, so these read them.
-    [TestFixture("Player_Adam")]
+    [TestFixture("Player_Adam", "Assets/ArkhamCombat/Actions")]
+    [TestFixture("Thug_Guard", "Assets/ArkhamCombat/Actions/Enemies")]
+    [TestFixture("Knife_Guard", "Assets/ArkhamCombat/Actions/Enemies")]
+    [TestFixture("Armored_Guard", "Assets/ArkhamCombat/Actions/Enemies")]
     public class CharacterPrefabContractTests
     {
+        private static readonly string[] ActionsThatLeaveTheBodyDown = { "Knockdown", "Death" };
+
         private readonly string prefabPath;
+        private readonly string ownActionsFolder;
 
         private GameObject character;
         private AnimationPresentationDriver driver;
         private CharacterClips clips;
 
-        public CharacterPrefabContractTests(string prefabName) => prefabPath = $"Assets/ArkhamCombat/Prefabs/Characters/{prefabName}.prefab";
+        public CharacterPrefabContractTests(string prefabName, string ownActionsFolder)
+        {
+            prefabPath = $"Assets/ArkhamCombat/Prefabs/Characters/{prefabName}.prefab";
+            this.ownActionsFolder = ownActionsFolder;
+        }
 
         [SetUp]
         public void SetUp()
@@ -65,24 +76,27 @@ namespace ArkhamCombat.Tests
         [Test]
         public void EveryClipThatLeavesTheBodyDown_HoldsItsLastPose()
         {
-            foreach (ClipEntry entry in clips.Entries)
+            IEnumerable<ClipEntry> entriesThatLeaveTheBodyDown = clips.Entries.Where(entry => ActionsThatLeaveTheBodyDown.Contains(entry.Action.name));
+
+            Assert.IsNotEmpty(entriesThatLeaveTheBodyDown, "a character that can be knocked down or killed has these clips");
+            foreach (ClipEntry entry in entriesThatLeaveTheBodyDown)
             {
-                bool leavesTheBodyDown = entry.Action.name == "Knockdown" || entry.Action.name == "Death";
-                if (leavesTheBodyDown)
-                {
-                    Assert.IsTrue(entry.HoldsItsLastPose, $"{entry.Action.name} ends lying down and must stay there");
-                }
+                Assert.IsTrue(entry.HoldsItsLastPose, $"{entry.Action.name} ends lying down and must stay there");
             }
         }
 
         [Test]
-        public void ThePlayersStrikes_EachHaveAClip()
+        public void EveryActionOfItsOwn_HasAClip()
         {
-            foreach (string actionName in new[] { "Jab_L", "Jab_R", "Cross", "RoundhouseKick", "Evade", "Counter", "CapeStun" })
-            {
-                ActionDefinition action = AssetDatabase.LoadAssetAtPath<ActionDefinition>($"Assets/ArkhamCombat/Actions/{actionName}.asset");
+            IEnumerable<ActionDefinition> ownActions = AssetDatabase.FindAssets("t:ActionDefinition", new[] { ownActionsFolder })
+                .Select(AssetDatabase.GUIDToAssetPath)
+                .Where(path => Path.GetDirectoryName(path).Replace(Path.DirectorySeparatorChar, '/') == ownActionsFolder)
+                .Select(AssetDatabase.LoadAssetAtPath<ActionDefinition>);
 
-                Assert.IsTrue(clips.TryFindEntry(action, out _), $"{actionName} would play as a hold");
+            Assert.IsNotEmpty(ownActions);
+            foreach (ActionDefinition action in ownActions)
+            {
+                Assert.IsTrue(clips.TryFindEntry(action, out _), $"{action.name} would play as a hold");
             }
         }
     }
