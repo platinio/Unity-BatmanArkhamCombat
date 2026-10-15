@@ -103,7 +103,7 @@ namespace ArkhamCombat.Tests
             List<BehaviorTreeNode> stepsOfTheSwing = StepsOfTheSwing();
 
             Assert.AreEqual(6, stepsOfTheSwing.Count);
-            Assert.IsInstanceOf<SetNavAgentSpeedNode>(stepsOfTheSwing[0], "a thug that was prowling must not walk in at its prowling speed");
+            Assert.IsInstanceOf<SetNavAgentSpeed>(stepsOfTheSwing[0], "a thug that was prowling must not walk in at its prowling speed");
             Assert.IsInstanceOf<MoveToStrikeDistanceNode>(stepsOfTheSwing[1]);
             Assert.AreEqual("FaceTarget", SubTreeRunBy(stepsOfTheSwing[2]));
             Assert.IsInstanceOf<TryAcquireAttackToken>(stepsOfTheSwing[3], "a thug that lost the turn while it walked in must not swing");
